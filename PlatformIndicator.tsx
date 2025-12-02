@@ -13,7 +13,7 @@ export function PlatformIndicator() {
   if (!config) return null;
 
   return (
-    <div className="fixed top-[60px] left-4 px-3 py-1.5 bg-black/80 text-white text-xs rounded-full backdrop-blur-sm shadow-lg z-40">
+    <div className="fixed top-[70px] left-4 px-3 py-1.5 bg-black/80 text-white text-xs rounded-full backdrop-blur-sm shadow-lg z-40">
       {config.isFarcaster ? '🟣 Farcaster Mode' : '🌐 Browser Mode'}
     </div>
   );

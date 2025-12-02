@@ -4,16 +4,16 @@ pragma solidity ^0.8.20;
 /**
  * @title ColorDropPool
  * @dev Tournament-style pool for Color Drop game on Farcaster x Celo
- * @notice 21 players compete, top 3 win prizes (10, 6, 3 CELO)
+ * @notice 21 players compete, top 3 win prizes (1, 0.6, 0.3 CELO)
  */
 contract ColorDropPool {
     // Constants
-    uint256 public constant ENTRY_FEE = 1 ether; // 1 CELO
-    uint8 public constant POOL_SIZE = 21;
-    uint256 public constant PRIZE_1ST = 10 ether;
-    uint256 public constant PRIZE_2ND = 6 ether;
-    uint256 public constant PRIZE_3RD = 3 ether;
-    uint256 public constant SYSTEM_FEE = 1 ether;
+    uint256 public constant ENTRY_FEE = 0.1 ether; // 1 CELO
+    uint8 public constant POOL_SIZE = 12;
+    uint256 public constant PRIZE_1ST = 0.6 ether;
+    uint256 public constant PRIZE_2ND = 0.3 ether;
+    uint256 public constant PRIZE_3RD = 0.1 ether;
+    uint256 public constant SYSTEM_FEE = 0.2 ether;
 
     // Structs
     struct Player {
@@ -85,11 +85,11 @@ contract ColorDropPool {
     }
 
     /**
-     * @dev Join current pool with 1 CELO entry fee
+     * @dev Join current pool with 0.1 CELO entry fee
      * @param fid Farcaster ID of the player
      */
     function joinPool(uint256 fid) external payable {
-        require(msg.value == ENTRY_FEE, "Must pay exactly 1 CELO");
+        require(msg.value == ENTRY_FEE, "Must pay exactly 0.1 CELO");
         require(fid > 0, "Invalid FID");
         require(activePoolId[msg.sender] == 0, "Already in active pool");
 

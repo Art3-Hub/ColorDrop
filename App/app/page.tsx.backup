@@ -4,29 +4,42 @@ import { useState } from 'react';
 import { useAccount } from 'wagmi';
 import { ConnectButton } from '@/components/ConnectButton';
 import { PlatformIndicator } from '@/components/PlatformIndicator';
-import { PlayGrid } from '@/components/landing/PlayGrid';
+import { PoolLobby } from '@/components/pool/PoolLobby';
 import { GameScreen } from '@/components/game/GameScreen';
+import { PoolResults } from '@/components/pool/PoolResults';
 import { isFarcaster } from '@/lib/platform';
 import { NETWORK_INFO } from '@/lib/wagmi';
 
-type AppState = 'landing' | 'game';
+type AppState = 'lobby' | 'game' | 'results';
 
 export default function Home() {
   const { address, isConnected } = useAccount();
-  const [appState, setAppState] = useState<AppState>('landing');
-  const [currentSlot, setCurrentSlot] = useState<number>(1);
+  const [appState, setAppState] = useState<AppState>('lobby');
   const platformIsFarcaster = isFarcaster();
 
-  const ENTRY_FEE_VALUE = parseFloat(process.env.NEXT_PUBLIC_ENTRY_FEE || '0.1');
+  // Mock pool join function - will be replaced with contract call
+  const handleJoinPool = async () => {
+    console.log('Joining pool...');
+    // TODO: Call smart contract to join pool
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  };
 
-  const handleStartGame = (slot: number) => {
-    setCurrentSlot(slot);
+  const handleStartGame = () => {
     setAppState('game');
   };
 
-  const handleBackToLanding = () => {
-    setAppState('landing');
+  const handleBackToLobby = () => {
+    setAppState('lobby');
   };
+
+  // Mock results - will be replaced with contract data
+  const mockResults = [
+    { rank: 1, address: '0x1234...5678', username: 'ColorMaster', accuracy: 98.5, prize: '10 CELO' },
+    { rank: 2, address: '0x2345...6789', username: 'HuePro', accuracy: 95.2, prize: '6 CELO' },
+    { rank: 3, address: '0x3456...7890', username: 'ShadeWizard', accuracy: 92.8, prize: '3 CELO' },
+    { rank: 4, address: '0x4567...8901', accuracy: 89.3 },
+    { rank: 5, address: '0x5678...9012', accuracy: 87.1 },
+  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
@@ -71,7 +84,7 @@ export default function Home() {
                 Welcome to Color Drop!
               </h2>
               <p className="text-base sm:text-lg text-gray-600 max-w-md mx-auto">
-                Pay {ENTRY_FEE_VALUE} CELO, match colors in 8 seconds, win prizes!
+                Join tournaments, match colors, and win CELO prizes on the blockchain.
               </p>
               <div className="pt-4">
                 <p className="text-sm text-gray-500 mb-4">
@@ -103,26 +116,24 @@ export default function Home() {
                 <h3 className="font-bold text-gray-900 mb-4">How It Works</h3>
                 <div className="space-y-3 text-sm text-gray-700">
                   <div className="flex items-start gap-3">
-                    <span className="text-2xl">🎮</span>
+                    <span className="text-2xl">💰</span>
                     <div>
-                      <div className="font-semibold">Choose a Slot & Pay {ENTRY_FEE_VALUE} CELO</div>
-                      <div className="text-gray-600">Pick any available slot to start</div>
+                      <div className="font-semibold">Pay 1 CELO to Join</div>
+                      <div className="text-gray-600">Enter a 21-player tournament pool</div>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <span className="text-2xl">🎯</span>
                     <div>
-                      <div className="font-semibold">Match the Color in 8 Seconds</div>
-                      <div className="text-gray-600">Use HSL sliders to match the target</div>
+                      <div className="font-semibold">Match the Color</div>
+                      <div className="text-gray-600">Use HSL sliders in 8 seconds</div>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <span className="text-2xl">🏆</span>
                     <div>
                       <div className="font-semibold">Top 3 Win Prizes</div>
-                      <div className="text-gray-600">
-                        {ENTRY_FEE_VALUE * 6} CELO • {ENTRY_FEE_VALUE * 3} CELO • {ENTRY_FEE_VALUE * 1} CELO
-                      </div>
+                      <div className="text-gray-600">10 CELO • 6 CELO • 3 CELO</div>
                     </div>
                   </div>
                 </div>
@@ -131,12 +142,24 @@ export default function Home() {
           </div>
         )}
 
-        {isConnected && appState === 'landing' && (
-          <PlayGrid onStartGame={handleStartGame} />
+        {isConnected && appState === 'lobby' && (
+          <PoolLobby
+            poolId={1}
+            onJoinPool={handleJoinPool}
+            onStartGame={handleStartGame}
+          />
         )}
 
         {isConnected && appState === 'game' && (
-          <GameScreen onBackToLobby={handleBackToLanding} slotNumber={currentSlot} />
+          <GameScreen />
+        )}
+
+        {isConnected && appState === 'results' && (
+          <PoolResults
+            results={mockResults}
+            userAddress={address || ''}
+            onBackToLobby={handleBackToLobby}
+          />
         )}
       </main>
 
