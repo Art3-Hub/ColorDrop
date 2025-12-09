@@ -10,6 +10,14 @@ Match the target color in 10 seconds. Win up to 0.6 CELO. Play, compete, share.
 
 Color Drop Tournament is a **skill-based mini app** where players compete in 12-player pools to match colors with precision. Built as a **Farcaster Mini App** with **Celo blockchain** integration for instant, low-cost payments.
 
+**🔗 Smart Contract (Celo Mainnet):** [`0x39E653277AFa663B9b00C777c608B6E998cCBb22`](https://celo.blockscout.com/address/0x39E653277AFa663B9b00C777c608B6E998cCBb22)
+
+**🧪 Testnet Contract (Celo Sepolia):** [`0xeB91E58A59E7Bcf8ADC8cae4f12187826965503A`](https://celo-sepolia.blockscout.com/address/0xeB91E58A59E7Bcf8ADC8cae4f12187826965503A)
+
+**📊 Contract Implementation Addresses:**
+- **Mainnet Implementation:** [`0x1eDf8c2290d4a14FDd80c5522AaE2F8d13F6BA43`](https://celo.blockscout.com/address/0x1eDf8c2290d4a14FDd80c5522AaE2F8d13F6BA43)
+- **Sepolia Implementation:** [`0x4BF512C0eF46FD7C5F3F9522426E3F0413A8dB77`](https://celo-sepolia.blockscout.com/address/0x4BF512C0eF46FD7C5F3F9522426E3F0413A8dB77)
+
 ### Core Mechanics
 
 - **Entry:** 0.1 CELO per player
@@ -48,6 +56,72 @@ Color Drop Tournament is a **skill-based mini app** where players compete in 12-
 - In-feed pool discovery
 - Native notifications
 - Channel integration (/color-drop)
+
+---
+
+## 💚 Why Celo?
+
+**Celo** is the perfect blockchain for Color Drop Tournament because:
+
+### ⚡ Ultra-Fast & Cheap
+- **5-second finality** — Instant game payouts, no waiting
+- **$0.001 gas fees** — Play hundreds of games for pennies
+- **Mobile-first** — Built for phone users (Farcaster's native platform)
+- **Carbon negative** — Eco-friendly blockchain with offset initiatives
+
+### 💰 Real Money, Real Fast
+- **Instant settlements** — Winners get CELO in seconds, not minutes
+- **Stablecoin ready** — cUSD/cEUR support for stable prizes (future)
+- **Low barriers** — 0.1 CELO entry ($0.05) makes it accessible globally
+- **No bridging delays** — Native CELO, no cross-chain complexity
+
+### 🌍 Built for Everyone
+- **ReFi ecosystem** — Regenerative finance for good
+- **Global accessibility** — Works in 100+ countries
+- **Mobile money integration** — Cash in/out via Valora, Opera MiniPay
+- **Social impact** — Every transaction supports climate initiatives
+
+### 🔒 Secure & Proven
+- **EVM compatible** — Battle-tested Ethereum security model
+- **Upgradeable contracts** — UUPS pattern for safe improvements
+- **Audited infrastructure** — Celo validators stake reputation and capital
+
+**Bottom Line:** Celo makes Color Drop feel like a native mobile game, not a crypto app.
+
+---
+
+## 🛡️ Why SELF Protocol Verification?
+
+**SELF.xyz** provides **privacy-preserving age verification** that's critical for Color Drop:
+
+### 🔐 Privacy-First Identity
+- **Zero-knowledge proofs** — Prove you're 18+ without revealing your identity
+- **No personal data stored** — SELF never sees your ID, we never see your ID
+- **Cryptographic verification** — Mathematical proof, not trust-based
+- **One-time verification** — Verify once, play forever (stored on-chain)
+
+### ⚖️ Legal Compliance
+- **Age-gated gaming** — Complies with international regulations for skill-based gaming
+- **Regulatory protection** — Shields Color Drop from underage participation risks
+- **Audit trail** — On-chain proof of compliance for regulators
+- **No liability exposure** — Verified users take responsibility for their participation
+
+### 🎮 Better Player Experience
+- **Try before verify** — 4 free slots to test the game (unverified users)
+- **Unlimited slots** — SELF-verified players (18+) get unlimited game participation
+- **Fair play enforcement** — On-chain slot limits prevent system abuse
+- **No repeated verification** — Verify once, stored permanently on Celo blockchain
+
+### 🚫 Why Not Just Frontend Checks?
+Without on-chain verification, players could:
+- Call the smart contract directly from Etherscan/MetaMask
+- Bypass backend API age checks completely
+- Play unlimited games while claiming to be unverified
+- Create regulatory and legal risks for the platform
+
+**Solution:** Backend validates SELF proofs → Calls `setUserVerification()` → Smart contract enforces limits on-chain.
+
+**Bottom Line:** SELF makes Color Drop legally compliant while preserving player privacy and preventing system abuse.
 
 ---
 
@@ -92,11 +166,12 @@ Prize: 0.6 | 0.3 | 0.1 CELO
 - **State:** Zustand
 
 ### Blockchain
-- **Network:** Celo Mainnet
-- **Smart Contracts:** Solidity 0.8.20 (Upgradeable via OpenZeppelin)
-- **Development:** Hardhat 3.0 + TypeScript
-- **Testnet:** Celo Sepolia
-- **Security:** ReentrancyGuard, Pausable, Custom Errors
+- **Network:** Celo Mainnet (Chain ID: 42220)
+- **Mainnet Contract (Proxy):** [`0x39E653277AFa663B9b00C777c608B6E998cCBb22`](https://celo.blockscout.com/address/0x39E653277AFa663B9b00C777c608B6E998cCBb22)
+- **Testnet Contract (Proxy):** [`0xeB91E58A59E7Bcf8ADC8cae4f12187826965503A`](https://celo-sepolia.blockscout.com/address/0xeB91E58A59E7Bcf8ADC8cae4f12187826965503A) (Sepolia)
+- **Smart Contracts:** Solidity 0.8.22 (Upgradeable via OpenZeppelin UUPS)
+- **Development:** Hardhat 2.22 + TypeScript
+- **Security:** ReentrancyGuard, Pausable, Custom Errors, SELF Age Verification
 
 ### Backend
 - **Hosting:** Vercel Edge Functions
@@ -165,19 +240,27 @@ cp .env.example .env
 pnpm dev
 ```
 
-### Deploy Contracts (Alfajores Testnet)
+### Deploy Contracts (Celo Sepolia Testnet)
 
 ```bash
-cd contracts
+cd Contracts
 
-# Install Foundry dependencies
-forge install
+# Install dependencies
+npm install --legacy-peer-deps
+
+# Configure .env file
+cp .env.example .env
+# Add your PRIVATE_KEY, TREASURY_ADDRESS_1, TREASURY_ADDRESS_2, VERIFIER_ADDRESS
 
 # Run tests
-forge test
+npm test
 
-# Deploy to Alfajores
-forge script script/Deploy.s.sol --rpc-url $ALFAJORES_RPC --broadcast
+# Deploy to Celo Sepolia
+npm run deploy:sepolia
+
+# Deployed Contracts:
+# Proxy: 0xeB91E58A59E7Bcf8ADC8cae4f12187826965503A
+# Implementation: 0x4BF512C0eF46FD7C5F3F9522426E3F0413A8dB77
 ```
 
 ### Configure Farcaster Manifest
@@ -205,9 +288,16 @@ Edit `public/.well-known/farcaster.json`:
 
 ## 📖 Documentation
 
-- [GAME-RULES.md](./Docs/GAME-RULES.md) - Complete game mechanics and rules
-- [IDEA.md](./Docs/IDEA.md) - Original concept and design thinking
-- [Smart Contract Docs](./contracts/README.md) - Contract architecture
+- [GAME-RULES.md](./GAME-RULES.md) - Complete game mechanics and rules
+- [GAME-GUIDE.md](./GAME-GUIDE.md) - Player guide and strategies
+- [Smart Contract Docs](./Contracts/README.md) - Contract architecture and deployment
+- [DEPLOYMENT-CHECKLIST.md](./DEPLOYMENT-CHECKLIST.md) - Production deployment guide
+
+**📊 Contract Explorers:**
+- [Mainnet Proxy (Blockscout)](https://celo.blockscout.com/address/0x39E653277AFa663B9b00C777c608B6E998cCBb22) - Live mainnet contract
+- [Mainnet Implementation (Blockscout)](https://celo.blockscout.com/address/0x1eDf8c2290d4a14FDd80c5522AaE2F8d13F6BA43) - Implementation contract
+- [Testnet Proxy (Blockscout)](https://celo-sepolia.blockscout.com/address/0xeB91E58A59E7Bcf8ADC8cae4f12187826965503A) - Sepolia testnet contract
+- [Testnet Implementation (Blockscout)](https://celo-sepolia.blockscout.com/address/0x4BF512C0eF46FD7C5F3F9522426E3F0413A8dB77) - Implementation contract
 
 ---
 
@@ -219,14 +309,18 @@ Edit `public/.well-known/farcaster.json`:
 - [x] Farcaster authentication
 - [x] Basic UI/UX
 
-### Phase 2: Beta Launch (Week 3)
-- [ ] Alfajores testnet deployment
+### Phase 2: Beta Launch (Week 3) ✅
+- [x] Celo Sepolia testnet deployment
+- [x] SELF Protocol age verification integration
+- [x] Smart contract with UUPS upgradeability
 - [ ] Alpha testing with 100 users
 - [ ] Feedback integration
 - [ ] Bug fixes
 
-### Phase 3: Mainnet Launch (Week 4)
-- [ ] Celo mainnet deployment
+### Phase 3: Mainnet Launch (Week 4) ✅
+- [x] Celo mainnet deployment (0x39E653277AFa663B9b00C777c608B6E998cCBb22)
+- [x] SELF verification production setup
+- [ ] Security audit for smart contracts
 - [ ] Frame integration
 - [ ] Meme generator
 - [ ] Channel setup (/color-drop)
@@ -311,8 +405,9 @@ Built by [Art3Hub](https://art3hub.io) with ❤️ for the Farcaster x Celo ecos
 
 ## 🙏 Acknowledgments
 
-- Farcaster team for Mini App SDK
-- Celo Foundation for blockchain support
+- **Farcaster** team for Mini App SDK and protocol
+- **Celo Foundation** for mobile-first blockchain infrastructure
+- **SELF Protocol** for privacy-preserving age verification
 - Early testers and community feedback
 - Color science references and HSL theory
 

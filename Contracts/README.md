@@ -5,8 +5,12 @@
 ## 📋 Contract Overview
 
 - **Version:** 2.0.0 (Upgradeable with OpenZeppelin)
-- **Network:** Celo Sepolia Testnet (Chain ID: 11142220)
-- **Deployed At:** [0x723D8583b56456A0343589114228281F37a3b290](https://celo-sepolia.blockscout.com/address/0x723D8583b56456A0343589114228281F37a3b290)
+- **Mainnet:** Celo (Chain ID: 42220)
+  - **Proxy:** [`0x39E653277AFa663B9b00C777c608B6E998cCBb22`](https://celo.blockscout.com/address/0x39E653277AFa663B9b00C777c608B6E998cCBb22)
+  - **Implementation:** [`0x1eDf8c2290d4a14FDd80c5522AaE2F8d13F6BA43`](https://celo.blockscout.com/address/0x1eDf8c2290d4a14FDd80c5522AaE2F8d13F6BA43)
+- **Testnet:** Celo Sepolia (Chain ID: 11142220)
+  - **Proxy:** [`0xeB91E58A59E7Bcf8ADC8cae4f12187826965503A`](https://celo-sepolia.blockscout.com/address/0xeB91E58A59E7Bcf8ADC8cae4f12187826965503A)
+  - **Implementation:** [`0x4BF512C0eF46FD7C5F3F9522426E3F0413A8dB77`](https://celo-sepolia.blockscout.com/address/0x4BF512C0eF46FD7C5F3F9522426E3F0413A8dB77)
 - **Entry Fee:** 0.1 CELO per player
 - **Pool Size:** 12 players
 - **Prize Distribution:** 0.6 / 0.3 / 0.1 CELO (top 3)
@@ -232,15 +236,61 @@ npm run clean
 
 ## 📜 Contract Verification
 
-After deployment, verify on CeloScan:
+### Automated Verification (Blockscout)
+
+For Celo mainnet and testnet, use the Blockscout verification script:
 
 ```bash
-# Verify proxy contract
-npx hardhat verify --network celo <PROXY_ADDRESS>
+# Verify on Celo Mainnet (Blockscout)
+npm run verify:blockscout:celo
 
-# Manual verification if automated fails
-npx hardhat verify --network celo <IMPLEMENTATION_ADDRESS>
+# Verify on Celo Sepolia (Blockscout)
+npm run verify:blockscout:sepolia
 ```
+
+The script will:
+1. Generate flattened contract source code
+2. Encode constructor arguments
+3. Provide manual verification instructions
+4. Create all necessary files for Blockscout verification
+
+### Manual Verification (Blockscout Web Interface)
+
+1. **Go to Blockscout:**
+   - Mainnet: https://celo.blockscout.com/address/0x1eDf8c2290d4a14FDd80c5522AaE2F8d13F6BA43
+   - Testnet: https://celo-sepolia.blockscout.com/address/0x723D8583b56456A0343589114228281F37a3b290
+
+2. **Click** 'Code' tab → 'Verify & Publish'
+
+3. **Enter Contract Details:**
+   - Contract Name: `ColorDropPool`
+   - Compiler: `v0.8.22+commit.4fc1097e`
+   - Optimization: Yes (200 runs)
+   - EVM Version: default
+
+4. **Paste Flattened Contract:**
+   ```bash
+   npx hardhat flatten contracts/ColorDropPool.sol
+   ```
+
+5. **Constructor Arguments (ABI-encoded):**
+   ```
+   000000000000000000000000c2564e41b7f5cb66d2d99466450cfebce9e8228f000000000000000000000000274f2719a0a241f696d4f82f177160a2531cf4f5000000000000000000000000499d377ef114cc1bf7798cecbb38412701400daf
+   ```
+
+6. **Click** 'Verify and Publish'
+
+### CeloScan Verification (Alternative)
+
+```bash
+# Verify implementation contract
+npx hardhat verify --network celo 0x1eDf8c2290d4a14FDd80c5522AaE2F8d13F6BA43 \
+  "0xc2564e41b7f5cb66d2d99466450cfebce9e8228f" \
+  "0x274f2719a0a241f696d4f82f177160a2531cf4f5" \
+  "0x499d377ef114cc1bf7798cecbb38412701400daf"
+```
+
+**Note:** Proxy contracts are automatically recognized by Blockscout. You only need to verify the implementation contract.
 
 ## 🔍 Upgrade Process
 
@@ -279,7 +329,11 @@ npx hardhat verify --network celo <IMPLEMENTATION_ADDRESS>
 - **RPC:** https://celo-sepolia.drpc.org
 - **Explorer:** https://celo-sepolia.blockscout.com
 - **Faucet:** https://faucet.celo.org
-- **Current Deployment:** [0x723D8583b56456A0343589114228281F37a3b290](https://celo-sepolia.blockscout.com/address/0x723D8583b56456A0343589114228281F37a3b290)
+- **Deployment:** [0x723D8583b56456A0343589114228281F37a3b290](https://celo-sepolia.blockscout.com/address/0x723D8583b56456A0343589114228281F37a3b290)
+
+### Production Deployments
+- **Celo Mainnet:** [0x39E653277AFa663B9b00C777c608B6E998cCBb22](https://celo.blockscout.com/address/0x39E653277AFa663B9b00C777c608B6E998cCBb22) ✅ LIVE
+- **Celo Sepolia:** [0x723D8583b56456A0343589114228281F37a3b290](https://celo-sepolia.blockscout.com/address/0x723D8583b56456A0343589114228281F37a3b290) ✅ TESTNET
 
 ## 🛠️ Development Stack
 
