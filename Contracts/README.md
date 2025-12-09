@@ -6,11 +6,13 @@
 
 - **Version:** 3.0.0 (Upgradeable with Role-Based Access Control)
 - **Mainnet:** Celo (Chain ID: 42220)
-  - **Proxy:** [`0xdD862847952c35021E0664E73fa3c29cE6aF2B80`](https://celo.blockscout.com/address/0xdD862847952c35021E0664E73fa3c29cE6aF2B80) ✅ **v3.0.0**
+  - **Proxy:** [`0xFD67421de125B5D216684176c58e90D6b7BCa1Ff`](https://celo.blockscout.com/address/0xFD67421de125B5D216684176c58e90D6b7BCa1Ff) ✅ **v3.0.0**
   - **Implementation:** [`0xa76846Ed172e1DaD467b3E343BB37347cC4F943B`](https://celo.blockscout.com/address/0xa76846Ed172e1DaD467b3E343BB37347cC4F943B) ✅ **v3.0.0**
+  - **Deployed by:** `0xc2564e41b7f5cb66d2d99466450cfebce9e8228f` (Admin)
 - **Testnet:** Celo Sepolia (Chain ID: 11142220)
-  - **Proxy:** [`0x32b476880AbCAeD213128F225371d99113F93883`](https://celo-sepolia.blockscout.com/address/0x32b476880AbCAeD213128F225371d99113F93883) ✅ **v3.0.0**
+  - **Proxy:** [`0x2f302E1604E3657035C1EADa450582fA4417f598`](https://celo-sepolia.blockscout.com/address/0x2f302E1604E3657035C1EADa450582fA4417f598) ✅ **v3.0.0**
   - **Implementation:** [`0xac8E5E4965d6c1fa376C77596BC54276870efB22`](https://celo-sepolia.blockscout.com/address/0xac8E5E4965d6c1fa376C77596BC54276870efB22) ✅ **v3.0.0**
+  - **Deployed by:** `0xc2564e41b7f5cb66d2d99466450cfebce9e8228f` (Admin)
 - **Entry Fee:** 0.1 CELO per player
 - **Pool Size:** 12 players
 - **Prize Distribution:** 0.6 / 0.3 / 0.1 CELO (top 3)
@@ -422,6 +424,22 @@ const { ethers, upgrades } = hre;
 - Ensure you're calling from the **owner** wallet
 - Verifier address must be non-zero
 - Transaction requires gas (~50K gas units)
+
+## 🔍 Blockscout Verification
+
+**Mainnet:** https://celo.blockscout.com/address/0xa76846Ed172e1DaD467b3E343BB37347cC4F943B
+**Sepolia:** https://celo-sepolia.blockscout.com/address/0xac8E5E4965d6c1fa376C77596BC54276870efB22
+
+**Quick Steps:**
+1. Click 'Code' → 'Verify & Publish'
+2. **Name:** `ColorDropPool` | **Compiler:** `v0.8.22+commit.4fc1097e` | **Optimization:** Yes (200 runs)
+3. Paste `flattened.sol` contents
+4. **Constructor Args (no 0x prefix):**
+   ```
+   000000000000000000000000c2564e41b7f5cb66d2d99466450cfebce9e8228f000000000000000000000000499d377ef114cc1bf7798cecbb38412701400daf000000000000000000000000c2564e41b7f5cb66d2d99466450cfebce9e8228f000000000000000000000000274f2719a0a241f696d4f82f177160a2531cf4f5000000000000000000000000499d377ef114cc1bf7798cecbb38412701400daf
+   ```
+
+See [DEPLOYMENT-SUMMARY.md](DEPLOYMENT-SUMMARY.md) for complete details.
 
 ## 📞 Support
 
