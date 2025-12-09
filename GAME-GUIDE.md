@@ -293,9 +293,9 @@ Game Session:
 3. Play Slot #9 → 79.45% (11th place)
 4. Slot #12 → 🔒 LOCKED (limit reached)
 
-Investment: 3 × 0.3 = 0.3 CELO
-Winnings: 0.3 CELO (3rd place)
-Net: -0.6 CELO
+Investment: 3 × 0.1 = 0.3 CELO
+Winnings: 0.1 CELO (3rd place)
+Net: -0.2 CELO
 ```
 
 **Verified User Example:**
