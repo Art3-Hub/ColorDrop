@@ -23,13 +23,13 @@ Version 1.0 | Last Updated: December 2025
 ## 🎯 Game Overview
 
 ### Objective
-Match a randomly generated target color as accurately as possible within 8 seconds using HSL (Hue, Saturation, Lightness) sliders.
+Match a randomly generated target color as accurately as possible within 10 seconds using HSL (Hue, Saturation, Lightness) sliders.
 
 ### Format
 - **Tournament-style pools** of 12 players
 - **Single elimination** — only top 3 win prizes
 - **Skill-based** — accuracy determines ranking
-- **Fast-paced** — 8 seconds per round
+- **Fast-paced** — 10 seconds per round
 
 ### Entry Requirements
 - Valid Farcaster account (FID)
@@ -44,15 +44,15 @@ Match a randomly generated target color as accurately as possible within 8 secon
 
 #### Standard Pool
 - **Size:** 12 players exactly
-- **Entry Fee:** 0.3 CELO per player
-- **Total Pool:** 3.6 CELO
-- **Prize Pool:** 3.0 CELO (1.8 + 0.9 + 0.3)
-- **System Fee:** 0.6 CELO (16.67%)
+- **Entry Fee:** 0.1 CELO per player
+- **Total Pool:** 1.2 CELO
+- **Prize Pool:** 1.0 CELO (0.6 + 0.3 + 0.1)
+- **System Fee:** 0.2 CELO (16.67%)
 
 #### Pool States
 1. **Open** — Accepting players (0-11/12)
 2. **Full** — 12 players joined, waiting to start
-3. **Active** — Game in progress (8 seconds)
+3. **Active** — Game in progress (10 seconds)
 4. **Completed** — Results finalized, prizes distributed
 
 #### Pool Lifecycle
@@ -92,8 +92,8 @@ Open → Full → Active → Completed
 - All players see identical target color simultaneously
 
 ### Time Limit
-- **Total time:** 8 seconds from color reveal
-- **Warning:** Visual/audio alert at 5 seconds remaining
+- **Total time:** 10 seconds from color reveal
+- **Warning:** Visual/audio alert at 7 seconds remaining
 - **Auto-submit:** If no manual lock-in, current color auto-submitted at 0 seconds
 
 ### Controls
@@ -170,9 +170,9 @@ Player B: 95.3% @ 5.8s → Rank 2
 
 ### Ranking Display
 ```
-🥇 @player1 — 98.7% (4.2s) → 1.8 CELO
-🥈 @player2 — 97.1% (6.1s) → 0.9 CELO
-🥉 @player3 — 95.8% (7.9s) → 0.3 CELO
+🥇 @player1 — 98.7% (4.2s) → 0.6 CELO
+🥈 @player2 — 97.1% (6.1s) → 0.3 CELO
+🥉 @player3 — 95.8% (7.9s) → 0.1 CELO
 ───────────────────────────────────
 4. @player4 — 94.2% (5.5s) ❌
 5. @player5 — 93.7% (3.8s) ❌
@@ -188,13 +188,13 @@ Player B: 95.3% @ 5.8s → Rank 2
 
 | Rank | Prize | % of Pool | Condition |
 |------|-------|-----------|-----------|
-| 🥇 1st | 1.8 CELO | 50.0% | Highest accuracy |
-| 🥈 2nd | 0.9 CELO | 25.0% | Second highest |
-| 🥉 3rd | 0.3 CELO | 8.3% | Third highest |
+| 🥇 1st | 0.6 CELO | 50.0% | Highest accuracy |
+| 🥈 2nd | 0.3 CELO | 25.0% | Second highest |
+| 🥉 3rd | 0.1 CELO | 8.3% | Third highest |
 | 4-12 | 0 CELO | 0% | No prize |
-| Treasury 1 | 0.3 CELO | 8.3% | Platform operations |
-| Treasury 2 | 0.3 CELO | 8.3% | Development fund |
-| **Total** | **3.6 CELO** | **100%** | — |
+| Treasury 1 | 0.1 CELO | 8.3% | Platform operations |
+| Treasury 2 | 0.1 CELO | 8.3% | Development fund |
+| **Total** | **1.2 CELO** | **100%** | — |
 
 ### Payout Process
 

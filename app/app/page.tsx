@@ -71,7 +71,7 @@ export default function Home() {
                 Welcome to Color Drop!
               </h2>
               <p className="text-base sm:text-lg text-gray-600 max-w-md mx-auto">
-                Pay {ENTRY_FEE_VALUE} CELO, match colors in 8 seconds, win prizes!
+                Pay {ENTRY_FEE_VALUE} CELO, match colors in 10 seconds, win prizes!
               </p>
               <div className="pt-4">
                 <p className="text-sm text-gray-500 mb-4">

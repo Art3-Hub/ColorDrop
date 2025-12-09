@@ -2,7 +2,7 @@
 
 **Ultra-fast color matching game on Farcaster x Celo**
 
-Match the target color in 8 seconds. Win up to 1.8 CELO. Play, compete, share.
+Match the target color in 10 seconds. Win up to 0.6 CELO. Play, compete, share.
 
 ---
 
@@ -12,16 +12,16 @@ Color Drop Tournament is a **skill-based mini app** where players compete in 12-
 
 ### Core Mechanics
 
-- **Entry:** 0.3 CELO per player
+- **Entry:** 0.1 CELO per player
 - **Pool Size:** 12 players per round
 - **Age Verification:** SELF Protocol for 18+ compliance
 - **Slot Limits:** 4 slots max (unverified) or ∞ unlimited (SELF verified)
-- **Gameplay:** 8 seconds to match target color using HSL sliders
+- **Gameplay:** 10 seconds to match target color using HSL sliders
 - **Winners:**
-  - 🥇 **1st Place:** 1.8 CELO (best accuracy)
-  - 🥈 **2nd Place:** 0.9 CELO
-  - 🥉 **3rd Place:** 0.3 CELO
-- **System Fee:** 0.6 CELO (16.67%) — Split between dual treasuries
+  - 🥇 **1st Place:** 0.6 CELO (best accuracy)
+  - 🥈 **2nd Place:** 0.3 CELO
+  - 🥉 **3rd Place:** 0.1 CELO
+- **System Fee:** 0.2 CELO (16.67%) — Split between dual treasuries
 
 ---
 
@@ -56,21 +56,21 @@ Color Drop Tournament is a **skill-based mini app** where players compete in 12-
 ### 1. Discover in Farcaster Feed
 ```
 Pool #247 — 10/12 players 🔥
-Prize: 1.8 | 0.9 | 0.3 CELO
-[Join Now (0.3 CELO)]
+Prize: 0.6 | 0.3 | 0.1 CELO
+[Join Now (0.1 CELO)]
 ```
 
 ### 2. Join Pool
 - Click "Join Now" → Opens Mini App
 - Auto-authenticate with Farcaster
-- Pay 0.3 CELO to enter
+- Pay 0.1 CELO to enter
 
 ### 3. Wait in Lobby
 - See other players joining
 - Pool starts when 12/12 full
 - Usually fills in <2 minutes
 
-### 4. Match the Color (8 seconds)
+### 4. Match the Color (10 seconds)
 - Target color appears
 - Adjust Hue, Saturation, Lightness sliders
 - Lock in your best match before timer expires

@@ -9,7 +9,7 @@ import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 /**
  * @title ColorDropPool
  * @dev Upgradeable tournament-style pool for Color Drop game on Farcaster x Celo
- * @notice 12 players compete @ 0.3 CELO, top 3 win prizes (1.8, 0.9, 0.3 CELO)
+ * @notice 12 players compete @ 0.1 CELO, top 3 win prizes (0.6, 0.3, 0.1 CELO)
  * @custom:security-contact security@colordrop.app
  */
 contract ColorDropPool is
@@ -19,12 +19,12 @@ contract ColorDropPool is
     PausableUpgradeable
 {
     // Constants
-    uint256 public constant ENTRY_FEE = 0.3 ether; // 0.3 CELO per player
+    uint256 public constant ENTRY_FEE = 0.1 ether; // 0.1 CELO per player
     uint8 public constant POOL_SIZE = 12;
-    uint256 public constant PRIZE_1ST = 1.8 ether; // 50% of prize pool
-    uint256 public constant PRIZE_2ND = 0.9 ether; // 25% of prize pool
-    uint256 public constant PRIZE_3RD = 0.3 ether; // 8.33% of prize pool
-    uint256 public constant SYSTEM_FEE = 0.6 ether; // 16.67% of total pool
+    uint256 public constant PRIZE_1ST = 0.6 ether; // 50% of prize pool
+    uint256 public constant PRIZE_2ND = 0.3 ether; // 25% of prize pool
+    uint256 public constant PRIZE_3RD = 0.1 ether; // 8.33% of prize pool
+    uint256 public constant SYSTEM_FEE = 0.2 ether; // 16.67% of total pool
     uint256 public constant FINALIZATION_TIMEOUT = 2 minutes; // Reduced from 5 minutes
 
     // Structs
@@ -129,7 +129,7 @@ contract ColorDropPool is
     }
 
     /**
-     * @dev Join current pool with 0.3 CELO entry fee
+     * @dev Join current pool with 0.1 CELO entry fee
      * @param fid Farcaster ID of the player
      * @notice Unverified users can play max 4 slots, SELF-verified users (18+) have infinite slots
      */

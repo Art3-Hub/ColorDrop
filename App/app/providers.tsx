@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { config } from '@/lib/wagmi';
 import { initializeFarcaster } from '@/lib/farcaster';
 import { detectPlatform } from '@/lib/platform';
+import { SelfProvider } from '@/contexts/SelfContext';
 
 // Create QueryClient at module level (official Farcaster Mini App pattern)
 const queryClient = new QueryClient({
@@ -54,7 +55,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        {children}
+        <SelfProvider>
+          {children}
+        </SelfProvider>
       </QueryClientProvider>
     </WagmiProvider>
   );

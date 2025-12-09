@@ -5,8 +5,9 @@ import { ColorPicker, type HSLColor } from './ColorPicker';
 import { TargetColor } from './TargetColor';
 import { GameTimer } from './GameTimer';
 import { calculateAccuracy, getAccuracyTier, generateRandomColor } from '@/lib/colorUtils';
+import { useColorDropPool } from '@/hooks/useColorDropPool';
 
-type GameState = 'idle' | 'playing' | 'finished';
+type GameState = 'idle' | 'playing' | 'finished' | 'submitting';
 
 interface GameResult {
   targetColor: HSLColor;
@@ -21,26 +22,46 @@ interface GameScreenProps {
 }
 
 export function GameScreen({ onBackToLobby, slotNumber }: GameScreenProps) {
+  const {
+    submitScore,
+    isScorePending,
+    isScoreConfirming,
+    isScoreSuccess,
+    scoreError
+  } = useColorDropPool();
+
   const [gameState, setGameState] = useState<GameState>('playing');
   const [targetColor, setTargetColor] = useState<HSLColor>(generateRandomColor());
   const [userColor, setUserColor] = useState<HSLColor>({ h: 180, s: 50, l: 50 });
   const [result, setResult] = useState<GameResult | null>(null);
   const [isPaying, setIsPaying] = useState(false);
 
-  const GAME_DURATION = 8; // 8 seconds
-  const ENTRY_FEE_VALUE = parseFloat(process.env.NEXT_PUBLIC_ENTRY_FEE || '0.1');
+  const GAME_DURATION = 10; // 10 seconds
+  const ENTRY_FEE_VALUE = parseFloat(process.env.NEXT_PUBLIC_ENTRY_FEE || '0.3');
   const ENTRY_FEE = `${ENTRY_FEE_VALUE} CELO`;
 
-  // Save played slot to localStorage when game finishes
+  // Handle score submission success
   useEffect(() => {
-    if (gameState === 'finished' && slotNumber) {
-      const playedSlots = JSON.parse(localStorage.getItem('playedSlots') || '[]');
-      if (!playedSlots.includes(slotNumber)) {
-        playedSlots.push(slotNumber);
-        localStorage.setItem('playedSlots', JSON.stringify(playedSlots));
+    if (isScoreSuccess) {
+      // Score submitted successfully - go back to lobby
+      if (onBackToLobby) {
+        onBackToLobby();
       }
     }
-  }, [gameState, slotNumber]);
+  }, [isScoreSuccess, onBackToLobby]);
+
+  // Submit score to smart contract when game finishes
+  const handleSubmitScore = useCallback(async () => {
+    if (!result) return;
+
+    setGameState('submitting');
+    try {
+      await submitScore(result.accuracy);
+    } catch (error) {
+      console.error('Failed to submit score:', error);
+      setGameState('finished');
+    }
+  }, [result, submitScore]);
 
   const handleStartGame = () => {
     const newTarget = generateRandomColor();
@@ -96,7 +117,7 @@ export function GameScreen({ onBackToLobby, slotNumber }: GameScreenProps) {
           Color Drop Tournament
         </h1>
         <p className="text-sm sm:text-base text-gray-600">
-          Match the target color as closely as you can in 8 seconds!
+          Match the target color as closely as you can in 10 seconds!
         </p>
         {slotNumber && (
           <div className="mt-2 inline-block px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold">
@@ -114,7 +135,7 @@ export function GameScreen({ onBackToLobby, slotNumber }: GameScreenProps) {
               Ready to Play?
             </h2>
             <p className="text-gray-600 mb-6">
-              You'll have 8 seconds to match a random color using HSL sliders.
+              You'll have 10 seconds to match a random color using HSL sliders.
               <br />
               The closer your match, the higher your score!
             </p>
@@ -207,13 +228,28 @@ export function GameScreen({ onBackToLobby, slotNumber }: GameScreenProps) {
           {/* Actions */}
           <div className="space-y-3">
             <button
-              onClick={handlePayAndPlayAgain}
-              disabled={isPaying}
+              onClick={handleSubmitScore}
+              disabled={isScorePending || isScoreConfirming}
               className="w-full px-6 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all shadow-md text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isPaying ? 'Processing Payment...' : `Play Another Slot (Pay ${ENTRY_FEE})`}
+              {isScorePending || isScoreConfirming ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="animate-spin">⏳</span>
+                  Submitting Score...
+                </span>
+              ) : (
+                '📊 Submit Score to Pool'
+              )}
             </button>
-            {onBackToLobby && (
+
+            {scoreError && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-800">
+                <p className="font-semibold">Failed to submit score</p>
+                <p className="text-xs mt-1">{scoreError.message}</p>
+              </div>
+            )}
+
+            {onBackToLobby && !isScorePending && !isScoreConfirming && (
               <button
                 onClick={onBackToLobby}
                 className="w-full px-6 py-3 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-all text-sm sm:text-base"

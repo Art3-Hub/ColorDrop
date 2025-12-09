@@ -1,76 +1,102 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useAccount } from 'wagmi';
 import { PaymentModal } from '../PaymentModal';
+import { SelfVerificationModal } from '../SelfVerificationModal';
+import { useSelf } from '@/contexts/SelfContext';
+import { useColorDropPool } from '@/hooks/useColorDropPool';
 
 interface PlayGridProps {
   onStartGame: (slot: number) => void;
 }
 
-export function PlayGrid({ onStartGame }: PlayGridProps) {
-  const [isPaying, setIsPaying] = useState(false);
-  const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
-  const [occupiedSlots, setOccupiedSlots] = useState<Set<number>>(new Set());
+type FlowState = 'idle' | 'verification_prompt' | 'payment' | 'playing';
 
-  const ENTRY_FEE_VALUE = parseFloat(process.env.NEXT_PUBLIC_ENTRY_FEE || '0.1');
+export function PlayGrid({ onStartGame }: PlayGridProps) {
+  const { address } = useAccount();
+  const {
+    isVerified,
+    initiateSelfVerification
+  } = useSelf();
+
+  const {
+    poolData,
+    userStatus,
+    hasReachedSlotLimit,
+    joinPool,
+    isJoinPending,
+    isJoinConfirming,
+    isJoinSuccess
+  } = useColorDropPool();
+
+  const [flowState, setFlowState] = useState<FlowState>('idle');
+  const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
+
+  const ENTRY_FEE_VALUE = parseFloat(process.env.NEXT_PUBLIC_ENTRY_FEE || '0.3');
   const ENTRY_FEE = `${ENTRY_FEE_VALUE} CELO`;
 
-  // Load played slots from localStorage
+  // Handle successful join
   useEffect(() => {
-    const loadPlayedSlots = () => {
-      const playedSlots = JSON.parse(localStorage.getItem('playedSlots') || '[]');
-      setOccupiedSlots(new Set(playedSlots));
-    };
-
-    loadPlayedSlots();
-    window.addEventListener('storage', loadPlayedSlots);
-    
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        loadPlayedSlots();
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      window.removeEventListener('storage', loadPlayedSlots);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, []);
+    if (isJoinSuccess && selectedSlot) {
+      // Start the game for this slot
+      onStartGame(selectedSlot);
+      setFlowState('idle');
+      setSelectedSlot(null);
+    }
+  }, [isJoinSuccess, selectedSlot, onStartGame]);
 
   const handleSlotClick = (slotNumber: number) => {
     setSelectedSlot(slotNumber);
+
+    // Show verification prompt if not verified and approaching limit
+    if (!isVerified && userStatus && userStatus.slotsUsed >= 2) {
+      setFlowState('verification_prompt');
+    } else {
+      // Skip directly to payment
+      setFlowState('payment');
+    }
+  };
+
+  const handleVerifySelf = async () => {
+    await initiateSelfVerification();
+    // After verification starts, proceed to payment
+    setFlowState('payment');
+  };
+
+  const handleSkipVerification = () => {
+    setFlowState('payment');
   };
 
   const handleConfirmPayment = async () => {
-    if (!selectedSlot) return;
-    
-    setIsPaying(true);
+    if (!selectedSlot || !address) return;
+
     try {
-      // TODO: Call smart contract to pay entry fee
-      console.log(`Paying ${ENTRY_FEE} for slot ${selectedSlot}...`);
+      // Get user's FID from Farcaster context
+      // TODO: Integrate with Farcaster SDK to get actual FID
+      const fid = BigInt(1); // Placeholder
 
-      // Simulate payment
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Mark slot as occupied
-      setOccupiedSlots(prev => new Set([...prev, selectedSlot]));
-
-      // Close modal and start game
-      setSelectedSlot(null);
-      onStartGame(selectedSlot);
+      await joinPool(fid);
     } catch (error) {
-      console.error('Failed to pay entry fee:', error);
-    } finally {
-      setIsPaying(false);
+      console.error('Failed to join pool:', error);
     }
   };
 
   const handleCancelPayment = () => {
-    if (!isPaying) {
+    if (!isJoinPending && !isJoinConfirming) {
+      setFlowState('idle');
       setSelectedSlot(null);
     }
   };
+
+  const handleCancelVerification = () => {
+    setFlowState('idle');
+    setSelectedSlot(null);
+  };
+
+  const slotsRemaining = userStatus
+    ? Math.max(0, userStatus.slotsAvailable - userStatus.slotsUsed)
+    : 4;
 
   return (
     <>
@@ -78,11 +104,39 @@ export function PlayGrid({ onStartGame }: PlayGridProps) {
         {/* Header */}
         <div className="text-center mb-6 sm:mb-8">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-            Choose Your Slot
+            Pool #{poolData?.poolId?.toString() || '...'} - Choose Your Slot
           </h2>
           <p className="text-sm sm:text-base text-gray-600">
-            Pay {ENTRY_FEE} to play • Top 3 players win prizes!
+            Pay {ENTRY_FEE} per slot • Top 3 players win prizes!
           </p>
+
+          {/* User Status Banner */}
+          {userStatus && (
+            <div className={`mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${
+              isVerified
+                ? 'bg-green-100 text-green-800 border border-green-300'
+                : 'bg-yellow-100 text-yellow-800 border border-yellow-300'
+            }`}>
+              {isVerified ? (
+                <>
+                  <span>✅</span>
+                  <span>Verified - Unlimited Slots</span>
+                </>
+              ) : (
+                <>
+                  <span>⚠️</span>
+                  <span>{slotsRemaining} {slotsRemaining === 1 ? 'slot' : 'slots'} remaining (4 max)</span>
+                </>
+              )}
+            </div>
+          )}
+
+          {hasReachedSlotLimit && (
+            <div className="mt-3 bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-800">
+              <p className="font-semibold">Slot limit reached!</p>
+              <p>Verify your age to unlock unlimited slots.</p>
+            </div>
+          )}
 
           {/* Prize Pool */}
           <div className="grid grid-cols-3 gap-2 sm:gap-4 mt-4 sm:mt-6 max-w-3xl mx-auto">
@@ -121,18 +175,22 @@ export function PlayGrid({ onStartGame }: PlayGridProps) {
         {/* Play Grid - 12 slots in 4x3 grid */}
         <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 sm:gap-4 mb-8">
           {Array.from({ length: 12 }, (_, i) => i + 1).map((slotNumber) => {
-            const isOccupied = occupiedSlots.has(slotNumber);
+            const slotIndex = slotNumber - 1;
+            const isOccupied = poolData && slotIndex < poolData.playerCount;
+            const canPlay = !hasReachedSlotLimit;
 
             return (
               <button
                 key={slotNumber}
                 onClick={() => handleSlotClick(slotNumber)}
-                disabled={isOccupied}
+                disabled={isOccupied || !canPlay}
                 className={`
                   aspect-square rounded-xl sm:rounded-2xl border-2 font-bold
                   transition-all duration-200 transform
                   ${isOccupied
                     ? 'bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed'
+                    : !canPlay
+                    ? 'bg-red-100 border-red-300 text-red-400 cursor-not-allowed'
                     : 'bg-gradient-to-br from-purple-500 to-blue-600 border-purple-400 text-white hover:scale-105 hover:shadow-xl active:scale-95'
                   }
                   disabled:opacity-50 disabled:cursor-not-allowed
@@ -142,7 +200,12 @@ export function PlayGrid({ onStartGame }: PlayGridProps) {
                 {isOccupied ? (
                   <div className="flex flex-col items-center justify-center gap-1">
                     <div className="text-lg sm:text-2xl">✓</div>
-                    <div className="text-[10px] sm:text-xs">Played</div>
+                    <div className="text-[10px] sm:text-xs">Filled</div>
+                  </div>
+                ) : !canPlay ? (
+                  <div className="flex flex-col items-center justify-center gap-1">
+                    <div className="text-lg sm:text-2xl">🔒</div>
+                    <div className="text-[10px] sm:text-xs">Limit</div>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center gap-1">
@@ -172,7 +235,7 @@ export function PlayGrid({ onStartGame }: PlayGridProps) {
             <div className="flex items-start gap-2 sm:gap-3">
               <span className="text-lg sm:text-2xl flex-shrink-0">2️⃣</span>
               <div>
-                <div className="font-semibold">Match the target color in 8 seconds</div>
+                <div className="font-semibold">Match the target color in 10 seconds</div>
                 <div className="text-gray-600">Use Hue, Saturation, and Lightness sliders</div>
               </div>
             </div>
@@ -190,15 +253,15 @@ export function PlayGrid({ onStartGame }: PlayGridProps) {
         <div className="mt-6 grid grid-cols-3 gap-3 sm:gap-4 text-center">
           <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 shadow">
             <div className="text-xl sm:text-2xl font-bold text-purple-600">
-              {12 - occupiedSlots.size}
+              {poolData ? 12 - poolData.playerCount : 12}
             </div>
             <div className="text-[10px] sm:text-xs text-gray-600">Slots Available</div>
           </div>
           <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 shadow">
             <div className="text-xl sm:text-2xl font-bold text-blue-600">
-              {occupiedSlots.size}
+              {poolData?.playerCount || 0}
             </div>
-            <div className="text-[10px] sm:text-xs text-gray-600">Players Joined</div>
+            <div className="text-[10px] sm:text-xs text-gray-600">Slots Filled</div>
           </div>
           <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 shadow">
             <div className="text-xl sm:text-2xl font-bold text-green-600">
@@ -209,14 +272,23 @@ export function PlayGrid({ onStartGame }: PlayGridProps) {
         </div>
       </div>
 
+      {/* SELF Verification Modal */}
+      <SelfVerificationModal
+        isOpen={flowState === 'verification_prompt'}
+        onVerify={handleVerifySelf}
+        onSkip={handleSkipVerification}
+        slotsRemaining={slotsRemaining}
+        isUnlimited={isVerified}
+      />
+
       {/* Payment Modal */}
       <PaymentModal
-        isOpen={selectedSlot !== null}
+        isOpen={flowState === 'payment'}
         slotNumber={selectedSlot || 0}
         entryFee={ENTRY_FEE}
         onConfirm={handleConfirmPayment}
         onCancel={handleCancelPayment}
-        isProcessing={isPaying}
+        isProcessing={isJoinPending || isJoinConfirming}
       />
     </>
   );
