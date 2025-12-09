@@ -7,9 +7,9 @@ export async function GET() {
       // 1. Connect your wallet (use 0xc2564e41b7f5cb66d2d99466450cfebce9e8228f - deployer wallet)
       // 2. Sign the message for domain: colordrop.art3hub.xyz
       // 3. Copy the header, payload, and signature values here
-      header: "PLACEHOLDER_HEADER_GENERATE_AT_BASE_DEV",
-      payload: "PLACEHOLDER_PAYLOAD_GENERATE_AT_BASE_DEV",
-      signature: "PLACEHOLDER_SIGNATURE_GENERATE_AT_BASE_DEV"
+      header: "eyJmaWQiOjIxMDY3MSwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDIxNDA3YjkzZTcyQ2Q5RkUxMkI0ZmMyZmM0NzRDNjE0ZUZkYmFERmMifQ",
+      payload: "eyJkb21haW4iOiJjb2xvcmRyb3AuYXJ0M2h1Yi54eXoifQ",
+      signature: "6TazEOgXkW+IcFTV50ZUF4JZufxJ17BXsQOJR+cTpoVog3/m8ta00eB6JaQkUyKQW5LYlJZgIR9HiELV/bfBDRs="
     },
     miniapp: {
       version: "1",
