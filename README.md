@@ -420,3 +420,4 @@ Built by [Art3Hub](https://art3hub.io) with ❤️ for the Farcaster x Celo ecos
 ---
 
 **Ready to play? Join a pool and prove your color skills! 🎨**
+
