@@ -252,7 +252,10 @@ Color Drop uses **SELF Protocol** for age verification to ensure compliance with
 1. **Unverified users** can play up to **4 slots** in a single game to try it out
 2. **SELF Verified users (18+)** have **unlimited slots** — play as many as you want
 3. Click "Verify Age with SELF" button to complete one-time verification
-4. Verification is stored on-chain and persists across sessions
+4. Backend validates zero-knowledge proof from SELF Protocol
+5. Backend calls smart contract to grant unlimited slots on-chain
+6. Contract enforces slot limits automatically when you join pools
+7. Verification persists across all sessions (stored on Celo blockchain)
 
 **Why verify?**
 - ✅ **Unlimited slots** in every game (no 4-slot limit)

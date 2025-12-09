@@ -1,11 +1,11 @@
-import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-ethers";
-// import "@openzeppelin/hardhat-upgrades"; // Temporarily disabled due to Hardhat 3.0 compatibility
+import "@openzeppelin/hardhat-upgrades";
 import "dotenv/config";
 
-const config: HardhatUserConfig = {
+/** @type import('hardhat/config').HardhatUserConfig */
+export default {
   solidity: {
-    version: "0.8.20",
+    version: "0.8.22",
     settings: {
       optimizer: {
         enabled: true,
@@ -16,19 +16,18 @@ const config: HardhatUserConfig = {
   networks: {
     // Celo Mainnet
     celo: {
-      type: "http" as const,
       url: process.env.CELO_RPC_URL || "https://forno.celo.org",
       chainId: 42220,
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
     },
     // Celo Sepolia Testnet
     sepolia: {
-      type: "http" as const,
-      url: process.env.SEPOLIA_RPC_URL || "https://sepolia-forno.celo-testnet.org",
-      chainId: 84532,
+      url: process.env.SEPOLIA_RPC_URL || "https://celo-sepolia-rpc.publicnode.com",
+      chainId: 11142220,
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
     },
     // Local development
     localhost: {
-      type: "http" as const,
       url: "http://127.0.0.1:8545",
     },
   },
@@ -49,10 +48,10 @@ const config: HardhatUserConfig = {
       },
       {
         network: "sepolia",
-        chainId: 84532,
+        chainId: 11142220,
         urls: {
-          apiURL: "https://api-sepolia.celoscan.io/api",
-          browserURL: "https://sepolia.celoscan.io",
+          apiURL: "https://api-celo-sepolia.celoscan.io/api",
+          browserURL: "https://celo-sepolia.celoscan.io",
         },
       },
     ],
@@ -68,5 +67,3 @@ const config: HardhatUserConfig = {
     currency: "USD",
   },
 };
-
-export default config;

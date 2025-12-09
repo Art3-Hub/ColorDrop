@@ -207,11 +207,20 @@ When all 12 slots complete:
 1. When approaching slot limit, verification prompt appears
 2. Click "Verify Age with SELF"
 3. SELF app opens (deep link)
-4. Complete verification in SELF app
-5. Return to Color Drop
-6. Unlimited slots unlocked ✅
+4. Complete verification in SELF app (proves 18+ without revealing identity)
+5. SELF sends zero-knowledge proof to Color Drop backend
+6. Backend validates proof and calls smart contract
+7. Smart contract grants unlimited slots on-chain
+8. Return to Color Drop - unlimited slots unlocked ✅
 
-**Privacy Note:** SELF uses zero-knowledge proofs. Your personal data never leaves your device or gets stored on-chain.
+**Technical Flow:**
+- ✅ Backend validates zero-knowledge proof from SELF Protocol
+- ✅ Backend wallet calls `setUserVerification()` on smart contract
+- ✅ Contract stores verification status on Celo blockchain
+- ✅ Contract enforces 4-slot limit for unverified, unlimited for verified
+- ✅ Verification persists forever (stored on-chain)
+
+**Privacy Note:** SELF uses zero-knowledge proofs. Your personal data never leaves your device or gets stored on-chain. Only verification status (18+ yes/no) is recorded.
 
 ---
 

@@ -6,6 +6,23 @@
 
 ---
 
+## 🎯 Architecture Overview
+
+**SELF Age Verification Flow:**
+1. ✅ Backend validates SELF zero-knowledge proofs (18+ verification)
+2. ✅ Backend wallet calls `contract.setUserVerification(address, true)`
+3. ✅ Smart contract stores verification on-chain and enforces slot limits
+4. ✅ Contract allows 4 slots for unverified, unlimited for SELF-verified
+5. ✅ Frontend timer (10 seconds) and color matching handled client-side
+6. ✅ Smart contract manages pools, payments, and prize distribution
+
+**Required Wallets:**
+- **Deployer** → Deploys smart contract to Celo
+- **Treasuries (2)** → Receive 0.1 CELO each per pool (system fees)
+- **Verifier** → Backend wallet that calls `setUserVerification()` after SELF validation
+
+---
+
 ## 📋 Pre-Deployment Requirements
 
 ### 1. Wallet & Accounts Setup
