@@ -9,15 +9,19 @@ async function main() {
   console.log("📍 Deploying from:", deployer.address);
   console.log("💰 Account balance:", ethers.formatEther(await ethers.provider.getBalance(deployer.address)), "CELO\n");
 
-  // Treasury and verifier addresses from environment variables
+  // Role addresses from environment variables
+  const admin = process.env.ADMIN_ADDRESS; // Primary owner
+  const upgrader = process.env.UPGRADER_ADDRESS; // Can deploy and upgrade
   const treasury1 = process.env.TREASURY_ADDRESS_1;
   const treasury2 = process.env.TREASURY_ADDRESS_2;
   const verifier = process.env.VERIFIER_ADDRESS;
 
-  if (!treasury1 || !treasury2 || !verifier) {
-    throw new Error("❌ TREASURY_ADDRESS_1, TREASURY_ADDRESS_2, and VERIFIER_ADDRESS must be set in .env file");
+  if (!admin || !upgrader || !treasury1 || !treasury2 || !verifier) {
+    throw new Error("❌ ADMIN_ADDRESS, UPGRADER_ADDRESS, TREASURY_ADDRESS_1, TREASURY_ADDRESS_2, and VERIFIER_ADDRESS must be set in .env file");
   }
 
+  console.log("👑 Admin (Primary Owner):", admin);
+  console.log("🔧 Upgrader (Deploy/Upgrade):", upgrader);
   console.log("🏦 Treasury 1:", treasury1);
   console.log("🏦 Treasury 2:", treasury2);
   console.log("🔐 Verifier:", verifier);
@@ -29,7 +33,7 @@ async function main() {
   console.log("⏳ Deploying proxy contract...");
   const colorDropPool = await upgrades.deployProxy(
     ColorDropPool,
-    [treasury1, treasury2, verifier],
+    [admin, upgrader, treasury1, treasury2, verifier],
     {
       initializer: "initialize",
       kind: "uups" // Can be 'transparent' or 'uups'

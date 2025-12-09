@@ -10,13 +10,17 @@ Match the target color in 10 seconds. Win up to 0.6 CELO. Play, compete, share.
 
 Color Drop Tournament is a **skill-based mini app** where players compete in 12-player pools to match colors with precision. Built as a **Farcaster Mini App** with **Celo blockchain** integration for instant, low-cost payments.
 
-**🔗 Smart Contract (Celo Mainnet):** [`0x39E653277AFa663B9b00C777c608B6E998cCBb22`](https://celo.blockscout.com/address/0x39E653277AFa663B9b00C777c608B6E998cCBb22)
+**🔗 Smart Contract (Celo Mainnet):** [`0xdD862847952c35021E0664E73fa3c29cE6aF2B80`](https://celo.blockscout.com/address/0xdD862847952c35021E0664E73fa3c29cE6aF2B80) ✅ **v3.0.0**
 
-**🧪 Testnet Contract (Celo Sepolia):** [`0xeB91E58A59E7Bcf8ADC8cae4f12187826965503A`](https://celo-sepolia.blockscout.com/address/0xeB91E58A59E7Bcf8ADC8cae4f12187826965503A)
+**🧪 Testnet Contract (Celo Sepolia):** [`0x32b476880AbCAeD213128F225371d99113F93883`](https://celo-sepolia.blockscout.com/address/0x32b476880AbCAeD213128F225371d99113F93883) ✅ **v3.0.0**
 
 **📊 Contract Implementation Addresses:**
-- **Mainnet Implementation:** [`0x1eDf8c2290d4a14FDd80c5522AaE2F8d13F6BA43`](https://celo.blockscout.com/address/0x1eDf8c2290d4a14FDd80c5522AaE2F8d13F6BA43)
-- **Sepolia Implementation:** [`0x4BF512C0eF46FD7C5F3F9522426E3F0413A8dB77`](https://celo-sepolia.blockscout.com/address/0x4BF512C0eF46FD7C5F3F9522426E3F0413A8dB77)
+- **Mainnet Implementation:** [`0xa76846Ed172e1DaD467b3E343BB37347cC4F943B`](https://celo.blockscout.com/address/0xa76846Ed172e1DaD467b3E343BB37347cC4F943B) (v3.0.0)
+- **Sepolia Implementation:** [`0xac8E5E4965d6c1fa376C77596BC54276870efB22`](https://celo-sepolia.blockscout.com/address/0xac8E5E4965d6c1fa376C77596BC54276870efB22) (v3.0.0)
+
+**🔐 Role-Based Access Control:**
+- **Admin:** `0xc2564e41b7f5cb66d2d99466450cfebce9e8228f` (Primary owner, manages settings)
+- **Upgrader:** `0x499d377ef114cc1bf7798cecbb38412701400daf` (Deploys and upgrades contracts)
 
 ### Core Mechanics
 
@@ -167,8 +171,8 @@ Prize: 0.6 | 0.3 | 0.1 CELO
 
 ### Blockchain
 - **Network:** Celo Mainnet (Chain ID: 42220)
-- **Mainnet Contract (Proxy):** [`0x39E653277AFa663B9b00C777c608B6E998cCBb22`](https://celo.blockscout.com/address/0x39E653277AFa663B9b00C777c608B6E998cCBb22)
-- **Testnet Contract (Proxy):** [`0xeB91E58A59E7Bcf8ADC8cae4f12187826965503A`](https://celo-sepolia.blockscout.com/address/0xeB91E58A59E7Bcf8ADC8cae4f12187826965503A) (Sepolia)
+- **Mainnet Contract (Proxy):** [`0xdD862847952c35021E0664E73fa3c29cE6aF2B80`](https://celo.blockscout.com/address/0xdD862847952c35021E0664E73fa3c29cE6aF2B80) (v3.0.0)
+- **Testnet Contract (Proxy):** [`0x32b476880AbCAeD213128F225371d99113F93883`](https://celo-sepolia.blockscout.com/address/0x32b476880AbCAeD213128F225371d99113F93883) (v3.0.0)
 - **Smart Contracts:** Solidity 0.8.22 (Upgradeable via OpenZeppelin UUPS)
 - **Development:** Hardhat 2.22 + TypeScript
 - **Security:** ReentrancyGuard, Pausable, Custom Errors, SELF Age Verification
@@ -258,9 +262,9 @@ npm test
 # Deploy to Celo Sepolia
 npm run deploy:sepolia
 
-# Deployed Contracts:
-# Proxy: 0xeB91E58A59E7Bcf8ADC8cae4f12187826965503A
-# Implementation: 0x4BF512C0eF46FD7C5F3F9522426E3F0413A8dB77
+# Deployed Contracts (v3.0.0 with Role-Based Access Control):
+# Proxy: 0x32b476880AbCAeD213128F225371d99113F93883
+# Implementation: 0xac8E5E4965d6c1fa376C77596BC54276870efB22
 ```
 
 ### Configure Farcaster Manifest
@@ -294,10 +298,10 @@ Edit `public/.well-known/farcaster.json`:
 - [DEPLOYMENT-CHECKLIST.md](./DEPLOYMENT-CHECKLIST.md) - Production deployment guide
 
 **📊 Contract Explorers:**
-- [Mainnet Proxy (Blockscout)](https://celo.blockscout.com/address/0x39E653277AFa663B9b00C777c608B6E998cCBb22) - Live mainnet contract
-- [Mainnet Implementation (Blockscout)](https://celo.blockscout.com/address/0x1eDf8c2290d4a14FDd80c5522AaE2F8d13F6BA43) - Implementation contract
-- [Testnet Proxy (Blockscout)](https://celo-sepolia.blockscout.com/address/0xeB91E58A59E7Bcf8ADC8cae4f12187826965503A) - Sepolia testnet contract
-- [Testnet Implementation (Blockscout)](https://celo-sepolia.blockscout.com/address/0x4BF512C0eF46FD7C5F3F9522426E3F0413A8dB77) - Implementation contract
+- [Mainnet Proxy (Blockscout)](https://celo.blockscout.com/address/0xdD862847952c35021E0664E73fa3c29cE6aF2B80) - Live mainnet contract (v3.0.0)
+- [Mainnet Implementation (Blockscout)](https://celo.blockscout.com/address/0xa76846Ed172e1DaD467b3E343BB37347cC4F943B) - Implementation contract (v3.0.0)
+- [Testnet Proxy (Blockscout)](https://celo-sepolia.blockscout.com/address/0x32b476880AbCAeD213128F225371d99113F93883) - Sepolia testnet contract (v3.0.0)
+- [Testnet Implementation (Blockscout)](https://celo-sepolia.blockscout.com/address/0xac8E5E4965d6c1fa376C77596BC54276870efB22) - Implementation contract (v3.0.0)
 
 ---
 

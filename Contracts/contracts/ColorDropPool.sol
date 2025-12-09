@@ -3,7 +3,7 @@ pragma solidity ^0.8.22;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnumerableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
@@ -16,10 +16,13 @@ import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 contract ColorDropPool is
     Initializable,
     UUPSUpgradeable,
-    OwnableUpgradeable,
+    AccessControlEnumerableUpgradeable,
     ReentrancyGuardUpgradeable,
     PausableUpgradeable
 {
+    // Role definitions
+    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+    bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     // Constants
     uint256 public constant ENTRY_FEE = 0.1 ether; // 0.1 CELO per player
     uint8 public constant POOL_SIZE = 12;
@@ -110,11 +113,22 @@ contract ColorDropPool is
 
     /**
      * @dev Initialize the contract (replaces constructor for upgradeable contracts)
+     * @param _admin Primary admin wallet (can grant/revoke roles, manage treasuries)
+     * @param _upgrader Upgrader wallet (can deploy and upgrade contracts)
      * @param _treasury1 First treasury wallet address (receives 50% of system fee)
      * @param _treasury2 Second treasury wallet address (receives 50% of system fee)
      * @param _verifier Backend wallet address authorized to verify users after SELF validation
      */
-    function initialize(address _treasury1, address _treasury2, address _verifier) public initializer {
+    function initialize(
+        address _admin,
+        address _upgrader,
+        address _treasury1,
+        address _treasury2,
+        address _verifier
+    ) public initializer {
+        if (_admin == address(0) || _upgrader == address(0)) {
+            revert InvalidTreasuryAddress();
+        }
         if (_treasury1 == address(0) || _treasury2 == address(0)) {
             revert InvalidTreasuryAddress();
         }
@@ -122,9 +136,14 @@ contract ColorDropPool is
             revert InvalidVerifierAddress();
         }
 
-        __Ownable_init(msg.sender);
+        __AccessControl_init();
         __ReentrancyGuard_init();
         __Pausable_init();
+
+        // Setup role hierarchy
+        _grantRole(DEFAULT_ADMIN_ROLE, _admin); // Can grant/revoke all roles
+        _grantRole(ADMIN_ROLE, _admin); // Admin permissions
+        _grantRole(UPGRADER_ROLE, _upgrader); // Can upgrade contracts
 
         treasury1 = _treasury1;
         treasury2 = _treasury2;
@@ -419,11 +438,11 @@ contract ColorDropPool is
     }
 
     /**
-     * @dev Update treasury addresses (only owner)
+     * @dev Update treasury addresses (only admin)
      * @param _treasury1 New first treasury address
      * @param _treasury2 New second treasury address
      */
-    function setTreasuries(address _treasury1, address _treasury2) external onlyOwner {
+    function setTreasuries(address _treasury1, address _treasury2) external onlyRole(ADMIN_ROLE) {
         if (_treasury1 == address(0) || _treasury2 == address(0)) {
             revert InvalidTreasuryAddress();
         }
@@ -445,10 +464,10 @@ contract ColorDropPool is
     }
 
     /**
-     * @dev Update verifier address (only owner)
+     * @dev Update verifier address (only admin)
      * @param newVerifier New backend verifier wallet address
      */
-    function setVerifier(address newVerifier) external onlyOwner {
+    function setVerifier(address newVerifier) external onlyRole(ADMIN_ROLE) {
         if (newVerifier == address(0)) revert InvalidVerifierAddress();
         address oldVerifier = verifier;
         verifier = newVerifier;
@@ -476,25 +495,26 @@ contract ColorDropPool is
     }
 
     /**
-     * @dev Pause contract (emergency stop)
+     * @dev Pause contract (emergency stop - admin only)
      */
-    function pause() external onlyOwner {
+    function pause() external onlyRole(ADMIN_ROLE) {
         _pause();
     }
 
     /**
-     * @dev Unpause contract
+     * @dev Unpause contract (admin only)
      */
-    function unpause() external onlyOwner {
+    function unpause() external onlyRole(ADMIN_ROLE) {
         _unpause();
     }
 
     /**
-     * @dev Emergency withdraw (only if critical bug, contract must be paused)
+     * @dev Emergency withdraw (only if critical bug, contract must be paused - admin only)
      */
-    function emergencyWithdraw() external onlyOwner whenPaused {
+    function emergencyWithdraw() external onlyRole(ADMIN_ROLE) whenPaused {
         uint256 balance = address(this).balance;
-        (bool success, ) = owner().call{value: balance}("");
+        address admin = getRoleMember(DEFAULT_ADMIN_ROLE, 0);
+        (bool success, ) = admin.call{value: balance}("");
         if (!success) revert TransferFailed();
     }
 
@@ -502,12 +522,17 @@ contract ColorDropPool is
      * @dev Get contract version for upgrade tracking
      */
     function version() external pure returns (string memory) {
-        return "2.0.0";
+        return "3.0.0";
     }
 
     /**
      * @dev Authorize contract upgrade (UUPS required function)
-     * @notice Only the owner can authorize upgrades
+     * @notice Only ADMIN_ROLE or UPGRADER_ROLE can authorize upgrades
      */
-    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+    function _authorizeUpgrade(address newImplementation) internal override {
+        require(
+            hasRole(ADMIN_ROLE, msg.sender) || hasRole(UPGRADER_ROLE, msg.sender),
+            "Caller is not authorized to upgrade"
+        );
+    }
 }

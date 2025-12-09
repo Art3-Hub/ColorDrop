@@ -4,18 +4,33 @@
 
 ## 📋 Contract Overview
 
-- **Version:** 2.0.0 (Upgradeable with OpenZeppelin)
+- **Version:** 3.0.0 (Upgradeable with Role-Based Access Control)
 - **Mainnet:** Celo (Chain ID: 42220)
-  - **Proxy:** [`0x39E653277AFa663B9b00C777c608B6E998cCBb22`](https://celo.blockscout.com/address/0x39E653277AFa663B9b00C777c608B6E998cCBb22)
-  - **Implementation:** [`0x1eDf8c2290d4a14FDd80c5522AaE2F8d13F6BA43`](https://celo.blockscout.com/address/0x1eDf8c2290d4a14FDd80c5522AaE2F8d13F6BA43)
+  - **Proxy:** [`0xdD862847952c35021E0664E73fa3c29cE6aF2B80`](https://celo.blockscout.com/address/0xdD862847952c35021E0664E73fa3c29cE6aF2B80) ✅ **v3.0.0**
+  - **Implementation:** [`0xa76846Ed172e1DaD467b3E343BB37347cC4F943B`](https://celo.blockscout.com/address/0xa76846Ed172e1DaD467b3E343BB37347cC4F943B) ✅ **v3.0.0**
 - **Testnet:** Celo Sepolia (Chain ID: 11142220)
-  - **Proxy:** [`0xeB91E58A59E7Bcf8ADC8cae4f12187826965503A`](https://celo-sepolia.blockscout.com/address/0xeB91E58A59E7Bcf8ADC8cae4f12187826965503A)
-  - **Implementation:** [`0x4BF512C0eF46FD7C5F3F9522426E3F0413A8dB77`](https://celo-sepolia.blockscout.com/address/0x4BF512C0eF46FD7C5F3F9522426E3F0413A8dB77)
+  - **Proxy:** [`0x32b476880AbCAeD213128F225371d99113F93883`](https://celo-sepolia.blockscout.com/address/0x32b476880AbCAeD213128F225371d99113F93883) ✅ **v3.0.0**
+  - **Implementation:** [`0xac8E5E4965d6c1fa376C77596BC54276870efB22`](https://celo-sepolia.blockscout.com/address/0xac8E5E4965d6c1fa376C77596BC54276870efB22) ✅ **v3.0.0**
 - **Entry Fee:** 0.1 CELO per player
 - **Pool Size:** 12 players
 - **Prize Distribution:** 0.6 / 0.3 / 0.1 CELO (top 3)
 - **System Fee:** 0.2 CELO (split 50/50 between dual treasuries)
 - **Age Verification:** SELF Protocol integration (18+ required for unlimited slots)
+
+### 🔐 Role-Based Access Control (v3.0.0)
+
+The contract uses OpenZeppelin's **AccessControl** for a two-owner system:
+
+| Role | Address | Permissions |
+|------|---------|-------------|
+| **ADMIN_ROLE** | `0xc2564e41b7f5cb66d2d99466450cfebce9e8228f` | Primary owner: Grant/revoke roles, manage treasuries, pause, emergency withdraw |
+| **UPGRADER_ROLE** | `0x499d377ef114cc1bf7798cecbb38412701400daf` | Can deploy and upgrade contracts, verify contracts on Blockscout |
+| **DEFAULT_ADMIN_ROLE** | `0xc2564e41b7f5cb66d2d99466450cfebce9e8228f` | OpenZeppelin super admin role (can assign all roles) |
+
+**Why Two Owners?**
+- Separation of concerns: Admin manages business logic, Upgrader handles technical deployments
+- Security: Upgrader wallet can be hot wallet for CI/CD, Admin wallet stays in cold storage
+- Flexibility: Both wallets can upgrade contracts, but only Admin can change treasuries/settings
 
 ## 🏗️ Architecture
 
@@ -28,7 +43,7 @@
 ### Security Features
 - ✅ **ReentrancyGuard** - Prevents reentrancy attacks on all payable functions
 - ✅ **Pausable** - Emergency stop mechanism for critical issues
-- ✅ **Ownable** - Role-based access control for admin functions
+- ✅ **AccessControl** - Two-owner role-based system (Admin + Upgrader)
 - ✅ **Custom Errors** - Gas-efficient error handling
 - ✅ **Dual Treasury** - 50/50 split for decentralized system fees
 - ✅ **SELF Age Verification** - Backend validates zero-knowledge proofs, on-chain enforcement
@@ -81,8 +96,13 @@ npm install --legacy-peer-deps
 Copy `.env.example` to `.env` and configure:
 
 ```bash
-# Deployment wallet (NEVER COMMIT THIS)
-PRIVATE_KEY=your_private_key_here
+# Upgrader wallet private key (NEVER COMMIT THIS)
+# This wallet deploys and upgrades contracts
+PRIVATE_KEY=your_upgrader_private_key_here
+
+# Role Addresses (Two-Owner System)
+ADMIN_ADDRESS=0x... # Primary owner (manages settings, cold storage)
+UPGRADER_ADDRESS=0x... # Deploys/upgrades contracts (must match PRIVATE_KEY)
 
 # Dual treasury addresses (REQUIRED - receives 50/50 split of system fees)
 TREASURY_ADDRESS_1=0x...
@@ -174,19 +194,28 @@ Returns: `(wallet, fid, accuracy, timestamp, hasSubmitted)`
 #### `version()`
 Returns contract version string (e.g., "2.0.0")
 
-### Admin Functions (Owner Only)
+### Admin Functions
 
-#### `setTreasuries(address _treasury1, address _treasury2)`
+#### `setTreasuries(address _treasury1, address _treasury2)` (ADMIN_ROLE only)
 Update dual treasury addresses
 
-#### `setVerifier(address _verifier)`
+#### `setVerifier(address _verifier)` (ADMIN_ROLE only)
 Update backend verifier wallet address (calls `setUserVerification()`)
 
-#### `pause()` / `unpause()`
+#### `pause()` / `unpause()` (ADMIN_ROLE only)
 Emergency pause/unpause contract operations
 
-#### `emergencyWithdraw()`
+#### `emergencyWithdraw()` (ADMIN_ROLE only)
 Emergency fund withdrawal (requires paused state)
+
+#### `grantRole(bytes32 role, address account)` (DEFAULT_ADMIN_ROLE only)
+Grant ADMIN_ROLE or UPGRADER_ROLE to new addresses
+
+#### `revokeRole(bytes32 role, address account)` (DEFAULT_ADMIN_ROLE only)
+Revoke roles from addresses
+
+#### `_authorizeUpgrade(address newImplementation)` (ADMIN_ROLE or UPGRADER_ROLE)
+Authorize contract upgrades (called internally by OpenZeppelin)
 
 ### SELF Verification Functions
 
