@@ -1,23 +1,51 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
+import { sdk } from '@farcaster/miniapp-sdk';
 import { ConnectButton } from '@/components/ConnectButton';
 import { PlatformIndicator } from '@/components/PlatformIndicator';
 import { PlayGrid } from '@/components/landing/PlayGrid';
 import { GameScreen } from '@/components/game/GameScreen';
+import { LeaderboardView } from '@/components/pool/LeaderboardView';
 import { isFarcaster } from '@/lib/platform';
 import { NETWORK_INFO } from '@/lib/wagmi';
+import { useColorDropPool } from '@/hooks/useColorDropPool';
 
-type AppState = 'landing' | 'game';
+type AppState = 'landing' | 'game' | 'leaderboard';
 
 export default function Home() {
   const { address, isConnected } = useAccount();
+  const { poolData, currentPoolId } = useColorDropPool();
   const [appState, setAppState] = useState<AppState>('landing');
   const [currentSlot, setCurrentSlot] = useState<number>(1);
+  const [isMiniApp, setIsMiniApp] = useState(false);
   const platformIsFarcaster = isFarcaster();
 
   const ENTRY_FEE_VALUE = parseFloat(process.env.NEXT_PUBLIC_ENTRY_FEE || '0.1');
+
+  // Initialize Farcaster SDK and call ready() to hide splash screen
+  useEffect(() => {
+    async function initFarcaster() {
+      try {
+        const result = await sdk.isInMiniApp();
+        setIsMiniApp(result);
+
+        if (result) {
+          // Call ready() to hide Farcaster splash screen
+          sdk.actions.ready();
+          console.log('[ColorDrop] SDK ready() called - Farcaster splash screen hidden');
+        } else {
+          console.log('[ColorDrop] Running in browser mode');
+        }
+      } catch (error) {
+        console.error('[ColorDrop] Failed to initialize Farcaster SDK:', error);
+        setIsMiniApp(false);
+      }
+    }
+
+    initFarcaster();
+  }, []);
 
   const handleStartGame = (slot: number) => {
     setCurrentSlot(slot);
@@ -27,6 +55,19 @@ export default function Home() {
   const handleBackToLanding = () => {
     setAppState('landing');
   };
+
+  const handleViewLeaderboard = () => {
+    setAppState('leaderboard');
+  };
+
+  // Auto-show leaderboard when pool completes
+  useEffect(() => {
+    if (poolData?.isComplete && appState === 'landing') {
+      // Optional: Auto-navigate to leaderboard
+      // setAppState('leaderboard');
+      console.log('Pool is complete! Players can view results.');
+    }
+  }, [poolData?.isComplete, appState]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
@@ -132,12 +173,16 @@ export default function Home() {
         )}
 
         {isConnected && appState === 'landing' && (
-          <PlayGrid onStartGame={handleStartGame} />
+          <PlayGrid onStartGame={handleStartGame} onViewLeaderboard={handleViewLeaderboard} />
         )}
 
         {isConnected && appState === 'game' && (
           <GameScreen onBackToLobby={handleBackToLanding} slotNumber={currentSlot} />
         )}
+
+        {isConnected && appState === 'leaderboard' && currentPoolId !== undefined && typeof currentPoolId === 'bigint' ? (
+          <LeaderboardView poolId={currentPoolId} onBackToLobby={handleBackToLanding} />
+        ) : null}
       </main>
 
       {/* Footer */}

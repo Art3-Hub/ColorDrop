@@ -1,13 +1,26 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useChainId } from 'wagmi';
 import { parseEther } from 'viem';
+import { celo } from 'wagmi/chains';
 import ColorDropPoolABI from '@/contracts/ColorDropPool.json';
 
-const POOL_ADDRESS = process.env.NEXT_PUBLIC_POOL_CONTRACT_ADDRESS as `0x${string}`;
-const ENTRY_FEE = parseEther(process.env.NEXT_PUBLIC_ENTRY_FEE || '0.3');
+// MAINNET ONLY - Production configuration
+const DEFAULT_NETWORK = process.env.NEXT_PUBLIC_DEFAULT_NETWORK || 'celo';
+const POOL_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS_MAINNET as `0x${string}`;
+const TARGET_CHAIN = celo;
+const ENTRY_FEE = parseEther(process.env.NEXT_PUBLIC_ENTRY_FEE || '0.1');
 const POLL_INTERVAL = 2000; // 2 seconds
+
+console.log('🔧 ColorDropPool Hook Configuration - MAINNET ONLY:', {
+  DEFAULT_NETWORK,
+  POOL_ADDRESS,
+  TARGET_CHAIN: TARGET_CHAIN.name,
+  CHAIN_ID: TARGET_CHAIN.id,
+  ENTRY_FEE: ENTRY_FEE.toString(),
+  ENTRY_FEE_CELO: (Number(ENTRY_FEE) / 1e18).toFixed(2) + ' CELO',
+});
 
 export interface PoolData {
   poolId: bigint;
@@ -24,10 +37,31 @@ export interface UserStatus {
   canJoin: boolean;
 }
 
+export interface PlayerData {
+  wallet: `0x${string}`;
+  fid: bigint;
+  accuracy: number;
+  hasPlayed: boolean;
+}
+
 export function useColorDropPool() {
-  const { address } = useAccount();
+  const { address, chain } = useAccount();
+  const connectedChainId = useChainId();
   const [currentPoolData, setCurrentPoolData] = useState<PoolData | null>(null);
   const [userStatus, setUserStatus] = useState<UserStatus | null>(null);
+
+  // Log chain mismatch warnings
+  useEffect(() => {
+    if (chain && chain.id !== TARGET_CHAIN.id) {
+      console.warn('⚠️ Chain Mismatch:', {
+        connectedChain: chain.name,
+        connectedChainId: chain.id,
+        targetChain: TARGET_CHAIN.name,
+        targetChainId: TARGET_CHAIN.id,
+        message: 'Please switch to the correct network'
+      });
+    }
+  }, [chain]);
 
   // Read current pool ID
   const { data: currentPoolId, refetch: refetchPoolId } = useReadContract({
@@ -128,14 +162,27 @@ export function useColorDropPool() {
   const joinPool = useCallback(async (fid: bigint) => {
     if (!address) throw new Error('Wallet not connected');
 
+    console.log('💰 Initiating joinPool transaction:', {
+      address: POOL_ADDRESS,
+      functionName: 'joinPool',
+      chain: TARGET_CHAIN.name,
+      chainId: TARGET_CHAIN.id,
+      connectedChain: chain?.name,
+      connectedChainId: chain?.id,
+      fid: fid.toString(),
+      value: ENTRY_FEE.toString(),
+      entryFeeETH: (Number(ENTRY_FEE) / 1e18).toFixed(2) + ' CELO',
+    });
+
     joinWriteContract({
       address: POOL_ADDRESS,
       abi: ColorDropPoolABI.abi,
       functionName: 'joinPool',
       args: [fid],
       value: ENTRY_FEE,
+      chainId: TARGET_CHAIN.id, // Explicitly specify chain ID
     });
-  }, [address, joinWriteContract]);
+  }, [address, chain, joinWriteContract]);
 
   // Submit score function
   const submitScore = useCallback(async (accuracy: number) => {
@@ -160,6 +207,25 @@ export function useColorDropPool() {
     return !userStatus.canJoin && userStatus.slotsUsed >= userStatus.slotsAvailable;
   }, [userStatus]);
 
+  // Get leaderboard data for a pool
+  const getLeaderboard = useCallback(async (poolId: bigint): Promise<PlayerData[]> => {
+    if (!currentPoolData) return [];
+
+    const players: PlayerData[] = [];
+
+    try {
+      // Fetch all players using multicall
+      for (let i = 0; i < currentPoolData.playerCount; i++) {
+        // TODO: This should use multicall for better performance
+        // For now, we'll return empty array and handle in the component
+      }
+    } catch (error) {
+      console.error('Failed to fetch leaderboard:', error);
+    }
+
+    return players;
+  }, [currentPoolData]);
+
   return {
     // Pool data
     currentPoolId,
@@ -172,6 +238,7 @@ export function useColorDropPool() {
     // Actions
     joinPool,
     submitScore,
+    getLeaderboard,
 
     // Join transaction states
     isJoinPending,

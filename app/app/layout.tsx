@@ -13,13 +13,45 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Color Drop Tournament - Match Colors, Win CELO",
-  description: "Ultra-fast color matching game on Farcaster. 21 players compete, top 3 win prizes. Built on Celo blockchain.",
-  icons: {
-    icon: "/icon.png",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://colordrop.art3hub.xyz"
+
+  return {
+    title: "Color Drop Tournament - Match Colors, Win CELO",
+    description: "Ultra-fast color matching tournament on Celo. 12 players compete, top 3 win prizes. Entry fee: 0.1 CELO.",
+    icons: {
+      icon: "/icon.png",
+    },
+    openGraph: {
+      title: "Color Drop Tournament",
+      description: "Match colors, win CELO prizes. 12-player tournament with instant gameplay.",
+      images: [`${appUrl}/og-image.png`],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: "Color Drop Tournament",
+      description: "Match colors, win CELO prizes",
+      images: [`${appUrl}/og-image.png`],
+    },
+    other: {
+      "fc:frame": JSON.stringify({
+        version: "next",
+        imageUrl: `${appUrl}/og-image.png`,
+        aspectRatio: "1:1",
+        button: {
+          title: "Play Color Drop",
+          action: {
+            type: "launch_frame",
+            name: "Color Drop Tournament",
+            url: appUrl,
+            splashImageUrl: `${appUrl}/splash.png`,
+            splashBackgroundColor: "#7c3aed",
+          },
+        },
+      }),
+    },
+  }
+}
 
 export default function RootLayout({
   children,

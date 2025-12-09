@@ -1,41 +1,48 @@
-import { createConfig, http } from 'wagmi';
-import { celo, celoSepolia } from 'wagmi/chains';
-import { injected } from 'wagmi/connectors';
+import { cookieStorage, createStorage, http } from 'wagmi';
+import { celo } from 'wagmi/chains';
+import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
 import type { Chain } from 'wagmi/chains';
 
-// Note: WalletConnect temporarily removed due to Next.js 16 Turbopack compatibility issues
-// with pino/thread-stream test files being bundled. Will add back once resolved.
-// Injected connector works for both browser wallets AND Farcaster Mini App (which provides injected provider)
+// Reown AppKit Project ID (WalletConnect Project ID - get from https://cloud.reown.com)
+export const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || '';
 
-// Default to testnet for development/testing
-const defaultNetwork = process.env.NEXT_PUBLIC_DEFAULT_NETWORK || 'sepolia';
-const chains = (defaultNetwork === 'sepolia'
-  ? [celoSepolia, celo]
-  : [celo, celoSepolia]) as readonly [Chain, ...Chain[]];
+if (!projectId) {
+  console.warn('Missing NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID - wallet connection may not work properly');
+}
 
-export const config = createConfig({
-  chains,
-  connectors: [
-    injected({
-      shimDisconnect: true,
-    }),
-  ],
-  transports: {
-    [celo.id]: http(process.env.NEXT_PUBLIC_CELO_RPC_URL || 'https://forno.celo.org'),
-    [celoSepolia.id]: http(
-      process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL || 'https://sepolia-forno.celo-testnet.org'
-    ),
-  },
-  ssr: true,
+// MAINNET ONLY - Production configuration
+const defaultNetwork = process.env.NEXT_PUBLIC_DEFAULT_NETWORK || 'celo';
+const chains = [celo] as readonly [Chain, ...Chain[]];
+
+console.log('🌐 Wagmi Configuration - MAINNET ONLY:', {
+  network: defaultNetwork,
+  chainId: celo.id,
+  chainName: celo.name,
+  rpcUrl: process.env.NEXT_PUBLIC_CELO_RPC_URL || 'https://forno.celo.org',
 });
 
-// Export network info for display
+// Create Wagmi adapter for Reown AppKit
+// This handles both browser wallets AND Farcaster Mini App injected provider
+export const wagmiAdapter = new WagmiAdapter({
+  storage: createStorage({
+    storage: cookieStorage,
+  }),
+  ssr: true,
+  projectId,
+  networks: chains as [Chain, ...Chain[]],
+  transports: {
+    [celo.id]: http(process.env.NEXT_PUBLIC_CELO_RPC_URL || 'https://forno.celo.org'),
+  },
+});
+
+// Export Wagmi config for providers
+export const config = wagmiAdapter.wagmiConfig;
+
+// Export network info for display - MAINNET ONLY
 export const NETWORK_INFO = {
-  name: defaultNetwork === 'sepolia' ? 'Celo Sepolia Testnet' : 'Celo Mainnet',
-  chainId: defaultNetwork === 'sepolia' ? celoSepolia.id : celo.id,
-  isTestnet: defaultNetwork === 'sepolia',
-  faucet: defaultNetwork === 'sepolia' ? 'https://faucet.celo.org' : null,
-  explorer: defaultNetwork === 'sepolia'
-    ? 'https://sepolia.celoscan.io'
-    : 'https://celoscan.io',
+  name: 'Celo Mainnet',
+  chainId: celo.id,
+  isTestnet: false,
+  faucet: null,
+  explorer: 'https://celoscan.io',
 };

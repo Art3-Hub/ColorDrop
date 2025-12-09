@@ -190,7 +190,7 @@ Edit `App/.env.local`:
 ```env
 # App URLs (production domain)
 NEXT_PUBLIC_APP_URL=https://colordrop.app
-NEXT_PUBLIC_SITE_URL=https://colordrop.app
+NEXT_PUBLIC_APP_URL=https://colordrop.app
 
 # Celo Network
 NEXT_PUBLIC_CELO_RPC_URL=https://forno.celo.org
