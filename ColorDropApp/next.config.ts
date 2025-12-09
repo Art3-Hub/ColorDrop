@@ -1,7 +1,7 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  transpilePackages: ['@walletconnect/ethereum-provider'],
+  transpilePackages: [],
   serverExternalPackages: ['pino', 'pino-pretty', 'thread-stream'],
 
   // Turbopack configuration (Next.js 16+ default bundler)
@@ -15,7 +15,7 @@ const nextConfig: NextConfig = {
   // Webpack configuration
   webpack: (config, { isServer }) => {
     // Ignore optional wallet connector dependencies that aren't used in our app
-    // We only use WalletConnect/Reown, not these other wallet SDKs
+    // We only use Reown AppKit which handles WalletConnect internally
     config.resolve.alias = {
       ...config.resolve.alias,
       '@solana/kit': false,
@@ -24,7 +24,7 @@ const nextConfig: NextConfig = {
       '@metamask/sdk': false,
       '@gemini-wallet/core': false,
       'porto': false,
-      '@walletconnect/ethereum-provider': require.resolve('@walletconnect/ethereum-provider'),
+      '@walletconnect/ethereum-provider': false,
     };
 
     // Fallback for node modules not available in browser
