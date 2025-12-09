@@ -305,9 +305,9 @@ Game Session:
       Best scores: #3 (97.64%), #7 (95.23%), #10 (92.47%)
       Rankings: 🥇 1st, 🥈 2nd, 🥉 3rd
 
-Investment: 12 × 0.3 = 1.2 CELO
-Winnings: 1.8 + 0.9 + 0.3 = 3.0 CELO
-Net: -0.6 CELO (guaranteed top 3, but negative ROI)
+Investment: 12 × 0.1 = 1.2 CELO
+Winnings: 0.6 + 0.3 + 0.1 = 1.0 CELO
+Net: -0.2 CELO (guaranteed top 3, but negative ROI)
 ```
 
 ---
@@ -465,7 +465,7 @@ Total: ~32 seconds per slot
 
 **🎯 Goal:** Match target color in 10 seconds
 **💰 Entry:** 0.1 CELO per slot
-**🏆 Prizes:** 1.8 / 0.9 / 0.3 CELO (top 3)
+**🏆 Prizes:** 0.6 / 0.3 / 0.1 CELO (top 3)
 **👥 Pool:** 12 slots total
 **🔐 Limits:** 4 slots (unverified) or ∞ (verified)
 **⏱️ Timer:** 10 seconds per game
