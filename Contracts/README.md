@@ -5,11 +5,13 @@
 ## 📋 Contract Overview
 
 - **Version:** 2.0.0 (Upgradeable with OpenZeppelin)
-- **Network:** Celo Mainnet / Sepolia Testnet
-- **Entry Fee:** 0.3 CELO per player
+- **Network:** Celo Sepolia Testnet (Chain ID: 11142220)
+- **Deployed At:** [0x723D8583b56456A0343589114228281F37a3b290](https://celo-sepolia.blockscout.com/address/0x723D8583b56456A0343589114228281F37a3b290)
+- **Entry Fee:** 0.1 CELO per player
 - **Pool Size:** 12 players
-- **Prize Distribution:** 1.8 / 0.9 / 0.3 CELO (top 3)
-- **System Fee:** 0.6 CELO (split 50/50 between dual treasuries)
+- **Prize Distribution:** 0.6 / 0.3 / 0.1 CELO (top 3)
+- **System Fee:** 0.2 CELO (split 50/50 between dual treasuries)
+- **Age Verification:** SELF Protocol integration (18+ required for unlimited slots)
 
 ## 🏗️ Architecture
 
@@ -25,20 +27,41 @@
 - ✅ **Ownable** - Role-based access control for admin functions
 - ✅ **Custom Errors** - Gas-efficient error handling
 - ✅ **Dual Treasury** - 50/50 split for decentralized system fees
+- ✅ **SELF Age Verification** - Backend validates zero-knowledge proofs, on-chain enforcement
+- ✅ **Slot Limits** - 4 slots for unverified users, unlimited for SELF-verified (18+)
 
 ## 📊 Economics
 
 ```
-12 players × 0.3 CELO = 3.6 CELO total pool
+12 players × 0.1 CELO = 1.2 CELO total pool
 
 Distribution:
-├─ 1st Place:  1.8 CELO (50.0%) - 6x ROI
-├─ 2nd Place:  0.9 CELO (25.0%) - 3x ROI
-├─ 3rd Place:  0.3 CELO (8.3%)  - 1x breakeven
-└─ System Fee: 0.6 CELO (16.7%)
-   ├─ Treasury 1: 0.3 CELO (50%)
-   └─ Treasury 2: 0.3 CELO (50%)
+├─ 1st Place:  0.6 CELO (50.0%) - 6x ROI
+├─ 2nd Place:  0.3 CELO (25.0%) - 3x ROI
+├─ 3rd Place:  0.1 CELO (8.3%)  - 1x breakeven
+└─ System Fee: 0.2 CELO (16.7%)
+   ├─ Treasury 1: 0.1 CELO (50%)
+   └─ Treasury 2: 0.1 CELO (50%)
 ```
+
+## 🎯 SELF Age Verification System
+
+**How it Works:**
+1. **Frontend** → User clicks "Verify Age with SELF" button
+2. **SELF Protocol** → Generates zero-knowledge proof (18+ verification)
+3. **Backend API** → Validates ZK proof via `/api/verify-self` endpoint
+4. **Backend Wallet** → Calls `setUserVerification(userAddress, true)` on smart contract
+5. **Smart Contract** → Stores verification on-chain, grants unlimited slots
+6. **On-Chain Enforcement** → Contract enforces 4-slot limit for unverified, unlimited for verified
+
+**Why On-Chain Storage:**
+- Prevents users from bypassing backend by calling contract directly
+- Verification persists permanently (stored on Celo blockchain)
+- No need to re-verify for future games
+
+**Slot Limits:**
+- **Unverified Users:** 4 slots per game (try before verifying)
+- **SELF Verified (18+):** Unlimited slots (play as much as you want)
 
 ## 🚀 Quick Start
 
@@ -54,20 +77,30 @@ npm install --legacy-peer-deps
 Copy `.env.example` to `.env` and configure:
 
 ```bash
-# Deployment wallet
+# Deployment wallet (NEVER COMMIT THIS)
 PRIVATE_KEY=your_private_key_here
 
 # Dual treasury addresses (REQUIRED - receives 50/50 split of system fees)
 TREASURY_ADDRESS_1=0x...
 TREASURY_ADDRESS_2=0x...
 
+# Backend verifier wallet (calls setUserVerification after SELF validation)
+VERIFIER_ADDRESS=0x...
+
 # RPC URLs
 CELO_RPC_URL=https://forno.celo.org
-SEPOLIA_RPC_URL=https://sepolia-forno.celo-testnet.org
+SEPOLIA_RPC_URL=https://celo-sepolia.drpc.org
 
-# CeloScan API key (for verification)
+# CeloScan API keys (for contract verification)
 CELOSCAN_API_KEY=your_api_key_here
+ETHERSCAN_API_KEY=your_etherscan_api_key_here
 ```
+
+**⚠️ Security Notes:**
+- **NEVER** commit `.env` file to version control
+- Keep private keys and API keys secure
+- Use separate wallets for deployment, treasuries, and verifier
+- Consider using hardware wallets for mainnet deployment
 
 ## 📦 Deployment
 
@@ -106,10 +139,11 @@ npm run upgrade:celo
 ### Public Functions
 
 #### `joinPool(uint256 fid)`
-Join current pool with 0.3 CELO entry fee
-- **Payment:** Exactly 0.3 CELO required
+Join current pool with 0.1 CELO entry fee
+- **Payment:** Exactly 0.1 CELO required
 - **Params:** `fid` - Farcaster ID of player
-- **Requirements:** Valid FID, not already in active pool
+- **Requirements:** Valid FID, not already in active pool, within slot limits
+- **Slot Enforcement:** 4 slots for unverified, unlimited for SELF-verified
 - **Events:** `PlayerJoined`, `PoolStarted` (when 12/12)
 
 #### `submitScore(uint256 poolId, uint16 accuracy)`
@@ -141,11 +175,23 @@ Returns contract version string (e.g., "2.0.0")
 #### `setTreasuries(address _treasury1, address _treasury2)`
 Update dual treasury addresses
 
+#### `setVerifier(address _verifier)`
+Update backend verifier wallet address (calls `setUserVerification()`)
+
 #### `pause()` / `unpause()`
 Emergency pause/unpause contract operations
 
 #### `emergencyWithdraw()`
 Emergency fund withdrawal (requires paused state)
+
+### SELF Verification Functions
+
+#### `setUserVerification(address user, bool verified)` (Verifier Only)
+Called by backend verifier wallet after SELF proof validation
+- **Caller:** Only the designated verifier wallet can call this
+- **Params:** `user` - User's wallet address, `verified` - true for 18+ verification
+- **Effect:** Grants unlimited slots to verified users
+- **Events:** `UserVerificationSet`
 
 ## 🧪 Testing
 
@@ -229,57 +275,70 @@ npx hardhat verify --network celo <IMPLEMENTATION_ADDRESS>
 - **Gas Token:** CELO
 
 ### Celo Sepolia Testnet
-- **Chain ID:** 84532
-- **RPC:** https://sepolia-forno.celo-testnet.org
-- **Explorer:** https://sepolia.celoscan.io
+- **Chain ID:** 11142220
+- **RPC:** https://celo-sepolia.drpc.org
+- **Explorer:** https://celo-sepolia.blockscout.com
 - **Faucet:** https://faucet.celo.org
+- **Current Deployment:** [0x723D8583b56456A0343589114228281F37a3b290](https://celo-sepolia.blockscout.com/address/0x723D8583b56456A0343589114228281F37a3b290)
 
 ## 🛠️ Development Stack
 
-- **Hardhat 3.0** - Development environment
+- **Hardhat 2.22** - Development environment (downgraded for compatibility)
 - **TypeScript** - Type-safe scripts
 - **Ethers.js v6** - Contract interaction
-- **OpenZeppelin Upgradeable** - Secure upgrade patterns
+- **OpenZeppelin Contracts Upgradeable 5.0** - Secure upgrade patterns (requires Solidity 0.8.22)
 - **OpenZeppelin Hardhat Upgrades** - Deploy & upgrade tools
+- **Solidity 0.8.22** - Smart contract language (required for OpenZeppelin 5.0)
 
 ## 🐛 Troubleshooting
 
-### Hardhat v3 Compatibility Issue
-**Known Issue**: `@openzeppelin/hardhat-upgrades` has compatibility issues with Hardhat 3.0.
+### Network Configuration Issues
+**Error:** `ConnectTimeoutError` or `ECONNREFUSED` when deploying
+**Solution:**
+- Celo migrated from Alfajores to Sepolia testnet
+- Use Chain ID **11142220** (not 44787)
+- Use RPC: `https://celo-sepolia.drpc.org`
+- Explorer: `https://celo-sepolia.blockscout.com`
 
-**Workaround for compilation**:
-- The contract compiles successfully without the upgrades plugin
-- For deployment with proxy pattern, you can:
-  1. Use Hardhat 2.x temporarily for deployment
-  2. Wait for OpenZeppelin to release Hardhat 3.0 compatible version
-  3. Use Foundry with OpenZeppelin's Foundry tools
+### Solidity Version Mismatch
+**Error:** `The Solidity version pragma statement doesn't match`
+**Solution:**
+- OpenZeppelin Contracts 5.0 requires Solidity **0.8.22** or higher
+- Update contract pragma: `pragma solidity ^0.8.22;`
+- Update hardhat.config.js: `solidity: { version: "0.8.22" }`
 
-**Current configuration**:
-- Contract compiles successfully with Hardhat 3.0
-- Upgrades plugin is temporarily disabled in `hardhat.config.ts`
-- Re-enable once compatibility is resolved
+### UUPS Upgrade Safety
+**Error:** `Implementation is missing upgradeTo function`
+**Solution:**
+- Import: `@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol`
+- Add to inheritance: `contract ColorDropPool is ... UUPSUpgradeable`
+- Add function: `function _authorizeUpgrade(address) internal override onlyOwner {}`
 
-### Hardhat v3 ESM Issues
-If you encounter module import errors:
-```bash
-npm pkg set type="module"
-npm install --legacy-peer-deps
+### Package Dependency Conflicts
+**Error:** `ERESOLVE unable to resolve dependency tree`
+**Solution:**
+- Use **Hardhat 2.22** (not 3.x) for compatibility
+- Install with: `npm install --legacy-peer-deps`
+- Downgrade packages if needed:
+  - `@nomicfoundation/hardhat-ethers@^3.0.8`
+  - `@nomicfoundation/hardhat-toolbox@^5.0.0`
+
+### ES Module Import Errors
+**Error:** `Named export 'ethers' not found`
+**Solution:** Use proper import syntax:
+```typescript
+import hre from "hardhat";
+const { ethers, upgrades } = hre;
 ```
 
-### "Module not found" errors
-Clean install dependencies:
-```bash
-rm -rf node_modules package-lock.json
-npm install --legacy-peer-deps
-```
+### Deployment Fails with "Insufficient Funds"
+- Ensure deployer wallet has ≥0.1 CELO for gas fees
+- Get testnet CELO from: https://faucet.celo.org
 
-### Deployment fails with "insufficient funds"
-Ensure deployer has ≥0.1 CELO for gas fees
-
-### Upgrade fails
-- Verify PROXY_ADDRESS is set correctly in `.env`
-- Ensure you're deploying from the same account that owns the proxy
-- Check that contract follows upgrade safety rules (no constructor, use `initialize()`)
+### Verifier Update Fails
+- Ensure you're calling from the **owner** wallet
+- Verifier address must be non-zero
+- Transaction requires gas (~50K gas units)
 
 ## 📞 Support
 

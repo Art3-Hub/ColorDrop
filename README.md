@@ -28,7 +28,7 @@ Color Drop Tournament is a **skill-based mini app** where players compete in 12-
 ## 🚀 Why Color Drop?
 
 ### Fast & Addictive
-- 8-second rounds = "one more game" psychology
+- 10-second rounds = "one more game" psychology
 - No complex tutorials or learning curve
 - Instant results and payouts
 
@@ -103,6 +103,10 @@ Prize: 0.6 | 0.3 | 0.1 CELO
 - **Database:** Supabase (leaderboards, stats)
 - **Real-time:** WebSockets (lobby updates)
 - **Media:** Cloudinary (meme generation)
+- **Age Verification:** SELF Protocol integration
+  - Backend validates zero-knowledge proofs (18+)
+  - Backend wallet calls `setUserVerification()` on smart contract
+  - Contract enforces 4-slot limit for unverified, unlimited for verified
 
 ### Farcaster Integration
 - Mini App SDK for auth & social features

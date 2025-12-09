@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.22;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
@@ -14,6 +15,7 @@ import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
  */
 contract ColorDropPool is
     Initializable,
+    UUPSUpgradeable,
     OwnableUpgradeable,
     ReentrancyGuardUpgradeable,
     PausableUpgradeable
@@ -502,4 +504,10 @@ contract ColorDropPool is
     function version() external pure returns (string memory) {
         return "2.0.0";
     }
+
+    /**
+     * @dev Authorize contract upgrade (UUPS required function)
+     * @notice Only the owner can authorize upgrades
+     */
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 }
