@@ -2,24 +2,26 @@
 
 **Ultra-fast color matching game on Farcaster x Celo**
 
-Match the target color in 8 seconds. Win up to 10 CELO. Play, compete, share.
+Match the target color in 10 seconds. Win up to 0.6 CELO. Play, compete, share.
 
 ---
 
 ## 🎯 Overview
 
-Color Drop Tournament is a **skill-based mini app** where players compete in 21-player pools to match colors with precision. Built as a **Farcaster Mini App** with **Celo blockchain** integration for instant, low-cost payments.
+Color Drop Tournament is a **skill-based mini app** where players compete in 12-player pools to match colors with precision. Built as a **Farcaster Mini App** with **Celo blockchain** integration for instant, low-cost payments.
 
 ### Core Mechanics
 
-- **Entry:** 1 CELO per player
-- **Pool Size:** 21 players per round
-- **Gameplay:** 8 seconds to match target color using HSL sliders
+- **Entry:** 0.1 CELO per player
+- **Pool Size:** 12 players per round
+- **Age Verification:** SELF Protocol for 18+ compliance
+- **Slot Limits:** 4 slots max (unverified) or ∞ unlimited (SELF verified)
+- **Gameplay:** 10 seconds to match target color using HSL sliders
 - **Winners:**
-  - 🥇 **1st Place:** 10 CELO (best accuracy)
-  - 🥈 **2nd Place:** 6 CELO
-  - 🥉 **3rd Place:** 3 CELO
-- **System Fee:** 1 CELO (4.76% of pool)
+  - 🥇 **1st Place:** 0.6 CELO (best accuracy)
+  - 🥈 **2nd Place:** 0.3 CELO
+  - 🥉 **3rd Place:** 0.1 CELO
+- **System Fee:** 0.2 CELO (16.67%) — Split between dual treasuries
 
 ---
 
@@ -53,22 +55,22 @@ Color Drop Tournament is a **skill-based mini app** where players compete in 21-
 
 ### 1. Discover in Farcaster Feed
 ```
-Pool #247 — 18/21 players 🔥
-Prize: 10 | 6 | 3 CELO
-[Join Now (1 CELO)]
+Pool #247 — 10/12 players 🔥
+Prize: 0.6 | 0.3 | 0.1 CELO
+[Join Now (0.1 CELO)]
 ```
 
 ### 2. Join Pool
 - Click "Join Now" → Opens Mini App
 - Auto-authenticate with Farcaster
-- Pay 1 CELO to enter
+- Pay 0.1 CELO to enter
 
 ### 3. Wait in Lobby
 - See other players joining
-- Pool starts when 21/21 full
+- Pool starts when 12/12 full
 - Usually fills in <2 minutes
 
-### 4. Match the Color (8 seconds)
+### 4. Match the Color (10 seconds)
 - Target color appears
 - Adjust Hue, Saturation, Lightness sliders
 - Lock in your best match before timer expires
@@ -91,9 +93,10 @@ Prize: 10 | 6 | 3 CELO
 
 ### Blockchain
 - **Network:** Celo Mainnet
-- **Smart Contracts:** Solidity 0.8.20
-- **Development:** Foundry + Hardhat
-- **Testnet:** Celo Alfajores
+- **Smart Contracts:** Solidity 0.8.20 (Upgradeable via OpenZeppelin)
+- **Development:** Hardhat 3.0 + TypeScript
+- **Testnet:** Celo Sepolia
+- **Security:** ReentrancyGuard, Pausable, Custom Errors
 
 ### Backend
 - **Hosting:** Vercel Edge Functions
@@ -265,7 +268,7 @@ We welcome contributions! Please see our contributing guidelines.
 ### Target (30 Days Post-Launch)
 - 10,000+ unique players (FIDs)
 - 100,000+ rounds played
-- 1,000 CELO daily volume
+- 300+ CELO daily volume
 - 25% weekly retention
 - 40% share rate
 

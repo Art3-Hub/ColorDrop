@@ -23,17 +23,17 @@ Version 1.0 | Last Updated: December 2025
 ## 🎯 Game Overview
 
 ### Objective
-Match a randomly generated target color as accurately as possible within 8 seconds using HSL (Hue, Saturation, Lightness) sliders.
+Match a randomly generated target color as accurately as possible within 10 seconds using HSL (Hue, Saturation, Lightness) sliders.
 
 ### Format
-- **Tournament-style pools** of 21 players
+- **Tournament-style pools** of 12 players
 - **Single elimination** — only top 3 win prizes
 - **Skill-based** — accuracy determines ranking
-- **Fast-paced** — 8 seconds per round
+- **Fast-paced** — 10 seconds per round
 
 ### Entry Requirements
 - Valid Farcaster account (FID)
-- 1 CELO entry fee
+- 0.3 CELO entry fee
 - Connected wallet (auto-managed via Farcaster Mini App)
 
 ---
@@ -43,42 +43,42 @@ Match a randomly generated target color as accurately as possible within 8 secon
 ### Pool Formation
 
 #### Standard Pool
-- **Size:** 21 players exactly
-- **Entry Fee:** 1 CELO per player
-- **Total Pool:** 21 CELO
-- **Prize Pool:** 19 CELO (10 + 6 + 3)
-- **System Fee:** 1 CELO (4.76%)
+- **Size:** 12 players exactly
+- **Entry Fee:** 0.1 CELO per player
+- **Total Pool:** 1.2 CELO
+- **Prize Pool:** 1.0 CELO (0.6 + 0.3 + 0.1)
+- **System Fee:** 0.2 CELO (16.67%)
 
 #### Pool States
-1. **Open** — Accepting players (0-20/21)
-2. **Full** — 21 players joined, waiting to start
-3. **Active** — Game in progress (8 seconds)
+1. **Open** — Accepting players (0-11/12)
+2. **Full** — 12 players joined, waiting to start
+3. **Active** — Game in progress (10 seconds)
 4. **Completed** — Results finalized, prizes distributed
 
 #### Pool Lifecycle
 ```
 Open → Full → Active → Completed
  ↓       ↓       ↓         ↓
-0-20   21/21   Playing   Paid Out
+0-11   12/12   Playing   Paid Out
 ```
 
 ### Joining a Pool
 
 #### Requirements
 - Farcaster account in good standing
-- Sufficient CELO balance (1 CELO + gas)
+- Sufficient CELO balance (0.3 CELO + gas)
 - No active participation in another pool
 - Accept Terms of Service
 
 #### Process
 1. Select available pool from lobby
-2. Confirm 1 CELO payment
+2. Confirm 0.3 CELO payment
 3. Transaction broadcast to Celo network
 4. Wait for confirmation (usually <5 seconds)
 5. Enter lobby and wait for pool to fill
 
 #### Cancellation Policy
-- **Before pool fills:** Can withdraw with 0.95 CELO refund (0.05 CELO cancellation fee)
+- **Before pool fills:** No withdrawal allowed once joined
 - **After pool fills:** No refunds, must play
 - **Technical failures:** Full refund if game cannot start
 
@@ -87,13 +87,13 @@ Open → Full → Active → Completed
 ## 🎮 Gameplay Rules
 
 ### Game Start
-- Pool starts automatically when 21/21 players joined
+- Pool starts automatically when 12/12 players joined
 - 3-second countdown before target color reveals
 - All players see identical target color simultaneously
 
 ### Time Limit
-- **Total time:** 8 seconds from color reveal
-- **Warning:** Visual/audio alert at 5 seconds remaining
+- **Total time:** 10 seconds from color reveal
+- **Warning:** Visual/audio alert at 7 seconds remaining
 - **Auto-submit:** If no manual lock-in, current color auto-submitted at 0 seconds
 
 ### Controls
@@ -170,14 +170,14 @@ Player B: 95.3% @ 5.8s → Rank 2
 
 ### Ranking Display
 ```
-🥇 @player1 — 98.7% (4.2s) → 10 CELO
-🥈 @player2 — 97.1% (6.1s) → 6 CELO
-🥉 @player3 — 95.8% (7.9s) → 3 CELO
+🥇 @player1 — 98.7% (4.2s) → 0.6 CELO
+🥈 @player2 — 97.1% (6.1s) → 0.3 CELO
+🥉 @player3 — 95.8% (7.9s) → 0.1 CELO
 ───────────────────────────────────
 4. @player4 — 94.2% (5.5s) ❌
 5. @player5 — 93.7% (3.8s) ❌
 ...
-21. @player21 — 42.1% (8.0s) ❌
+12. @player12 — 42.1% (8.0s) ❌
 ```
 
 ---
@@ -188,12 +188,13 @@ Player B: 95.3% @ 5.8s → Rank 2
 
 | Rank | Prize | % of Pool | Condition |
 |------|-------|-----------|-----------|
-| 🥇 1st | 10 CELO | 47.6% | Highest accuracy |
-| 🥈 2nd | 6 CELO | 28.6% | Second highest |
-| 🥉 3rd | 3 CELO | 14.3% | Third highest |
-| 4-21 | 0 CELO | 0% | No prize |
-| System | 1 CELO | 4.8% | Platform fee |
-| **Total** | **21 CELO** | **100%** | — |
+| 🥇 1st | 0.6 CELO | 50.0% | Highest accuracy |
+| 🥈 2nd | 0.3 CELO | 25.0% | Second highest |
+| 🥉 3rd | 0.1 CELO | 8.3% | Third highest |
+| 4-12 | 0 CELO | 0% | No prize |
+| Treasury 1 | 0.1 CELO | 8.3% | Platform operations |
+| Treasury 2 | 0.1 CELO | 8.3% | Development fund |
+| **Total** | **1.2 CELO** | **100%** | — |
 
 ### Payout Process
 
@@ -229,16 +230,36 @@ If prize transfer fails (e.g., invalid wallet):
 
 #### Wallet Requirements
 - Valid Celo-compatible wallet
-- Sufficient balance (1 CELO + ~0.01 gas)
+- Sufficient balance (0.3 CELO + ~0.01 gas)
 - No blacklisted addresses
 - Accepts terms of service
 
 ### Restrictions
 
-#### Age Requirement
-- Must be 18+ years old
-- Verified via Farcaster profile (if available)
-- Legal gambling age in jurisdiction may apply
+#### Age Verification & Slot Limits
+
+**SELF Protocol Integration:**
+Color Drop uses **SELF Protocol** for age verification to ensure compliance with global regulations.
+
+**Slot Limits Based on Verification:**
+
+| Status | Max Slots per Game | Verification Required |
+|--------|-------------------|----------------------|
+| **Unverified** | 4 slots | None - Try before verify |
+| **SELF Verified (18+)** | ∞ Unlimited | One-time age verification |
+
+**How it works:**
+1. **Unverified users** can play up to **4 slots** in a single game to try it out
+2. **SELF Verified users (18+)** have **unlimited slots** — play as many as you want
+3. Click "Verify Age with SELF" button to complete one-time verification
+4. Verification is stored on-chain and persists across sessions
+
+**Why verify?**
+- ✅ **Unlimited slots** in every game (no 4-slot limit)
+- ✅ Comply with global legal requirements (18+)
+- ✅ Support responsible gaming practices
+- ✅ Unlock full platform features and bonuses
+- ✅ Privacy-preserving (zero-knowledge proof)
 
 #### Geographic Restrictions
 - Available globally except restricted jurisdictions

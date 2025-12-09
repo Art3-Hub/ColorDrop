@@ -183,7 +183,7 @@ export function PoolLobby({ poolId, onJoinPool, onStartGame }: PoolLobbyProps) {
         <ul className="space-y-2 text-sm text-gray-700">
           <li className="flex items-start">
             <span className="mr-2">🎨</span>
-            <span>Match the target color as closely as possible in 8 seconds</span>
+            <span>Match the target color as closely as possible in 10 seconds</span>
           </li>
           <li className="flex items-start">
             <span className="mr-2">🎯</span>

@@ -1,19 +1,31 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+
 /**
  * @title ColorDropPool
- * @dev Tournament-style pool for Color Drop game on Farcaster x Celo
- * @notice 21 players compete, top 3 win prizes (1, 0.6, 0.3 CELO)
+ * @dev Upgradeable tournament-style pool for Color Drop game on Farcaster x Celo
+ * @notice 12 players compete @ 0.1 CELO, top 3 win prizes (0.6, 0.3, 0.1 CELO)
+ * @custom:security-contact security@colordrop.app
  */
-contract ColorDropPool {
+contract ColorDropPool is
+    Initializable,
+    OwnableUpgradeable,
+    ReentrancyGuardUpgradeable,
+    PausableUpgradeable
+{
     // Constants
-    uint256 public constant ENTRY_FEE = 0.1 ether; // 1 CELO
+    uint256 public constant ENTRY_FEE = 0.1 ether; // 0.1 CELO per player
     uint8 public constant POOL_SIZE = 12;
-    uint256 public constant PRIZE_1ST = 0.6 ether;
-    uint256 public constant PRIZE_2ND = 0.3 ether;
-    uint256 public constant PRIZE_3RD = 0.1 ether;
-    uint256 public constant SYSTEM_FEE = 0.2 ether;
+    uint256 public constant PRIZE_1ST = 0.6 ether; // 50% of prize pool
+    uint256 public constant PRIZE_2ND = 0.3 ether; // 25% of prize pool
+    uint256 public constant PRIZE_3RD = 0.1 ether; // 8.33% of prize pool
+    uint256 public constant SYSTEM_FEE = 0.2 ether; // 16.67% of total pool
+    uint256 public constant FINALIZATION_TIMEOUT = 2 minutes; // Reduced from 5 minutes
 
     // Structs
     struct Player {
@@ -37,9 +49,20 @@ contract ColorDropPool {
     // State variables
     mapping(uint256 => Pool) public pools;
     mapping(address => uint256) public activePoolId; // Track player's active pool
+    mapping(address => uint8) public playerSlotCount; // Track slots used per player
+    mapping(address => bool) public verifiedUsers; // Track SELF-verified users (18+)
     uint256 public currentPoolId;
-    address public treasury;
-    address public owner;
+
+    // Dual treasury addresses
+    address public treasury1;
+    address public treasury2;
+
+    // Backend verifier address (for SELF age verification)
+    address public verifier;
+
+    // Slot limits
+    uint8 public constant UNVERIFIED_SLOT_LIMIT = 4; // Max 4 slots for unverified users
+    // Verified users have infinite slots (no limit)
 
     // Events
     event PoolCreated(uint256 indexed poolId, bytes32 targetColor);
@@ -54,47 +77,77 @@ contract ColorDropPool {
     );
     event PrizePaid(address indexed winner, uint256 amount);
     event SystemFeePaid(address indexed treasury, uint256 amount);
+    event TreasuryUpdated(address indexed treasury1, address indexed treasury2);
+    event UserVerified(address indexed user, bool verified);
+    event VerifierUpdated(address indexed oldVerifier, address indexed newVerifier);
 
-    // Modifiers
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Not owner");
-        _;
+    // Custom errors (gas efficient)
+    error InvalidTreasuryAddress();
+    error InvalidVerifierAddress();
+    error InvalidFID();
+    error AlreadyInActivePool();
+    error PoolFull();
+    error InvalidEntryFee();
+    error InvalidAccuracy();
+    error NotInPool();
+    error AlreadySubmitted();
+    error PoolNotReady();
+    error TransferFailed();
+    error PoolDoesNotExist();
+    error PoolNotActive();
+    error SlotLimitExceeded();
+    error UnauthorizedVerifier();
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
     }
 
-    modifier poolExists(uint256 poolId) {
-        require(poolId <= currentPoolId, "Pool does not exist");
-        _;
-    }
+    /**
+     * @dev Initialize the contract (replaces constructor for upgradeable contracts)
+     * @param _treasury1 First treasury wallet address (receives 50% of system fee)
+     * @param _treasury2 Second treasury wallet address (receives 50% of system fee)
+     * @param _verifier Backend verifier address for SELF age verification
+     */
+    function initialize(address _treasury1, address _treasury2, address _verifier) public initializer {
+        if (_treasury1 == address(0) || _treasury2 == address(0)) {
+            revert InvalidTreasuryAddress();
+        }
+        if (_verifier == address(0)) {
+            revert InvalidVerifierAddress();
+        }
 
-    modifier poolNotFull(uint256 poolId) {
-        require(pools[poolId].playerCount < POOL_SIZE, "Pool is full");
-        _;
-    }
+        __Ownable_init(msg.sender);
+        __ReentrancyGuard_init();
+        __Pausable_init();
 
-    modifier poolActive(uint256 poolId) {
-        require(pools[poolId].isActive, "Pool not active");
-        require(!pools[poolId].isCompleted, "Pool already completed");
-        _;
-    }
+        treasury1 = _treasury1;
+        treasury2 = _treasury2;
+        verifier = _verifier;
 
-    constructor(address _treasury) {
-        require(_treasury != address(0), "Invalid treasury address");
-        owner = msg.sender;
-        treasury = _treasury;
         _createNewPool();
     }
 
     /**
      * @dev Join current pool with 0.1 CELO entry fee
      * @param fid Farcaster ID of the player
+     * @notice Unverified users can play max 4 slots, SELF-verified users (18+) have infinite slots
      */
-    function joinPool(uint256 fid) external payable {
-        require(msg.value == ENTRY_FEE, "Must pay exactly 0.1 CELO");
-        require(fid > 0, "Invalid FID");
-        require(activePoolId[msg.sender] == 0, "Already in active pool");
+    function joinPool(uint256 fid) external payable nonReentrant whenNotPaused {
+        if (msg.value != ENTRY_FEE) revert InvalidEntryFee();
+        if (fid == 0) revert InvalidFID();
+        if (activePoolId[msg.sender] != 0) revert AlreadyInActivePool();
+
+        // Check slot limits based on verification status
+        uint8 currentSlots = playerSlotCount[msg.sender];
+        bool isVerified = verifiedUsers[msg.sender];
+
+        if (!isVerified && currentSlots >= UNVERIFIED_SLOT_LIMIT) {
+            revert SlotLimitExceeded();
+        }
 
         Pool storage pool = pools[currentPoolId];
-        require(pool.playerCount < POOL_SIZE, "Pool is full");
+        if (pool.playerCount >= POOL_SIZE) revert PoolFull();
 
         // Add player to pool
         pool.players[pool.playerCount] = Player({
@@ -107,6 +160,7 @@ contract ColorDropPool {
 
         pool.playerCount++;
         activePoolId[msg.sender] = currentPoolId;
+        playerSlotCount[msg.sender]++; // Increment slot usage
 
         emit PlayerJoined(currentPoolId, msg.sender, fid);
 
@@ -128,19 +182,21 @@ contract ColorDropPool {
      */
     function submitScore(uint256 poolId, uint16 accuracy)
         external
-        poolExists(poolId)
-        poolActive(poolId)
+        nonReentrant
+        whenNotPaused
     {
-        require(accuracy <= 10000, "Invalid accuracy");
-        require(activePoolId[msg.sender] == poolId, "Not in this pool");
+        if (poolId > currentPoolId) revert PoolDoesNotExist();
+        if (accuracy > 10000) revert InvalidAccuracy();
+        if (activePoolId[msg.sender] != poolId) revert NotInPool();
 
         Pool storage pool = pools[poolId];
+        if (!pool.isActive || pool.isCompleted) revert PoolNotActive();
 
         // Find player and update score
         bool found = false;
         for (uint8 i = 0; i < pool.playerCount; i++) {
             if (pool.players[i].wallet == msg.sender) {
-                require(!pool.players[i].hasSubmitted, "Already submitted");
+                if (pool.players[i].hasSubmitted) revert AlreadySubmitted();
 
                 pool.players[i].accuracy = accuracy;
                 pool.players[i].timestamp = uint32(block.timestamp);
@@ -150,7 +206,7 @@ contract ColorDropPool {
             }
         }
 
-        require(found, "Player not in pool");
+        if (!found) revert NotInPool();
 
         emit ScoreSubmitted(poolId, msg.sender, accuracy);
 
@@ -159,17 +215,16 @@ contract ColorDropPool {
     }
 
     /**
-     * @dev Finalize pool and distribute prizes (called manually or automatically)
+     * @dev Finalize pool and distribute prizes (callable by anyone after timeout)
      * @param poolId Pool ID to finalize
      */
-    function finalizePool(uint256 poolId)
-        external
-        poolExists(poolId)
-        poolActive(poolId)
-    {
-        Pool storage pool = pools[poolId];
+    function finalizePool(uint256 poolId) external nonReentrant whenNotPaused {
+        if (poolId > currentPoolId) revert PoolDoesNotExist();
 
-        // Require all players to have submitted or 5 minutes passed
+        Pool storage pool = pools[poolId];
+        if (!pool.isActive || pool.isCompleted) revert PoolNotActive();
+
+        // Require all players to have submitted or timeout passed
         bool allSubmitted = true;
         for (uint8 i = 0; i < pool.playerCount; i++) {
             if (!pool.players[i].hasSubmitted) {
@@ -178,10 +233,9 @@ contract ColorDropPool {
             }
         }
 
-        require(
-            allSubmitted || block.timestamp > pool.startTime + 5 minutes,
-            "Not ready to finalize"
-        );
+        if (!allSubmitted && block.timestamp <= pool.startTime + FINALIZATION_TIMEOUT) {
+            revert PoolNotReady();
+        }
 
         _distributePrizes(poolId);
     }
@@ -194,7 +248,7 @@ contract ColorDropPool {
 
         Pool storage newPool = pools[currentPoolId];
         newPool.id = currentPoolId;
-        newPool.targetColor = keccak256(abi.encodePacked(block.timestamp, currentPoolId));
+        newPool.targetColor = keccak256(abi.encodePacked(block.timestamp, currentPoolId, block.prevrandao));
 
         emit PoolCreated(currentPoolId, newPool.targetColor);
     }
@@ -219,21 +273,22 @@ contract ColorDropPool {
     }
 
     /**
-     * @dev Distribute prizes to top 3 players
+     * @dev Distribute prizes to top 3 players and system fees to dual treasuries
      */
     function _distributePrizes(uint256 poolId) private {
         Pool storage pool = pools[poolId];
-        require(!pool.isCompleted, "Already completed");
+        if (pool.isCompleted) revert PoolNotActive();
 
         pool.isCompleted = true;
 
         // Find top 3 players
         address[3] memory winners = _getTopThree(poolId);
 
-        // Pay system fee
-        (bool feeSuccess, ) = treasury.call{value: SYSTEM_FEE}("");
-        require(feeSuccess, "Fee transfer failed");
-        emit SystemFeePaid(treasury, SYSTEM_FEE);
+        // Split system fee 50/50 between treasury wallets
+        uint256 feePerTreasury = SYSTEM_FEE / 2;
+
+        _payFee(treasury1, feePerTreasury);
+        _payFee(treasury2, feePerTreasury);
 
         // Pay prizes
         _payPrize(winners[0], PRIZE_1ST);
@@ -249,13 +304,22 @@ contract ColorDropPool {
     }
 
     /**
+     * @dev Pay system fee to treasury
+     */
+    function _payFee(address treasury, uint256 amount) private {
+        (bool success, ) = treasury.call{value: amount}("");
+        if (!success) revert TransferFailed();
+        emit SystemFeePaid(treasury, amount);
+    }
+
+    /**
      * @dev Pay prize to winner
      */
     function _payPrize(address winner, uint256 amount) private {
-        require(winner != address(0), "Invalid winner");
+        if (winner == address(0)) return; // Skip if no winner at this position
 
         (bool success, ) = winner.call{value: amount}("");
-        require(success, "Prize transfer failed");
+        if (!success) revert TransferFailed();
 
         emit PrizePaid(winner, amount);
     }
@@ -267,7 +331,7 @@ contract ColorDropPool {
         Pool storage pool = pools[poolId];
         address[3] memory topPlayers;
 
-        // Simple bubble sort for top 3 (sufficient for 21 players)
+        // Simple bubble sort for top 3 (sufficient for 12 players)
         for (uint8 i = 0; i < pool.playerCount; i++) {
             for (uint8 j = 0; j < 3; j++) {
                 if (topPlayers[j] == address(0)) {
@@ -305,7 +369,7 @@ contract ColorDropPool {
                 return pool.players[i];
             }
         }
-        revert("Player not found");
+        revert NotInPool();
     }
 
     /**
@@ -340,7 +404,7 @@ contract ColorDropPool {
         uint32 timestamp,
         bool hasSubmitted
     ) {
-        require(index < pools[poolId].playerCount, "Invalid index");
+        if (index >= pools[poolId].playerCount) revert NotInPool();
         Player storage player = pools[poolId].players[index];
         return (
             player.wallet,
@@ -352,18 +416,84 @@ contract ColorDropPool {
     }
 
     /**
-     * @dev Update treasury address
+     * @dev Set user verification status (called by backend verifier after SELF validation)
+     * @param user Address of the user to verify
+     * @param verified Verification status (true if 18+ via SELF)
      */
-    function setTreasury(address _treasury) external onlyOwner {
-        require(_treasury != address(0), "Invalid address");
-        treasury = _treasury;
+    function setUserVerification(address user, bool verified) external {
+        if (msg.sender != verifier) revert UnauthorizedVerifier();
+        verifiedUsers[user] = verified;
+        emit UserVerified(user, verified);
     }
 
     /**
-     * @dev Emergency withdraw (only if critical bug)
+     * @dev Update verifier address (only owner)
+     * @param newVerifier New backend verifier address
      */
-    function emergencyWithdraw() external onlyOwner {
-        (bool success, ) = owner.call{value: address(this).balance}("");
-        require(success, "Withdraw failed");
+    function setVerifier(address newVerifier) external onlyOwner {
+        if (newVerifier == address(0)) revert InvalidVerifierAddress();
+        address oldVerifier = verifier;
+        verifier = newVerifier;
+        emit VerifierUpdated(oldVerifier, newVerifier);
+    }
+
+    /**
+     * @dev Update treasury addresses (only owner)
+     * @param _treasury1 New first treasury address
+     * @param _treasury2 New second treasury address
+     */
+    function setTreasuries(address _treasury1, address _treasury2) external onlyOwner {
+        if (_treasury1 == address(0) || _treasury2 == address(0)) {
+            revert InvalidTreasuryAddress();
+        }
+        treasury1 = _treasury1;
+        treasury2 = _treasury2;
+        emit TreasuryUpdated(_treasury1, _treasury2);
+    }
+
+    /**
+     * @dev Get user verification status and slot count
+     * @param user Address to check
+     */
+    function getUserStatus(address user) external view returns (
+        bool isVerified,
+        uint8 slotsUsed,
+        uint8 slotsAvailable,
+        bool canJoin
+    ) {
+        isVerified = verifiedUsers[user];
+        slotsUsed = playerSlotCount[user];
+        slotsAvailable = isVerified ? type(uint8).max : UNVERIFIED_SLOT_LIMIT;
+        canJoin = activePoolId[user] == 0 && (isVerified || slotsUsed < UNVERIFIED_SLOT_LIMIT);
+    }
+
+    /**
+     * @dev Pause contract (emergency stop)
+     */
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    /**
+     * @dev Unpause contract
+     */
+    function unpause() external onlyOwner {
+        _unpause();
+    }
+
+    /**
+     * @dev Emergency withdraw (only if critical bug, contract must be paused)
+     */
+    function emergencyWithdraw() external onlyOwner whenPaused {
+        uint256 balance = address(this).balance;
+        (bool success, ) = owner().call{value: balance}("");
+        if (!success) revert TransferFailed();
+    }
+
+    /**
+     * @dev Get contract version for upgrade tracking
+     */
+    function version() external pure returns (string memory) {
+        return "2.0.0";
     }
 }
