@@ -14,11 +14,17 @@ const nextConfig: NextConfig = {
 
   // Webpack configuration
   webpack: (config, { isServer }) => {
-    // Ignore optional Solana dependencies that aren't used in our app
+    // Ignore optional wallet connector dependencies that aren't used in our app
+    // We only use WalletConnect/Reown, not these other wallet SDKs
     config.resolve.alias = {
       ...config.resolve.alias,
       '@solana/kit': false,
       '@coinbase/cdp-sdk': false,
+      '@coinbase/wallet-sdk': false,
+      '@metamask/sdk': false,
+      '@gemini-wallet/core': false,
+      'porto': false,
+      '@walletconnect/ethereum-provider': require.resolve('@walletconnect/ethereum-provider'),
     };
 
     // Fallback for node modules not available in browser
