@@ -34,18 +34,29 @@ export default function Home() {
         if (result) {
           // Call ready() to hide Farcaster splash screen
           sdk.actions.ready();
-          console.log('[ColorDrop] SDK ready() called - Farcaster splash screen hidden');
+          console.log('[ColorDrop] 🎯 Farcaster MiniApp detected');
+          console.log('[ColorDrop] 📱 SDK ready() called - splash screen hidden');
+          console.log('[ColorDrop] 💡 Wallet should auto-connect via wagmi useAccount()');
         } else {
-          console.log('[ColorDrop] Running in browser mode');
+          console.log('[ColorDrop] 🌐 Running in browser mode');
         }
       } catch (error) {
-        console.error('[ColorDrop] Failed to initialize Farcaster SDK:', error);
+        console.error('[ColorDrop] ❌ Failed to initialize Farcaster SDK:', error);
         setIsMiniApp(false);
       }
     }
 
     initFarcaster();
   }, []);
+
+  // Log wallet connection status for debugging
+  useEffect(() => {
+    if (platformIsFarcaster && address) {
+      console.log('[ColorDrop] ✅ Farcaster wallet auto-connected:', address);
+    } else if (platformIsFarcaster && !address) {
+      console.log('[ColorDrop] ⏳ Waiting for Farcaster wallet auto-connection...');
+    }
+  }, [platformIsFarcaster, address]);
 
   const handleStartGame = (slot: number) => {
     setCurrentSlot(slot);
