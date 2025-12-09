@@ -31,9 +31,9 @@ Match colors as accurately as possible in 10 seconds using HSL sliders. Top 3 pl
 |------|-------|------------|
 | 🥇 1st | 0.6 CELO | 6× entry fee |
 | 🥈 2nd | 0.3 CELO | 3× entry fee |
-| 🥉 3rd | 0.3 CELO | 1× entry fee |
+| 🥉 3rd | 0.1 CELO | 1× entry fee |
 
-**System Fee:** 0.6 CELO (50/50 to dual treasuries)
+**System Fee:** 0.2 CELO (50/50 to dual treasuries)
 
 ---
 
@@ -173,7 +173,7 @@ When all 12 slots complete:
 ```
 🥇 1st  @alice   97.64%  →  0.6 CELO
 🥈 2nd  @bob     95.23%  →  0.3 CELO
-🥉 3rd  @charlie 92.47%  →  0.3 CELO
+🥉 3rd  @charlie 92.47%  →  0.1 CELO
    4th  @dave    88.91%
    5th  @eve     85.56%
    ...
