@@ -1,0 +1,84 @@
+=======================================================================
+COLOR DROP POOL v3.0.0 - BLOCKSCOUT VERIFICATION DATA
+=======================================================================
+
+📍 IMPLEMENTATION CONTRACTS TO VERIFY:
+
+Celo Sepolia Testnet:
+https://celo-sepolia.blockscout.com/address/0xac8E5E4965d6c1fa376C77596BC54276870efB22
+
+Celo Mainnet:
+https://celo.blockscout.com/address/0xa76846Ed172e1DaD467b3E343BB37347cC4F943B
+
+=======================================================================
+
+📝 VERIFICATION FORM VALUES:
+
+Contract Name:
+ColorDropPool
+
+Compiler Version:
+v0.8.22+commit.4fc1097e
+
+Optimization:
+Yes
+
+Optimization Runs:
+200
+
+EVM Version:
+default
+
+=======================================================================
+
+🔑 CONSTRUCTOR ARGUMENTS (Copy exactly - NO 0x prefix):
+
+000000000000000000000000c2564e41b7f5cb66d2d99466450cfebce9e8228f000000000000000000000000499d377ef114cc1bf7798cecbb38412701400daf000000000000000000000000c2564e41b7f5cb66d2d99466450cfebce9e8228f000000000000000000000000274f2719a0a241f696d4f82f177160a2531cf4f5000000000000000000000000499d377ef114cc1bf7798cecbb38412701400daf
+
+=======================================================================
+
+📄 SOURCE CODE:
+
+The flattened source code is in the file: flattened.sol
+
+To copy it:
+1. Open: open flattened.sol
+2. Select All (Cmd+A)
+3. Copy (Cmd+C)
+4. Paste into Blockscout "Solidity Contract Code" field
+
+Or use terminal:
+cat flattened.sol | pbcopy
+
+=======================================================================
+
+✅ VERIFICATION STEPS:
+
+1. Go to implementation contract URL above
+2. Click "Code" tab → "Verify & Publish"
+3. Fill form with values above
+4. Paste flattened.sol contents
+5. Paste constructor arguments (without 0x)
+6. Click "Verify and Publish"
+7. Wait 30-60 seconds
+
+=======================================================================
+
+📊 DECODED CONSTRUCTOR PARAMETERS:
+
+Parameter 1 - Admin (DEFAULT_ADMIN_ROLE + ADMIN_ROLE):
+0xc2564e41b7f5cb66d2d99466450cfebce9e8228f
+
+Parameter 2 - Upgrader (UPGRADER_ROLE):
+0x499d377ef114cc1bf7798cecbb38412701400daf
+
+Parameter 3 - Treasury 1:
+0xc2564e41b7f5cb66d2d99466450cfebce9e8228f
+
+Parameter 4 - Treasury 2:
+0x274f2719a0a241f696d4f82f177160a2531cf4f5
+
+Parameter 5 - Verifier (SELF Protocol):
+0x499d377ef114cc1bf7798cecbb38412701400daf
+
+=======================================================================

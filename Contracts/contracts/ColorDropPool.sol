@@ -522,7 +522,7 @@ contract ColorDropPool is
      * @dev Get contract version for upgrade tracking
      */
     function version() external pure returns (string memory) {
-        return "3.0.0";
+        return "3.0.1";
     }
 
     /**
