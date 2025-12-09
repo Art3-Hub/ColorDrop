@@ -8,17 +8,19 @@ async function main() {
   console.log("📍 Deploying from:", deployer.address);
   console.log("💰 Account balance:", ethers.formatEther(await ethers.provider.getBalance(deployer.address)), "CELO\n");
 
-  // Treasury addresses from environment variables
+  // Treasury and verifier addresses from environment variables
   const treasury1 = process.env.TREASURY_ADDRESS_1;
   const treasury2 = process.env.TREASURY_ADDRESS_2;
+  const verifier = process.env.VERIFIER_ADDRESS;
 
-  if (!treasury1 || !treasury2) {
-    throw new Error("❌ TREASURY_ADDRESS_1 and TREASURY_ADDRESS_2 must be set in .env file");
+  if (!treasury1 || !treasury2 || !verifier) {
+    throw new Error("❌ TREASURY_ADDRESS_1, TREASURY_ADDRESS_2, and VERIFIER_ADDRESS must be set in .env file");
   }
 
   console.log("🏦 Treasury 1:", treasury1);
   console.log("🏦 Treasury 2:", treasury2);
-  console.log("💸 Each treasury receives: 0.3 CELO per pool (50/50 split)\n");
+  console.log("🔐 Verifier:", verifier);
+  console.log("💸 Each treasury receives: 0.1 CELO per pool (50/50 split)\n");
 
   // Deploy upgradeable contract
   const ColorDropPool = await ethers.getContractFactory("ColorDropPool");
@@ -26,7 +28,7 @@ async function main() {
   console.log("⏳ Deploying proxy contract...");
   const colorDropPool = await upgrades.deployProxy(
     ColorDropPool,
-    [treasury1, treasury2],
+    [treasury1, treasury2, verifier],
     {
       initializer: "initialize",
       kind: "uups" // Can be 'transparent' or 'uups'

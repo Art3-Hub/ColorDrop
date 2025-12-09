@@ -23,7 +23,7 @@
   - Address: `___________________________________`
   - Verified multi-sig or secure cold storage
 
-- [ ] **Backend Verifier Wallet** (for SELF verification)
+- [ ] **Backend Verifier Wallet** (calls setUserVerification after SELF validation)
   - Private key secured (different from deployer)
   - Minimum balance: 2 CELO (for verification transactions)
   - Address: `___________________________________`
@@ -71,7 +71,7 @@ CELOSCAN_API_KEY=YOUR_CELOSCAN_API_KEY
 TREASURY_ADDRESS_1=0x...
 TREASURY_ADDRESS_2=0x...
 
-# Backend verifier address (for SELF age verification)
+# Backend verifier wallet (calls setUserVerification after SELF validation)
 VERIFIER_ADDRESS=0x...
 ```
 

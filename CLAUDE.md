@@ -614,17 +614,17 @@ ColorDrop/
 mapping(uint256 => Pool) public pools;
 mapping(address => uint256) public activePoolId;
 mapping(address => uint8) public playerSlotCount;    // Track slots used
-mapping(address => bool) public verifiedUsers;       // SELF verification status
+mapping(address => bool) public verifiedUsers;       // SELF-verified (18+)
 address public treasury1;
 address public treasury2;
-address public verifier;                             // Backend verifier address
+address public verifier;                             // Backend verifier wallet
 ```
 
 #### Critical Constants
 ```solidity
 uint256 public constant ENTRY_FEE = 0.1 ether;
 uint8 public constant POOL_SIZE = 12;
-uint8 public constant UNVERIFIED_SLOT_LIMIT = 4;
+uint8 public constant UNVERIFIED_SLOT_LIMIT = 4;     // Max slots for unverified
 uint256 public constant PRIZE_1ST = 0.6 ether;
 uint256 public constant PRIZE_2ND = 0.3 ether;
 uint256 public constant PRIZE_3RD = 0.1 ether;
@@ -632,19 +632,28 @@ uint256 public constant SYSTEM_FEE = 0.2 ether;
 ```
 
 #### Key Functions
-- `initialize(address _treasury1, address _treasury2, address _verifier)` - Initializer (replaces constructor)
-- `joinPool(uint256 fid)` - Join pool (enforces slot limits)
+- `initialize(address _treasury1, address _treasury2, address _verifier)` - Initializer
+- `joinPool(uint256 fid)` - Join pool (enforces 4-slot limit for unverified)
 - `submitScore(uint256 poolId, uint16 accuracy)` - Submit color accuracy
 - `finalizePool(uint256 poolId)` - Distribute prizes
-- `setUserVerification(address user, bool verified)` - Called by backend verifier
-- `getUserStatus(address user)` - Check verification and slot count
+- `setUserVerification(address user, bool verified)` - Backend sets verification (verifier-only)
+- `getUserStatus(address user)` - Check verification and slot availability
+- `setTreasuries(address _treasury1, address _treasury2)` - Update treasury addresses
+- `setVerifier(address newVerifier)` - Update verifier wallet (owner-only)
 
 ---
 
 ## 🔐 SELF Protocol Integration
 
 ### Overview
-SELF Protocol provides privacy-preserving age verification (18+) using zero-knowledge proofs. Users verify once, and the status is stored on-chain.
+SELF Protocol provides privacy-preserving age verification (18+) using zero-knowledge proofs.
+
+**Architecture:** Hybrid backend + on-chain verification
+- Backend validates SELF zero-knowledge proofs off-chain
+- Backend calls `setUserVerification()` to store status on-chain
+- Smart contract enforces 4-slot limit for unverified users
+- SELF-verified users get unlimited slots
+- Frontend checks both backend API and contract state
 
 ### Flow
 ```
@@ -656,11 +665,13 @@ SELF Protocol provides privacy-preserving age verification (18+) using zero-know
    ↓
 4. SELF app sends proof to /api/verify-self
    ↓
-5. Backend verifies proof and extracts wallet address
+5. Backend verifies proof using SelfBackendVerifier
    ↓
 6. Backend calls contract.setUserVerification(address, true)
    ↓
-7. User now has unlimited slots
+7. Frontend checks contract.getUserStatus()
+   ↓
+8. User now has unlimited slots (enforced by smart contract)
 ```
 
 ### Backend API Routes
@@ -671,14 +682,16 @@ SELF Protocol provides privacy-preserving age verification (18+) using zero-know
 - **Process**:
   1. Verify zero-knowledge proof using `SelfBackendVerifier`
   2. Extract wallet address from proof
-  3. Store verification in cache (1 hour TTL)
-  4. Update smart contract via `setUserVerification()`
+  3. Call `contract.setUserVerification(address, true)` using verifier wallet
+  4. Cache verification status in backend
+  5. Return success response
 
 #### `/api/verify-self/check/route.ts`
-- **Method**: POST
-- **Purpose**: Poll verification status
-- **Input**: `{ userId: "0x..." }`
-- **Output**: `{ verified: boolean, date_of_birth?: string }`
+- **Method**: GET
+- **Purpose**: Check user's verification status and slot availability
+- **Input**: Query param `?address=0x...`
+- **Process**: Calls `contract.getUserStatus(address)`
+- **Returns**: `{ verified: boolean, slotsUsed: number, slotsAvailable: number, canJoin: boolean }`
 
 ### Environment Variables
 ```env

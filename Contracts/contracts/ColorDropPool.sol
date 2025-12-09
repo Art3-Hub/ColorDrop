@@ -21,6 +21,7 @@ contract ColorDropPool is
     // Constants
     uint256 public constant ENTRY_FEE = 0.1 ether; // 0.1 CELO per player
     uint8 public constant POOL_SIZE = 12;
+    uint8 public constant UNVERIFIED_SLOT_LIMIT = 4; // Max slots for unverified users
     uint256 public constant PRIZE_1ST = 0.6 ether; // 50% of prize pool
     uint256 public constant PRIZE_2ND = 0.3 ether; // 25% of prize pool
     uint256 public constant PRIZE_3RD = 0.1 ether; // 8.33% of prize pool
@@ -50,19 +51,21 @@ contract ColorDropPool is
     mapping(uint256 => Pool) public pools;
     mapping(address => uint256) public activePoolId; // Track player's active pool
     mapping(address => uint8) public playerSlotCount; // Track slots used per player
-    mapping(address => bool) public verifiedUsers; // Track SELF-verified users (18+)
+    mapping(address => bool) public verifiedUsers; // SELF-verified users (unlimited slots)
     uint256 public currentPoolId;
 
     // Dual treasury addresses
     address public treasury1;
     address public treasury2;
 
-    // Backend verifier address (for SELF age verification)
+    // Backend verifier wallet (calls setUserVerification after SELF proof validation)
     address public verifier;
 
-    // Slot limits
-    uint8 public constant UNVERIFIED_SLOT_LIMIT = 4; // Max 4 slots for unverified users
-    // Verified users have infinite slots (no limit)
+    // SELF Age Verification Architecture:
+    // - Backend validates SELF zero-knowledge proofs (18+ age verification)
+    // - Backend calls setUserVerification() to grant unlimited slots on-chain
+    // - Contract enforces 4-slot limit for unverified, unlimited for verified
+    // - Frontend calls /api/verify-self/check before allowing joinPool()
 
     // Events
     event PoolCreated(uint256 indexed poolId, bytes32 targetColor);
@@ -107,7 +110,7 @@ contract ColorDropPool is
      * @dev Initialize the contract (replaces constructor for upgradeable contracts)
      * @param _treasury1 First treasury wallet address (receives 50% of system fee)
      * @param _treasury2 Second treasury wallet address (receives 50% of system fee)
-     * @param _verifier Backend verifier address for SELF age verification
+     * @param _verifier Backend wallet address authorized to verify users after SELF validation
      */
     function initialize(address _treasury1, address _treasury2, address _verifier) public initializer {
         if (_treasury1 == address(0) || _treasury2 == address(0)) {
@@ -131,18 +134,16 @@ contract ColorDropPool is
     /**
      * @dev Join current pool with 0.1 CELO entry fee
      * @param fid Farcaster ID of the player
-     * @notice Unverified users can play max 4 slots, SELF-verified users (18+) have infinite slots
+     * @notice Enforces 4-slot limit for unverified users, unlimited for SELF-verified (18+)
      */
     function joinPool(uint256 fid) external payable nonReentrant whenNotPaused {
         if (msg.value != ENTRY_FEE) revert InvalidEntryFee();
         if (fid == 0) revert InvalidFID();
         if (activePoolId[msg.sender] != 0) revert AlreadyInActivePool();
 
-        // Check slot limits based on verification status
-        uint8 currentSlots = playerSlotCount[msg.sender];
+        // Enforce slot limits: 4 for unverified, unlimited for verified
         bool isVerified = verifiedUsers[msg.sender];
-
-        if (!isVerified && currentSlots >= UNVERIFIED_SLOT_LIMIT) {
+        if (!isVerified && playerSlotCount[msg.sender] >= UNVERIFIED_SLOT_LIMIT) {
             revert SlotLimitExceeded();
         }
 
@@ -416,28 +417,6 @@ contract ColorDropPool is
     }
 
     /**
-     * @dev Set user verification status (called by backend verifier after SELF validation)
-     * @param user Address of the user to verify
-     * @param verified Verification status (true if 18+ via SELF)
-     */
-    function setUserVerification(address user, bool verified) external {
-        if (msg.sender != verifier) revert UnauthorizedVerifier();
-        verifiedUsers[user] = verified;
-        emit UserVerified(user, verified);
-    }
-
-    /**
-     * @dev Update verifier address (only owner)
-     * @param newVerifier New backend verifier address
-     */
-    function setVerifier(address newVerifier) external onlyOwner {
-        if (newVerifier == address(0)) revert InvalidVerifierAddress();
-        address oldVerifier = verifier;
-        verifier = newVerifier;
-        emit VerifierUpdated(oldVerifier, newVerifier);
-    }
-
-    /**
      * @dev Update treasury addresses (only owner)
      * @param _treasury1 New first treasury address
      * @param _treasury2 New second treasury address
@@ -452,8 +431,35 @@ contract ColorDropPool is
     }
 
     /**
-     * @dev Get user verification status and slot count
+     * @dev Set user verification status (called by backend after SELF validation)
+     * @param user Address of the user to verify
+     * @param verified Verification status (true if 18+ via SELF)
+     * @notice Only the backend verifier wallet can call this
+     */
+    function setUserVerification(address user, bool verified) external {
+        if (msg.sender != verifier) revert UnauthorizedVerifier();
+        verifiedUsers[user] = verified;
+        emit UserVerified(user, verified);
+    }
+
+    /**
+     * @dev Update verifier address (only owner)
+     * @param newVerifier New backend verifier wallet address
+     */
+    function setVerifier(address newVerifier) external onlyOwner {
+        if (newVerifier == address(0)) revert InvalidVerifierAddress();
+        address oldVerifier = verifier;
+        verifier = newVerifier;
+        emit VerifierUpdated(oldVerifier, newVerifier);
+    }
+
+    /**
+     * @dev Get user verification status and slot availability
      * @param user Address to check
+     * @return isVerified Whether user is SELF-verified (18+)
+     * @return slotsUsed Number of slots currently used
+     * @return slotsAvailable Total slots available (4 or unlimited)
+     * @return canJoin Whether user can join a new pool
      */
     function getUserStatus(address user) external view returns (
         bool isVerified,
