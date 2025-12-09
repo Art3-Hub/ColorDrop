@@ -1,6 +1,6 @@
 import { HardhatUserConfig } from "hardhat/config";
-import "@nomicfoundation/hardhat-toolbox";
-import "@nomicfoundation/hardhat-verify";
+import "@nomicfoundation/hardhat-ethers";
+// import "@openzeppelin/hardhat-upgrades"; // Temporarily disabled due to Hardhat 3.0 compatibility
 import "dotenv/config";
 
 const config: HardhatUserConfig = {
@@ -16,18 +16,19 @@ const config: HardhatUserConfig = {
   networks: {
     // Celo Mainnet
     celo: {
+      type: "http" as const,
       url: process.env.CELO_RPC_URL || "https://forno.celo.org",
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       chainId: 42220,
     },
     // Celo Sepolia Testnet
     sepolia: {
+      type: "http" as const,
       url: process.env.SEPOLIA_RPC_URL || "https://sepolia-forno.celo-testnet.org",
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       chainId: 84532,
     },
     // Local development
     localhost: {
+      type: "http" as const,
       url: "http://127.0.0.1:8545",
     },
   },

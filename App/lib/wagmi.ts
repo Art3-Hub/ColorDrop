@@ -1,6 +1,7 @@
 import { createConfig, http } from 'wagmi';
 import { celo, celoSepolia } from 'wagmi/chains';
 import { injected } from 'wagmi/connectors';
+import type { Chain } from 'wagmi/chains';
 
 // Note: WalletConnect temporarily removed due to Next.js 16 Turbopack compatibility issues
 // with pino/thread-stream test files being bundled. Will add back once resolved.
@@ -8,9 +9,9 @@ import { injected } from 'wagmi/connectors';
 
 // Default to testnet for development/testing
 const defaultNetwork = process.env.NEXT_PUBLIC_DEFAULT_NETWORK || 'sepolia';
-const chains = defaultNetwork === 'sepolia'
+const chains = (defaultNetwork === 'sepolia'
   ? [celoSepolia, celo]
-  : [celo, celoSepolia];
+  : [celo, celoSepolia]) as readonly [Chain, ...Chain[]];
 
 export const config = createConfig({
   chains,

@@ -1,9 +1,6 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  turbopack: {
-    root: '/Users/osx/Projects/Art3Hub/Polkadot/ColorDrop/App',
-  },
   transpilePackages: ['@walletconnect/ethereum-provider'],
   serverExternalPackages: ['pino', 'pino-pretty', 'thread-stream'],
 };

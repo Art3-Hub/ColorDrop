@@ -1,60 +1,79 @@
-import { ethers } from "hardhat";
+import { ethers, upgrades } from "hardhat";
 
 async function main() {
-  console.log("Starting ColorDropPool deployment to Celo...");
+  console.log("🚀 Deploying ColorDropPool (Upgradeable)...\n");
 
   // Get deployer account
   const [deployer] = await ethers.getSigners();
-  console.log("Deploying contracts with account:", deployer.address);
+  console.log("📍 Deploying from:", deployer.address);
+  console.log("💰 Account balance:", ethers.formatEther(await ethers.provider.getBalance(deployer.address)), "CELO\n");
 
-  const balance = await ethers.provider.getBalance(deployer.address);
-  console.log("Account balance:", ethers.formatEther(balance), "CELO");
+  // Treasury addresses from environment variables
+  const treasury1 = process.env.TREASURY_ADDRESS_1;
+  const treasury2 = process.env.TREASURY_ADDRESS_2;
 
-  // Treasury address (update this with your actual treasury address)
-  const treasuryAddress = process.env.TREASURY_ADDRESS || deployer.address;
-  console.log("Treasury address:", treasuryAddress);
+  if (!treasury1 || !treasury2) {
+    throw new Error("❌ TREASURY_ADDRESS_1 and TREASURY_ADDRESS_2 must be set in .env file");
+  }
 
-  // Deploy ColorDropPool
-  console.log("\nDeploying ColorDropPool...");
+  console.log("🏦 Treasury 1:", treasury1);
+  console.log("🏦 Treasury 2:", treasury2);
+  console.log("💸 Each treasury receives: 0.3 CELO per pool (50/50 split)\n");
+
+  // Deploy upgradeable contract
   const ColorDropPool = await ethers.getContractFactory("ColorDropPool");
-  const colorDropPool = await ColorDropPool.deploy(treasuryAddress);
 
-  await colorDropPool.waitForDeployment();
-
-  const contractAddress = await colorDropPool.getAddress();
-  console.log("✅ ColorDropPool deployed to:", contractAddress);
-
-  // Wait for a few block confirmations before verification
-  console.log("\nWaiting for block confirmations...");
-  await colorDropPool.deploymentTransaction()?.wait(5);
-
-  console.log("\n📋 Deployment Summary:");
-  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-  console.log("Contract Address:", contractAddress);
-  console.log("Treasury Address:", treasuryAddress);
-  console.log("Network:", (await ethers.provider.getNetwork()).name);
-  console.log("Chain ID:", (await ethers.provider.getNetwork()).chainId);
-  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-
-  console.log("\n🔍 To verify the contract, run:");
-  console.log(
-    `npx hardhat verify --network ${
-      (await ethers.provider.getNetwork()).name
-    } ${contractAddress} ${treasuryAddress}`
+  console.log("⏳ Deploying proxy contract...");
+  const colorDropPool = await upgrades.deployProxy(
+    ColorDropPool,
+    [treasury1, treasury2],
+    {
+      initializer: "initialize",
+      kind: "uups" // Can be 'transparent' or 'uups'
+    }
   );
 
-  // Return deployment info
-  return {
-    contractAddress,
-    treasuryAddress,
-    deployer: deployer.address,
-  };
+  await colorDropPool.waitForDeployment();
+  const proxyAddress = await colorDropPool.getAddress();
+
+  console.log("\n✅ ColorDropPool deployed successfully!");
+  console.log("📍 Proxy Address:", proxyAddress);
+  console.log("📍 Implementation Address:", await upgrades.erc1967.getImplementationAddress(proxyAddress));
+  console.log("📍 Admin Address:", await upgrades.erc1967.getAdminAddress(proxyAddress));
+
+  // Verify contract configuration
+  console.log("\n🔍 Verifying configuration...");
+  const entryFee = await colorDropPool.ENTRY_FEE();
+  const poolSize = await colorDropPool.POOL_SIZE();
+  const prize1st = await colorDropPool.PRIZE_1ST();
+  const prize2nd = await colorDropPool.PRIZE_2ND();
+  const prize3rd = await colorDropPool.PRIZE_3RD();
+  const systemFee = await colorDropPool.SYSTEM_FEE();
+  const currentPoolId = await colorDropPool.currentPoolId();
+  const version = await colorDropPool.version();
+
+  console.log("✓ Entry Fee:", ethers.formatEther(entryFee), "CELO");
+  console.log("✓ Pool Size:", poolSize.toString(), "players");
+  console.log("✓ 1st Prize:", ethers.formatEther(prize1st), "CELO");
+  console.log("✓ 2nd Prize:", ethers.formatEther(prize2nd), "CELO");
+  console.log("✓ 3rd Prize:", ethers.formatEther(prize3rd), "CELO");
+  console.log("✓ System Fee:", ethers.formatEther(systemFee), "CELO (split 50/50)");
+  console.log("✓ Current Pool ID:", currentPoolId.toString());
+  console.log("✓ Contract Version:", version);
+
+  console.log("\n📝 Save these addresses to your .env file:");
+  console.log(`PROXY_ADDRESS=${proxyAddress}`);
+  console.log(`IMPLEMENTATION_ADDRESS=${await upgrades.erc1967.getImplementationAddress(proxyAddress)}`);
+
+  console.log("\n🎮 To verify on CeloScan, run:");
+  console.log(`npx hardhat verify --network celo ${proxyAddress}`);
+
+  console.log("\n✨ Deployment complete!");
 }
 
-// Execute deployment
 main()
   .then(() => process.exit(0))
   .catch((error) => {
-    console.error(error);
+    console.error("\n❌ Deployment failed:", error);
     process.exit(1);
   });
