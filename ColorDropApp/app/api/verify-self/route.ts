@@ -7,7 +7,7 @@ import { getContract } from 'viem'
 // Initialize the Self Backend Verifier
 const selfBackendVerifier = new SelfBackendVerifier(
   process.env.NEXT_PUBLIC_SELF_SCOPE || 'colordrop',
-  `${process.env.NEXT_PUBLIC_APP_URL/api/verify-self`,
+  (process.env.NEXT_PUBLIC_APP_URL || '') + '/api/verify-self',
   process.env.NEXT_PUBLIC_SELF_USE_MOCK === 'true', // mockPassport (false for mainnet)
   AllIds, // allowed attestation IDs
   new DefaultConfigStore({
@@ -87,8 +87,9 @@ export async function POST(request: NextRequest) {
       const yy = dateOfBirthRaw.substring(0, 2)
       const mm = dateOfBirthRaw.substring(2, 4)
       const dd = dateOfBirthRaw.substring(4, 6)
-      const yyyy = parseInt(yy) >= 50 ? `19${yy}` : `20${yy}`
-      dateOfBirth = `${yyyy}-${mm}-${dd}`
+      const century = parseInt(yy) >= 50 ? '19' : '20'
+      const yyyy = century + yy
+      dateOfBirth = yyyy + '-' + mm + '-' + dd
     }
 
     // Extract wallet address from userContextData (hex encoded)
