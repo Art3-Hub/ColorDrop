@@ -6,14 +6,16 @@ import { PaymentModal } from '../PaymentModal';
 import { SelfVerificationModal } from '../SelfVerificationModal';
 import { useSelf } from '@/contexts/SelfContext';
 import { useColorDropPool } from '@/hooks/useColorDropPool';
+import { getCurrentUser } from '@/lib/farcaster';
 
 interface PlayGridProps {
   onStartGame: (slot: number) => void;
+  onViewLeaderboard?: () => void;
 }
 
 type FlowState = 'idle' | 'verification_prompt' | 'payment' | 'playing';
 
-export function PlayGrid({ onStartGame }: PlayGridProps) {
+export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
   const { address } = useAccount();
   const {
     isVerified,
@@ -73,8 +75,19 @@ export function PlayGrid({ onStartGame }: PlayGridProps) {
 
     try {
       // Get user's FID from Farcaster context
-      // TODO: Integrate with Farcaster SDK to get actual FID
-      const fid = BigInt(1); // Placeholder
+      let fid = BigInt(1); // Default fallback
+
+      try {
+        const farcasterUser = await getCurrentUser();
+        if (farcasterUser?.fid) {
+          fid = BigInt(farcasterUser.fid);
+          console.log('Using Farcaster FID:', fid);
+        } else {
+          console.warn('No Farcaster FID found, using fallback FID:', fid);
+        }
+      } catch (error) {
+        console.warn('Failed to get Farcaster FID, using fallback:', error);
+      }
 
       await joinPool(fid);
     } catch (error) {
@@ -270,6 +283,19 @@ export function PlayGrid({ onStartGame }: PlayGridProps) {
             <div className="text-[10px] sm:text-xs text-gray-600">Total Prize Pool</div>
           </div>
         </div>
+
+        {/* View Leaderboard Button - Show if pool is complete */}
+        {poolData?.isComplete && onViewLeaderboard && (
+          <div className="mt-6">
+            <button
+              onClick={onViewLeaderboard}
+              className="w-full px-6 py-4 bg-gradient-to-r from-yellow-500 to-orange-600 text-white font-bold rounded-xl hover:from-yellow-600 hover:to-orange-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+            >
+              <span className="text-2xl">🏆</span>
+              <span>View Pool Results</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* SELF Verification Modal */}

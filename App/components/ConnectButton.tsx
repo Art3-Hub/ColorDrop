@@ -1,6 +1,7 @@
 'use client';
 
-import { useAccount, useConnect, useDisconnect } from 'wagmi';
+import { useAccount, useDisconnect } from 'wagmi';
+import { useAppKit } from '@reown/appkit/react';
 import { isFarcaster } from '@/lib/platform';
 import { getCurrentUser } from '@/lib/farcaster';
 import { useState, useEffect } from 'react';
@@ -8,8 +9,8 @@ import type { FarcasterUser } from '@/lib/farcaster';
 
 export function ConnectButton() {
   const { address, isConnected } = useAccount();
-  const { connect, connectors } = useConnect();
   const { disconnect } = useDisconnect();
+  const { open } = useAppKit();
   const [farcasterUser, setFarcasterUser] = useState<FarcasterUser | null>(null);
 
   const platformIsFarcaster = isFarcaster();
@@ -38,15 +39,8 @@ export function ConnectButton() {
   };
 
   const handleBrowserConnect = () => {
-    // Prefer WalletConnect, fallback to injected
-    const walletConnectConnector = connectors.find(c => c.id === 'walletConnect');
-    const injectedConnector = connectors.find(c => c.id === 'injected');
-
-    const connector = walletConnectConnector || injectedConnector;
-
-    if (connector) {
-      connect({ connector });
-    }
+    // Open Reown AppKit modal - works for both browser wallets and Farcaster injected wallet
+    open();
   };
 
   // Farcaster Mode

@@ -698,7 +698,7 @@ SELF Protocol provides privacy-preserving age verification (18+) using zero-know
 NEXT_PUBLIC_SELF_SCOPE=colordrop
 NEXT_PUBLIC_SELF_APP_NAME=Color Drop Tournament
 NEXT_PUBLIC_SELF_USE_MOCK=false
-NEXT_PUBLIC_SITE_URL=https://colordrop.app
+NEXT_PUBLIC_APP_URL=https://colordrop.app
 NEXT_PUBLIC_COLOR_DROP_CONTRACT_ADDRESS=0x...
 VERIFIER_PRIVATE_KEY=0x...  # Backend wallet for setUserVerification calls
 ```
@@ -765,7 +765,7 @@ Edit `.env.local`:
 NEXT_PUBLIC_COLOR_DROP_CONTRACT_ADDRESS=0x...  # Proxy address
 NEXT_PUBLIC_CELO_RPC_URL=https://forno.celo.org
 NEXT_PUBLIC_SELF_SCOPE=colordrop
-NEXT_PUBLIC_SITE_URL=https://colordrop.app
+NEXT_PUBLIC_APP_URL=https://colordrop.app
 VERIFIER_PRIVATE_KEY=0x...  # Same as contract verifier
 ```
 
@@ -978,6 +978,45 @@ When Claude works on this project:
    - Change slot limits → Edit `UNVERIFIED_SLOT_LIMIT` constant
    - Add treasury → Modify `initialize()` and `_distributePrizes()`
    - Fix SELF integration → Check `/api/verify-self/` routes
+
+---
+
+## 🎮 Farcaster Mini App Setup
+
+### Configuration Status
+✅ Route handler: `app/.well-known/farcaster.json/route.ts`
+✅ Frame metadata: `app/layout.tsx` (generateMetadata)
+✅ Reown AppKit: `app/providers.tsx` + `lib/wagmi.ts`
+✅ Environment: `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_APP_URL`
+✅ Placeholder images: icon.png, splash.png, og-image.png, screenshots
+
+### ⚠️ Action Required: Generate Account Association
+
+To activate Mini App in Farcaster:
+
+1. **Visit**: https://base.dev/preview?tab=account
+2. **Connect wallet**: `0xc2564e41b7f5cb66d2d99466450cfebce9e8228f` (deployer)
+3. **Sign message** for domain: `colordrop.app`
+4. **Copy values** (header, payload, signature)
+5. **Update**: `app/.well-known/farcaster.json/route.ts` lines 9-11
+
+Replace placeholders with actual values from base.dev.
+
+### Testing
+
+**Local**: http://localhost:3000/.well-known/farcaster.json
+**Production**: Deploy to public URL, then share in Farcaster to test Mini App launch
+
+### How It Works
+
+**In Browser**:
+- Reown AppKit modal for wallet selection
+- Supports MetaMask, WalletConnect, Coinbase Wallet
+
+**In Farcaster Mini App**:
+- Farcaster's injected wallet auto-detected
+- Seamless wallet connection via Reown
+- User sees Farcaster profile + wallet status
 
 ---
 

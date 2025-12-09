@@ -102,7 +102,7 @@ export function SelfProvider({ children }: SelfProviderProps) {
     }
 
     try {
-      const endpoint = `${process.env.NEXT_PUBLIC_SITE_URL}/api/verify-self`
+      const endpoint = `${process.env.NEXT_PUBLIC_APP_URL}/api/verify-self`
 
       console.log('🔧 Self Protocol Configuration:', {
         endpoint,
@@ -164,7 +164,7 @@ export function SelfProvider({ children }: SelfProviderProps) {
 
     try {
       console.log('🔗 Generated Self deeplink:', universalLink)
-      console.log('📍 Verification endpoint:', `${process.env.NEXT_PUBLIC_SITE_URL}/api/verify-self`)
+      console.log('📍 Verification endpoint:', `${process.env.NEXT_PUBLIC_APP_URL}/api/verify-self`)
       console.log('👤 User address:', address)
 
       // Check if we're in Farcaster environment

@@ -3,7 +3,9 @@
 import React, { useEffect, useState } from 'react';
 import { WagmiProvider } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { config } from '@/lib/wagmi';
+import { createAppKit } from '@reown/appkit/react';
+import { celo } from '@reown/appkit/networks';
+import { wagmiAdapter, projectId, NETWORK_INFO } from '@/lib/wagmi';
 import { initializeFarcaster } from '@/lib/farcaster';
 import { detectPlatform } from '@/lib/platform';
 import { SelfProvider } from '@/contexts/SelfContext';
@@ -18,6 +20,39 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// AppKit metadata
+const metadata = {
+  name: 'Color Drop Tournament',
+  description: 'Ultra-fast color matching game on Farcaster. Match colors, win CELO prizes!',
+  url: process.env.NEXT_PUBLIC_APP_URL|| 'https://colordrop.art3hub.xyz',
+  icons: ['/icon.png'],
+};
+
+// Initialize Reown AppKit - MAINNET ONLY
+// This creates the wallet connection modal for both browser and Farcaster environments
+if (projectId) {
+  createAppKit({
+    adapters: [wagmiAdapter],
+    projectId,
+    networks: [celo], // MAINNET ONLY
+    defaultNetwork: celo,
+    metadata,
+    features: {
+      analytics: false, // Disable analytics for privacy
+    },
+    themeMode: 'light',
+    themeVariables: {
+      '--w3m-accent': '#7c3aed', // Purple accent matching game theme
+      '--w3m-border-radius-master': '12px',
+    },
+  });
+
+  console.log('✅ Reown AppKit initialized - MAINNET ONLY (Celo)', {
+    chainId: celo.id,
+    chainName: celo.name,
+  });
+}
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
@@ -53,7 +88,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <WagmiProvider config={config}>
+    <WagmiProvider config={wagmiAdapter.wagmiConfig}>
       <QueryClientProvider client={queryClient}>
         <SelfProvider>
           {children}

@@ -7,7 +7,7 @@ import { getContract } from 'viem'
 // Initialize the Self Backend Verifier
 const selfBackendVerifier = new SelfBackendVerifier(
   process.env.NEXT_PUBLIC_SELF_SCOPE || 'colordrop',
-  `${process.env.NEXT_PUBLIC_SITE_URL}/api/verify-self`,
+  `${process.env.NEXT_PUBLIC_APP_URL/api/verify-self`,
   process.env.NEXT_PUBLIC_SELF_USE_MOCK === 'true', // mockPassport (false for mainnet)
   AllIds, // allowed attestation IDs
   new DefaultConfigStore({
