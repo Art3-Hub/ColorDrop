@@ -35,7 +35,8 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
   const [flowState, setFlowState] = useState<FlowState>('idle');
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
 
-  const ENTRY_FEE_VALUE = parseFloat(process.env.NEXT_PUBLIC_ENTRY_FEE || '0.3');
+  const POOL_SIZE = 9; // 9-player pools for faster games
+  const ENTRY_FEE_VALUE = parseFloat(process.env.NEXT_PUBLIC_ENTRY_FEE || '0.1');
   const ENTRY_FEE = `${ENTRY_FEE_VALUE} CELO`;
 
   // Handle successful join
@@ -151,33 +152,33 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
             </div>
           )}
 
-          {/* Prize Pool */}
+          {/* Prize Pool - 9 players x 0.1 CELO = 0.9 CELO total */}
           <div className="grid grid-cols-3 gap-2 sm:gap-4 mt-4 sm:mt-6 max-w-3xl mx-auto">
-            {/* 1st Place */}
+            {/* 1st Place - 0.45 CELO (50%) */}
             <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl sm:rounded-2xl p-3 sm:p-4 border-2 border-yellow-300 shadow-lg">
               <div className="text-3xl sm:text-4xl mb-1 sm:mb-2">🥇</div>
               <div className="text-lg sm:text-2xl font-bold text-yellow-700">
-                {(ENTRY_FEE_VALUE * 6).toFixed(3).replace(/\.?0+$/, '')}
+                {(ENTRY_FEE_VALUE * 4.5).toFixed(2)}
               </div>
               <div className="text-xs sm:text-sm font-semibold text-yellow-600">CELO</div>
               <div className="text-[10px] sm:text-xs text-yellow-700 mt-1 font-medium">1st Place</div>
             </div>
 
-            {/* 2nd Place */}
+            {/* 2nd Place - 0.225 CELO (25%) */}
             <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl sm:rounded-2xl p-3 sm:p-4 border-2 border-gray-300 shadow-lg">
               <div className="text-3xl sm:text-4xl mb-1 sm:mb-2">🥈</div>
               <div className="text-lg sm:text-2xl font-bold text-gray-700">
-                {(ENTRY_FEE_VALUE * 3).toFixed(3).replace(/\.?0+$/, '')}
+                {(ENTRY_FEE_VALUE * 2.25).toFixed(3)}
               </div>
               <div className="text-xs sm:text-sm font-semibold text-gray-600">CELO</div>
               <div className="text-[10px] sm:text-xs text-gray-700 mt-1 font-medium">2nd Place</div>
             </div>
 
-            {/* 3rd Place */}
+            {/* 3rd Place - 0.075 CELO (8.33%) */}
             <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl sm:rounded-2xl p-3 sm:p-4 border-2 border-orange-300 shadow-lg">
               <div className="text-3xl sm:text-4xl mb-1 sm:mb-2">🥉</div>
               <div className="text-lg sm:text-2xl font-bold text-orange-700">
-                {(ENTRY_FEE_VALUE * 1).toFixed(3).replace(/\.?0+$/, '')}
+                {(ENTRY_FEE_VALUE * 0.75).toFixed(3)}
               </div>
               <div className="text-xs sm:text-sm font-semibold text-orange-600">CELO</div>
               <div className="text-[10px] sm:text-xs text-orange-700 mt-1 font-medium">3rd Place</div>
@@ -185,9 +186,9 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
           </div>
         </div>
 
-        {/* Play Grid - 12 slots in 4x3 grid */}
-        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 sm:gap-4 mb-8">
-          {Array.from({ length: 12 }, (_, i) => i + 1).map((slotNumber) => {
+        {/* Play Grid - 9 slots in 3x3 grid */}
+        <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-8 max-w-md mx-auto">
+          {Array.from({ length: POOL_SIZE }, (_, i) => i + 1).map((slotNumber) => {
             const slotIndex = slotNumber - 1;
             const isOccupied = poolData && slotIndex < poolData.playerCount;
             const canPlay = !hasReachedSlotLimit;
@@ -266,7 +267,7 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
         <div className="mt-6 grid grid-cols-3 gap-3 sm:gap-4 text-center">
           <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 shadow">
             <div className="text-xl sm:text-2xl font-bold text-purple-600">
-              {poolData ? 12 - poolData.playerCount : 12}
+              {poolData ? POOL_SIZE - poolData.playerCount : POOL_SIZE}
             </div>
             <div className="text-[10px] sm:text-xs text-gray-600">Slots Available</div>
           </div>
@@ -278,7 +279,7 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
           </div>
           <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 shadow">
             <div className="text-xl sm:text-2xl font-bold text-green-600">
-              {(ENTRY_FEE_VALUE * 12).toFixed(1)}
+              {(ENTRY_FEE_VALUE * POOL_SIZE).toFixed(2)}
             </div>
             <div className="text-[10px] sm:text-xs text-gray-600">Total Prize Pool</div>
           </div>

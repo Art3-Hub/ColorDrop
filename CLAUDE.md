@@ -8,7 +8,7 @@ Last Updated: December 2025
 
 ## 📋 Project Overview
 
-Color Drop Tournament is a skill-based Farcaster Mini App where 12 players compete to match colors in 10 seconds, with winners receiving CELO prizes (0.6, 0.3, 0.1 CELO). The project integrates:
+Color Drop Tournament is a skill-based Farcaster Mini App where 9 players compete to match colors in 10 seconds, with winners receiving CELO prizes (0.45, 0.225, 0.075 CELO). The project integrates:
 
 - **Frontend**: Next.js 16 + React + TypeScript
 - **Blockchain**: Celo (Solidity 0.8.20 upgradeable contracts)
@@ -18,11 +18,11 @@ Color Drop Tournament is a skill-based Farcaster Mini App where 12 players compe
 
 ### Core Game Mechanics
 - **Entry Fee**: 0.1 CELO per slot
-- **Pool Size**: 12 slots per game
+- **Pool Size**: 9 slots per game (3×3 grid for faster games)
 - **Game Duration**: 10 seconds to match color
 - **Color System**: HSL sliders (Hue, Saturation, Lightness)
 - **Scoring**: Delta E 2000 color difference algorithm
-- **Winners**: Top 3 most accurate matches (0.6, 0.3, 0.1 CELO)
+- **Winners**: Top 3 most accurate matches (0.45, 0.225, 0.075 CELO)
 - **Multi-Slot**: Users can play multiple slots per pool
   - Unverified: Maximum 4 slots
   - SELF-verified (18+): Unlimited slots
@@ -46,23 +46,23 @@ Pool Completion → Winner Calculation → Prize Distribution
 ```
 ┌─────────────────────────────────────────┐
 │     POOL STATUS SCREEN                  │
-│  Pool #248 • 7/12 Filled • Live 🔴     │
+│  Pool #248 • 5/9 Filled • Live 🔴       │
 │                                          │
 │  ✅ Verified - Unlimited Slots          │
 │  (or: ⚠️ 2 slots remaining)            │
 │                                          │
-│  ┌────┬────┬────┬────┐                 │
-│  │ ✓  │ ✓  │ 🎮 │ ✓  │  Click slot    │
-│  │ #1 │ #2 │ #3 │ #4 │  to play       │
-│  └────┴────┴────┴────┘                 │
-│  ┌────┬────┬────┬────┐                 │
-│  │ 🎮 │ ✓  │ 🎮 │ ✓  │                 │
-│  │ #5 │ #6 │ #7 │ #8 │                 │
-│  └────┴────┴────┴────┘                 │
-│  ┌────┬────┬────┬────┐                 │
-│  │ 🎮 │ 🎮 │ 🎮 │ 🎮 │                 │
-│  │ #9 │#10 │#11 │#12 │                 │
-│  └────┴────┴────┴────┘                 │
+│  ┌────┬────┬────┐                       │
+│  │ ✓  │ ✓  │ 🎮 │  Click slot          │
+│  │ #1 │ #2 │ #3 │  to play             │
+│  └────┴────┴────┘                       │
+│  ┌────┬────┬────┐                       │
+│  │ 🎮 │ ✓  │ 🎮 │                       │
+│  │ #4 │ #5 │ #6 │                       │
+│  └────┴────┴────┘                       │
+│  ┌────┬────┬────┐                       │
+│  │ ✓  │ ✓  │ 🎮 │                       │
+│  │ #7 │ #8 │ #9 │                       │
+│  └────┴────┴────┘                       │
 └─────────────────────────────────────────┘
 ```
 
@@ -404,7 +404,7 @@ function submitScore(uint256 score) external {
 
 ### 7. Pool Completion & Winner Calculation
 
-**Triggered when all 12 slots submitted scores:**
+**Triggered when all 9 slots submitted scores:**
 
 **Winner Calculation Algorithm:**
 ```solidity
@@ -457,18 +457,15 @@ function _distributePrizes(address winner1, address winner2, address winner3) in
 ```
 Pool #248 - Final Results
 
-🥇 1st  @alice   97.64%  →  0.6 CELO
-🥈 2nd  @bob     95.23%  →  0.3 CELO
-🥉 3rd  @charlie 92.47%  →  0.1 CELO
+🥇 1st  @alice   97.64%  →  0.45 CELO
+🥈 2nd  @bob     95.23%  →  0.225 CELO
+🥉 3rd  @charlie 92.47%  →  0.075 CELO
    4th  @dave    88.91%
    5th  @eve     85.56%
    6th  @frank   82.34%
    7th  @grace   79.12%
    8th  @henry   75.67%
    9th  @iris    71.23%
-   10th @jack    68.45%
-   11th @kelly   64.89%
-   12th @leo     62.34%
 ```
 
 ### 8. Multi-Slot Strategy Example
@@ -477,13 +474,13 @@ Pool #248 - Final Results
 ```
 Session Timeline:
 ─────────────────────────────────────────
-Pool #248 opens (0/12 filled)
+Pool #248 opens (0/9 filled)
 
 1. Play Slot #1
    → Color: H:120, S:80%, L:50% (target)
    → User:  H:118, S:82%, L:48%
    → Score: 85.32%
-   → Status: 8th place (not in top 3)
+   → Status: 6th place (not in top 3)
 
 2. Play Slot #5
    → Color: H:300, S:60%, L:40% (target)
@@ -495,37 +492,36 @@ Pool #248 opens (0/12 filled)
    → Color: H:60, S:90%, L:70% (target)
    → User:  H:55, S:85%, L:75%
    → Score: 79.45%
-   → Status: 11th place (not in top 3)
+   → Status: 8th place (not in top 3)
 
-4. Slot #12 → 🔒 LOCKED (4 slots used)
+4. Try Slot #5 again → 🔒 LOCKED (4 slots used)
    → Prompt: "Verify age (18+) for unlimited slots"
 
 Final Results:
 Investment: 3 × 0.1 = 0.3 CELO
-Winnings: 0.1 CELO (3rd place)
-Net: -0.2 CELO
+Winnings: 0.075 CELO (3rd place)
+Net: -0.225 CELO
 ```
 
 **Verified User (unlimited slots):**
 ```
 Session Timeline:
 ─────────────────────────────────────────
-Pool #249 opens (0/12 filled)
+Pool #249 opens (0/9 filled)
 
-1-12. Play all 12 slots
-      Scores: 97.64%, 95.23%, 92.47%, 88.91%, 85.56%,
-              82.34%, 79.12%, 75.67%, 71.23%, 68.45%,
-              64.89%, 62.34%
+1-9. Play all 9 slots
+     Scores: 97.64%, 95.23%, 92.47%, 88.91%, 85.56%,
+             82.34%, 79.12%, 75.67%, 71.23%
 
-      Rankings: 🥇 1st, 🥈 2nd, 🥉 3rd (all yours!)
+     Rankings: 🥇 1st, 🥈 2nd, 🥉 3rd (all yours!)
 
 Final Results:
-Investment: 12 × 0.1 = 1.2 CELO
-Winnings: 0.6 + 0.3 + 0.1 = 1.0 CELO
-Net: -0.2 CELO (guaranteed top 3 but negative ROI)
+Investment: 9 × 0.1 = 0.9 CELO
+Winnings: 0.45 + 0.225 + 0.075 = 0.75 CELO
+Net: -0.15 CELO (guaranteed top 3 but negative ROI)
 
 Note: This is an extreme example. The optimal strategy
-is typically 4-6 slots for competitive play.
+is typically 3-4 slots for competitive play.
 ```
 
 ### 9. Workflow Timing Analysis
@@ -592,22 +588,22 @@ ColorDrop/
 
 ## 🔧 Smart Contract Architecture
 
-### ColorDropPool.sol v2.0.0
+### ColorDropPool.sol v3.1.0
 
 **Contract Type**: Upgradeable (OpenZeppelin UUPS pattern)
 
 #### Key Features
 - **Entry Fee**: 0.1 CELO per slot
-- **Pool Size**: 12 players
+- **Pool Size**: 9 players (3×3 grid for faster games)
 - **Age Verification**: SELF Protocol integration
 - **Slot Limits**:
   - Unverified users: 4 slots max
   - SELF-verified (18+): Unlimited slots
 - **Prize Distribution**:
-  - 1st: 0.6 CELO
-  - 2nd: 0.3 CELO
-  - 3rd: 0.1 CELO
-  - System Fee: 0.2 CELO (split 50/50 between dual treasuries)
+  - 1st: 0.45 CELO (50%)
+  - 2nd: 0.225 CELO (25%)
+  - 3rd: 0.075 CELO (8.33%)
+  - System Fee: 0.15 CELO (split 50/50 between dual treasuries)
 
 #### State Variables
 ```solidity
@@ -623,12 +619,12 @@ address public verifier;                             // Backend verifier wallet
 #### Critical Constants
 ```solidity
 uint256 public constant ENTRY_FEE = 0.1 ether;
-uint8 public constant POOL_SIZE = 12;
+uint8 public constant POOL_SIZE = 9;
 uint8 public constant UNVERIFIED_SLOT_LIMIT = 4;     // Max slots for unverified
-uint256 public constant PRIZE_1ST = 0.6 ether;
-uint256 public constant PRIZE_2ND = 0.3 ether;
-uint256 public constant PRIZE_3RD = 0.1 ether;
-uint256 public constant SYSTEM_FEE = 0.2 ether;
+uint256 public constant PRIZE_1ST = 0.45 ether;      // 50% of prize pool
+uint256 public constant PRIZE_2ND = 0.225 ether;     // 25% of prize pool
+uint256 public constant PRIZE_3RD = 0.075 ether;     // 8.33% of prize pool
+uint256 public constant SYSTEM_FEE = 0.15 ether;     // 16.67% of total pool
 ```
 
 #### Key Functions
@@ -934,6 +930,10 @@ npm run type-check      # TypeScript check
   - Implemented slot limit system (4 unverified / unlimited verified)
   - Dual treasury system
   - Upgradeable contract pattern
+- **v3.1.0** (Dec 2025):
+  - Reduced pool size from 12 to 9 players for faster games
+  - Updated prize distribution (0.45, 0.225, 0.075 CELO)
+  - 3×3 grid layout for better UX
 
 ### Future Enhancements
 - [ ] NFT rewards for top performers

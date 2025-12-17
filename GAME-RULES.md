@@ -2,7 +2,7 @@
 
 **Official rules and gameplay mechanics for Color Drop Tournament**
 
-Version 1.0 | Last Updated: December 2025
+Version 1.1 | Last Updated: December 2025
 
 ---
 
@@ -26,14 +26,14 @@ Version 1.0 | Last Updated: December 2025
 Match a randomly generated target color as accurately as possible within 10 seconds using HSL (Hue, Saturation, Lightness) sliders.
 
 ### Format
-- **Tournament-style pools** of 12 players
+- **Tournament-style pools** of 9 players (3×3 grid)
 - **Single elimination** — only top 3 win prizes
 - **Skill-based** — accuracy determines ranking
 - **Fast-paced** — 10 seconds per round
 
 ### Entry Requirements
 - Valid Farcaster account (FID)
-- 0.3 CELO entry fee
+- 0.1 CELO entry fee
 - Connected wallet (auto-managed via Farcaster Mini App)
 
 ---
@@ -43,15 +43,15 @@ Match a randomly generated target color as accurately as possible within 10 seco
 ### Pool Formation
 
 #### Standard Pool
-- **Size:** 12 players exactly
+- **Size:** 9 players exactly (3×3 grid)
 - **Entry Fee:** 0.1 CELO per player
-- **Total Pool:** 1.2 CELO
-- **Prize Pool:** 1.0 CELO (0.6 + 0.3 + 0.1)
-- **System Fee:** 0.2 CELO (16.67%)
+- **Total Pool:** 0.9 CELO
+- **Prize Pool:** 0.75 CELO (0.45 + 0.225 + 0.075)
+- **System Fee:** 0.15 CELO (16.67%)
 
 #### Pool States
-1. **Open** — Accepting players (0-11/12)
-2. **Full** — 12 players joined, waiting to start
+1. **Open** — Accepting players (0-8/9)
+2. **Full** — 9 players joined, waiting to start
 3. **Active** — Game in progress (10 seconds)
 4. **Completed** — Results finalized, prizes distributed
 
@@ -59,20 +59,20 @@ Match a randomly generated target color as accurately as possible within 10 seco
 ```
 Open → Full → Active → Completed
  ↓       ↓       ↓         ↓
-0-11   12/12   Playing   Paid Out
+0-8    9/9   Playing   Paid Out
 ```
 
 ### Joining a Pool
 
 #### Requirements
 - Farcaster account in good standing
-- Sufficient CELO balance (0.3 CELO + gas)
+- Sufficient CELO balance (0.1 CELO + gas)
 - No active participation in another pool
 - Accept Terms of Service
 
 #### Process
 1. Select available pool from lobby
-2. Confirm 0.3 CELO payment
+2. Confirm 0.1 CELO payment
 3. Transaction broadcast to Celo network
 4. Wait for confirmation (usually <5 seconds)
 5. Enter lobby and wait for pool to fill
@@ -87,7 +87,7 @@ Open → Full → Active → Completed
 ## 🎮 Gameplay Rules
 
 ### Game Start
-- Pool starts automatically when 12/12 players joined
+- Pool starts automatically when 9/9 players joined
 - 3-second countdown before target color reveals
 - All players see identical target color simultaneously
 
@@ -170,14 +170,14 @@ Player B: 95.3% @ 5.8s → Rank 2
 
 ### Ranking Display
 ```
-🥇 @player1 — 98.7% (4.2s) → 0.6 CELO
-🥈 @player2 — 97.1% (6.1s) → 0.3 CELO
-🥉 @player3 — 95.8% (7.9s) → 0.1 CELO
+🥇 @player1 — 98.7% (4.2s) → 0.45 CELO
+🥈 @player2 — 97.1% (6.1s) → 0.225 CELO
+🥉 @player3 — 95.8% (7.9s) → 0.075 CELO
 ───────────────────────────────────
 4. @player4 — 94.2% (5.5s) ❌
 5. @player5 — 93.7% (3.8s) ❌
 ...
-12. @player12 — 42.1% (8.0s) ❌
+9. @player9 — 52.1% (8.0s) ❌
 ```
 
 ---
@@ -188,13 +188,13 @@ Player B: 95.3% @ 5.8s → Rank 2
 
 | Rank | Prize | % of Pool | Condition |
 |------|-------|-----------|-----------|
-| 🥇 1st | 0.6 CELO | 50.0% | Highest accuracy |
-| 🥈 2nd | 0.3 CELO | 25.0% | Second highest |
-| 🥉 3rd | 0.1 CELO | 8.3% | Third highest |
-| 4-12 | 0 CELO | 0% | No prize |
-| Treasury 1 | 0.1 CELO | 8.3% | Platform operations |
-| Treasury 2 | 0.1 CELO | 8.3% | Development fund |
-| **Total** | **1.2 CELO** | **100%** | — |
+| 🥇 1st | 0.45 CELO | 50.0% | Highest accuracy |
+| 🥈 2nd | 0.225 CELO | 25.0% | Second highest |
+| 🥉 3rd | 0.075 CELO | 8.3% | Third highest |
+| 4-9 | 0 CELO | 0% | No prize |
+| Treasury 1 | 0.075 CELO | 8.3% | Platform operations |
+| Treasury 2 | 0.075 CELO | 8.3% | Development fund |
+| **Total** | **0.9 CELO** | **100%** | — |
 
 ### Payout Process
 
@@ -230,7 +230,7 @@ If prize transfer fails (e.g., invalid wallet):
 
 #### Wallet Requirements
 - Valid Celo-compatible wallet
-- Sufficient balance (0.3 CELO + ~0.01 gas)
+- Sufficient balance (0.1 CELO + ~0.01 gas)
 - No blacklisted addresses
 - Accepts terms of service
 
@@ -432,6 +432,7 @@ Unlock colors by achieving **90%+ accuracy**:
 
 ### Version History
 - **v1.0** (Dec 2025) — Initial ruleset
+- **v1.1** (Dec 2025) — Reduced pool size from 12 to 9 players for faster games
 
 ### Amendment Process
 - Rule changes announced 7 days in advance
@@ -473,7 +474,7 @@ By playing Color Drop Tournament, you agree to:
 - Comply with local regulations
 
 **Last Updated:** December 2025
-**Version:** 1.0
+**Version:** 1.1
 **Effective Date:** Upon first game entry
 
 ---

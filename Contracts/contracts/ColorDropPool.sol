@@ -10,7 +10,7 @@ import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 /**
  * @title ColorDropPool
  * @dev Upgradeable tournament-style pool for Color Drop game on Farcaster x Celo
- * @notice 12 players compete @ 0.1 CELO, top 3 win prizes (0.6, 0.3, 0.1 CELO)
+ * @notice 9 players compete @ 0.1 CELO, top 3 win prizes (0.45, 0.225, 0.075 CELO)
  * @custom:security-contact security@colordrop.app
  */
 contract ColorDropPool is
@@ -23,15 +23,15 @@ contract ColorDropPool is
     // Role definitions
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
-    // Constants
+    // Constants - 9 players x 0.1 CELO = 0.9 CELO total pool
     uint256 public constant ENTRY_FEE = 0.1 ether; // 0.1 CELO per player
-    uint8 public constant POOL_SIZE = 12;
+    uint8 public constant POOL_SIZE = 9;
     uint8 public constant UNVERIFIED_SLOT_LIMIT = 4; // Max slots for unverified users
-    uint256 public constant PRIZE_1ST = 0.6 ether; // 50% of prize pool
-    uint256 public constant PRIZE_2ND = 0.3 ether; // 25% of prize pool
-    uint256 public constant PRIZE_3RD = 0.1 ether; // 8.33% of prize pool
-    uint256 public constant SYSTEM_FEE = 0.2 ether; // 16.67% of total pool
-    uint256 public constant FINALIZATION_TIMEOUT = 2 minutes; // Reduced from 5 minutes
+    uint256 public constant PRIZE_1ST = 0.45 ether; // 50% of prize pool
+    uint256 public constant PRIZE_2ND = 0.225 ether; // 25% of prize pool
+    uint256 public constant PRIZE_3RD = 0.075 ether; // 8.33% of prize pool
+    uint256 public constant SYSTEM_FEE = 0.15 ether; // 16.67% of total pool
+    uint256 public constant FINALIZATION_TIMEOUT = 2 minutes;
 
     // Structs
     struct Player {
@@ -353,7 +353,7 @@ contract ColorDropPool is
         Pool storage pool = pools[poolId];
         address[3] memory topPlayers;
 
-        // Simple bubble sort for top 3 (sufficient for 12 players)
+        // Simple bubble sort for top 3 (sufficient for 9 players)
         for (uint8 i = 0; i < pool.playerCount; i++) {
             for (uint8 j = 0; j < 3; j++) {
                 if (topPlayers[j] == address(0)) {
@@ -522,7 +522,7 @@ contract ColorDropPool is
      * @dev Get contract version for upgrade tracking
      */
     function version() external pure returns (string memory) {
-        return "3.0.1";
+        return "3.1.0";
     }
 
     /**

@@ -1,12 +1,14 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { WagmiProvider } from 'wagmi';
+import { WagmiProvider, cookieToInitialState } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { config, projectId } from '@/lib/wagmi';
+import { config, projectId, metadata, networks, wagmiAdapter } from '@/lib/wagmi';
 import { initializeFarcaster } from '@/lib/farcaster';
 import { detectPlatform } from '@/lib/platform';
 import { SelfProvider } from '@/contexts/SelfContext';
+import { AutoConnect } from '@/components/auto-connect';
+import { createAppKit } from '@reown/appkit/react';
 
 // Create QueryClient at module level (Farcaster Mini App pattern)
 const queryClient = new QueryClient({
@@ -19,17 +21,25 @@ const queryClient = new QueryClient({
   },
 });
 
-// AppKit metadata for browser mode
-const metadata = {
-  name: 'Color Drop Tournament',
-  description: 'Match colors, win CELO prizes on Farcaster',
-  url: process.env.NEXT_PUBLIC_APP_URL || 'https://colordrop.art3hub.xyz',
-  icons: [`${process.env.NEXT_PUBLIC_APP_URL || 'https://colordrop.art3hub.xyz'}/icon.png`],
-};
+// Create Reown AppKit modal immediately (before component render)
+// This provides the wallet connection UI for browser mode
+let appKitModal: ReturnType<typeof createAppKit> | null = null;
 
-// Note: We're using plain wagmi with farcasterMiniApp() connector
-// For browser mode, we use wagmi's native WalletConnect modal via the connector
-// No Reown AppKit initialization needed - connectors handle everything
+if (typeof window !== 'undefined' && !appKitModal) {
+  appKitModal = createAppKit({
+    adapters: [wagmiAdapter],
+    projectId,
+    networks,
+    defaultNetwork: networks[0],
+    metadata,
+    features: {
+      analytics: true,
+      email: false,
+      socials: false,
+    },
+    featuresOrder: ['injected', 'eip6963', 'walletConnect'],
+  });
+}
 
 // Error suppressor for WalletConnect subscription errors
 function ErrorSuppressor({ children }: { children: React.ReactNode }) {
@@ -55,17 +65,23 @@ function ErrorSuppressor({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({ children, cookies }: { children: React.ReactNode; cookies?: string }) {
   const [isLoading, setIsLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
   const [isFarcasterEnv, setIsFarcasterEnv] = useState(false);
+  const initialState = cookieToInitialState(config, cookies);
 
   useEffect(() => {
+    setMounted(true);
+
     async function initialize() {
       const platform = detectPlatform();
+      console.log('[Providers] 🔍 Detected platform:', platform);
 
-      if (platform === 'farcaster') {
+      if (platform === 'farcaster' || platform === 'base') {
         const initialized = await initializeFarcaster();
         setIsFarcasterEnv(initialized);
+        console.log('[Providers] 📱 Farcaster SDK initialized:', initialized);
       }
 
       setIsLoading(false);
@@ -73,6 +89,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
     initialize();
   }, []);
+
+  // Prevent SSR hydration mismatch
+  if (!mounted) {
+    return null;
+  }
 
   if (isLoading) {
     return (
@@ -90,11 +111,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <ErrorSuppressor>
-      <WagmiProvider config={config}>
+      <WagmiProvider config={config} initialState={initialState}>
         <QueryClientProvider client={queryClient}>
-          <SelfProvider>
-            {children}
-          </SelfProvider>
+          <AutoConnect>
+            <SelfProvider>
+              {children}
+            </SelfProvider>
+          </AutoConnect>
         </QueryClientProvider>
       </WagmiProvider>
     </ErrorSuppressor>
