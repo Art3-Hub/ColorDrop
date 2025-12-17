@@ -1,4 +1,6 @@
-import { ethers, upgrades } from "hardhat";
+import hre from "hardhat";
+const { ethers } = hre;
+const upgrades = hre.upgrades;
 
 async function main() {
   console.log("🔄 Upgrading ColorDropPool...\n");
