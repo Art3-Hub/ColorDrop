@@ -1,22 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { SelfBackendVerifier, DefaultConfigStore, AllIds } from '@selfxyz/core'
 import { createPublicClient, http } from 'viem'
 import { celo } from 'viem/chains'
-import { getContract } from 'viem'
 
-// Initialize the Self Backend Verifier
-const selfBackendVerifier = new SelfBackendVerifier(
-  process.env.NEXT_PUBLIC_SELF_SCOPE || 'colordrop',
-  (process.env.NEXT_PUBLIC_APP_URL || '') + '/api/verify-self',
-  process.env.NEXT_PUBLIC_SELF_USE_MOCK === 'true', // mockPassport (false for mainnet)
-  AllIds, // allowed attestation IDs
-  new DefaultConfigStore({
-    minimumAge: 18,
-    excludedCountries: [],
-    ofac: false
-  }),
-  'hex' // user identifier type (ethereum address)
-)
+// Dynamic import to avoid bundler issues with snarkjs
+let selfBackendVerifier: InstanceType<typeof import('@selfxyz/core').SelfBackendVerifier> | null = null
+
+async function getVerifier() {
+  if (!selfBackendVerifier) {
+    const { SelfBackendVerifier, DefaultConfigStore, AllIds } = await import('@selfxyz/core')
+    selfBackendVerifier = new SelfBackendVerifier(
+      process.env.NEXT_PUBLIC_SELF_SCOPE || 'colordrop',
+      (process.env.NEXT_PUBLIC_APP_URL || '') + '/api/verify-self',
+      process.env.NEXT_PUBLIC_SELF_USE_MOCK === 'true',
+      AllIds,
+      new DefaultConfigStore({
+        minimumAge: 18,
+        excludedCountries: [],
+        ofac: false
+      }),
+      'hex'
+    )
+  }
+  return selfBackendVerifier
+}
 
 // Viem client for contract interaction
 const publicClient = createPublicClient({
@@ -43,6 +49,7 @@ export async function POST(request: NextRequest) {
   console.log('📍 Request URL:', request.url)
 
   try {
+    const verifier = await getVerifier()
     const body = await request.json()
     const { attestationId, proof, publicSignals, userContextData } = body
 
@@ -54,7 +61,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Verify the attestation
-    const result = await selfBackendVerifier.verify(
+    const result = await verifier.verify(
       attestationId,
       proof,
       publicSignals,
