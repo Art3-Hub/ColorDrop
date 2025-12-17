@@ -79,14 +79,15 @@ export function AutoConnect({ children, enabled = true }: PropsWithChildren<{ en
           connector = connectors.find(c => c.id === 'farcasterMiniApp' || c.name.toLowerCase().includes('farcaster'))
           console.log('[AutoConnect] 🟣 Farcaster mini app detected - connector:', connector?.name || 'NOT FOUND')
         } else if (isBaseMiniApp) {
-          connector = connectors.find(c => c.id === 'baseAccount' || c.name.toLowerCase().includes('base'))
-          console.log('[AutoConnect] 🔵 Base mini app detected - connector:', connector?.name || 'NOT FOUND')
+          // Base mini apps use injected provider (EIP-1193)
+          connector = connectors.find(c => c.id === 'injected' || c.name.toLowerCase() === 'injected')
+          console.log('[AutoConnect] 🔵 Base mini app detected - using injected connector:', connector?.name || 'NOT FOUND')
         } else {
-          // Fallback: try Farcaster first, then Base
+          // Fallback: try Farcaster first, then injected
           console.log('[AutoConnect] ⚠️ Could not determine platform, trying Farcaster first...')
           connector = connectors.find(c => c.id === 'farcasterMiniApp' || c.name.toLowerCase().includes('farcaster'))
           if (!connector) {
-            connector = connectors.find(c => c.id === 'baseAccount' || c.name.toLowerCase().includes('base'))
+            connector = connectors.find(c => c.id === 'injected')
           }
         }
 
