@@ -25,7 +25,8 @@ contract ColorDropPool is
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     // Constants - 9 players x 0.1 CELO = 0.9 CELO total pool
     uint256 public constant ENTRY_FEE = 0.1 ether; // 0.1 CELO per player
-    uint8 public constant POOL_SIZE = 9;
+    uint8 public constant POOL_SIZE = 9; // Logical pool size (9 players)
+    uint8 public constant STORAGE_POOL_SIZE = 12; // Storage array size (for upgrade compatibility)
     uint8 public constant UNVERIFIED_SLOT_LIMIT = 4; // Max slots for unverified users
     uint256 public constant PRIZE_1ST = 0.45 ether; // 50% of prize pool
     uint256 public constant PRIZE_2ND = 0.225 ether; // 25% of prize pool
@@ -44,7 +45,7 @@ contract ColorDropPool is
 
     struct Pool {
         uint256 id;
-        Player[POOL_SIZE] players;
+        Player[STORAGE_POOL_SIZE] players; // Storage array kept at 12 for upgrade compatibility
         uint8 playerCount;
         bool isActive;
         bool isCompleted;
@@ -522,7 +523,7 @@ contract ColorDropPool is
      * @dev Get contract version for upgrade tracking
      */
     function version() external pure returns (string memory) {
-        return "3.1.0";
+        return "3.2.0";
     }
 
     /**
