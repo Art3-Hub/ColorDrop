@@ -20,12 +20,13 @@ export function PoolLobby({ poolId, onJoinPool, onStartGame }: PoolLobbyProps) {
   const [isJoining, setIsJoining] = useState(false);
   const [hasJoined, setHasJoined] = useState(false);
 
-  const POOL_SIZE = 21;
+  const POOL_SIZE = 9; // 9-player pools for faster games
   const ENTRY_FEE_VALUE = parseFloat(process.env.NEXT_PUBLIC_ENTRY_FEE || '0.1');
   const ENTRY_FEE = `${ENTRY_FEE_VALUE} CELO`;
-  const FIRST_PRIZE = ENTRY_FEE_VALUE * 10; // 10x entry fee
-  const SECOND_PRIZE = ENTRY_FEE_VALUE * 6; // 6x entry fee
-  const THIRD_PRIZE = ENTRY_FEE_VALUE * 3; // 3x entry fee
+  // Prize distribution: 50%, 25%, 8.33% of 0.9 CELO pool
+  const FIRST_PRIZE = ENTRY_FEE_VALUE * 4.5; // 0.45 CELO (50%)
+  const SECOND_PRIZE = ENTRY_FEE_VALUE * 2.25; // 0.225 CELO (25%)
+  const THIRD_PRIZE = ENTRY_FEE_VALUE * 0.75; // 0.075 CELO (8.33%)
 
   const handleJoinPool = async () => {
     setIsJoining(true);
@@ -57,7 +58,7 @@ export function PoolLobby({ poolId, onJoinPool, onStartGame }: PoolLobbyProps) {
         <div className="text-center">
           <h1 className="text-2xl sm:text-3xl font-bold mb-2">Pool #{poolId || '---'}</h1>
           <p className="text-sm sm:text-base text-purple-100 mb-4 sm:mb-6">
-            21-Player Tournament • {ENTRY_FEE} Entry
+            9-Player Tournament • {ENTRY_FEE} Entry
           </p>
 
           {/* Prize Pool */}
@@ -106,8 +107,8 @@ export function PoolLobby({ poolId, onJoinPool, onStartGame }: PoolLobbyProps) {
           </div>
         </div>
 
-        {/* Player Grid */}
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-3 mb-6">
+        {/* Player Grid - 3x3 for 9 players */}
+        <div className="grid grid-cols-3 gap-3 mb-6 max-w-md mx-auto">
           {Array.from({ length: POOL_SIZE }).map((_, index) => {
             const player = players[index];
             return (
@@ -195,7 +196,7 @@ export function PoolLobby({ poolId, onJoinPool, onStartGame }: PoolLobbyProps) {
           </li>
           <li className="flex items-start">
             <span className="mr-2">⚡</span>
-            <span>All 21 players play simultaneously when pool is full</span>
+            <span>All 9 players compete for prizes when pool is full</span>
           </li>
         </ul>
       </div>
