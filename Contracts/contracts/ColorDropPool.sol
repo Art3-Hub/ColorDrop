@@ -202,6 +202,7 @@ contract ColorDropPool is
      * @dev Submit accuracy score for current pool
      * @param poolId Pool ID to submit score for
      * @param accuracy Accuracy score (0-10000 basis points)
+     * @notice Players can submit scores immediately after paying, no need to wait for pool to fill
      */
     function submitScore(uint256 poolId, uint16 accuracy)
         external
@@ -213,7 +214,8 @@ contract ColorDropPool is
         if (activePoolId[msg.sender] != poolId) revert NotInPool();
 
         Pool storage pool = pools[poolId];
-        if (!pool.isActive || pool.isCompleted) revert PoolNotActive();
+        // Only check if pool is already completed, allow submission before pool is full
+        if (pool.isCompleted) revert PoolNotActive();
 
         // Find player and update score
         bool found = false;
@@ -523,7 +525,7 @@ contract ColorDropPool is
      * @dev Get contract version for upgrade tracking
      */
     function version() external pure returns (string memory) {
-        return "3.2.0";
+        return "3.3.0";
     }
 
     /**

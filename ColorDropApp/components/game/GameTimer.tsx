@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface GameTimerProps {
   duration: number; // seconds
@@ -10,15 +10,27 @@ interface GameTimerProps {
 
 export function GameTimer({ duration, onTimeUp, isRunning }: GameTimerProps) {
   const [timeLeft, setTimeLeft] = useState(duration);
+  const hasCalledTimeUp = useRef(false);
 
+  // Reset timer when duration or isRunning changes
   useEffect(() => {
     if (!isRunning) {
       setTimeLeft(duration);
-      return;
+      hasCalledTimeUp.current = false;
     }
+  }, [isRunning, duration]);
 
-    if (timeLeft <= 0) {
+  // Handle time up callback in a separate effect to avoid render-phase updates
+  useEffect(() => {
+    if (timeLeft <= 0 && isRunning && !hasCalledTimeUp.current) {
+      hasCalledTimeUp.current = true;
       onTimeUp();
+    }
+  }, [timeLeft, isRunning, onTimeUp]);
+
+  // Countdown timer
+  useEffect(() => {
+    if (!isRunning || timeLeft <= 0) {
       return;
     }
 
@@ -26,7 +38,6 @@ export function GameTimer({ duration, onTimeUp, isRunning }: GameTimerProps) {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          onTimeUp();
           return 0;
         }
         return prev - 1;
@@ -34,7 +45,7 @@ export function GameTimer({ duration, onTimeUp, isRunning }: GameTimerProps) {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isRunning, timeLeft, duration, onTimeUp]);
+  }, [isRunning, timeLeft]);
 
   const progress = (timeLeft / duration) * 100;
   const isLowTime = timeLeft <= 3;
