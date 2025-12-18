@@ -15,6 +15,13 @@ const nextConfig = {
       '@selfxyz/common',
     ],
   },
+  webpack: (config) => {
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      'porto/internal': false,
+    };
+    return config;
+  },
 };
 
 module.exports = nextConfig;
