@@ -52,6 +52,9 @@ export function useColorDropPool() {
   const [currentPoolData, setCurrentPoolData] = useState<PoolData | null>(null);
   const [userStatus, setUserStatus] = useState<UserStatus | null>(null);
 
+  // Track transaction hash to detect new successful transactions
+  const [lastSuccessfulJoinHash, setLastSuccessfulJoinHash] = useState<string | null>(null);
+
   // Check if we need to switch chains
   const isWrongChain = chain && chain.id !== TARGET_CHAIN.id;
 
@@ -67,22 +70,6 @@ export function useColorDropPool() {
       });
     }
   }, [chain, isWrongChain]);
-
-  // Helper function to ensure correct chain
-  const ensureCorrectChain = useCallback(async () => {
-    if (isWrongChain && switchChainAsync) {
-      console.log('🔄 Switching chain from', chain?.name, 'to', TARGET_CHAIN.name);
-      try {
-        await switchChainAsync({ chainId: TARGET_CHAIN.id });
-        console.log('✅ Chain switched successfully to', TARGET_CHAIN.name);
-        return true;
-      } catch (error) {
-        console.error('❌ Failed to switch chain:', error);
-        throw new Error(`Please switch to ${TARGET_CHAIN.name} network to continue`);
-      }
-    }
-    return true;
-  }, [isWrongChain, switchChainAsync, chain?.name]);
 
   // Read current pool ID - always read from Celo regardless of connected chain
   const { data: currentPoolId, refetch: refetchPoolId, isLoading: isLoadingPoolId, error: poolIdError } = useReadContract({
@@ -146,10 +133,24 @@ export function useColorDropPool() {
   } = useWriteContract();
 
   // Wait for join transaction
-  const { isLoading: isJoinConfirming, isSuccess: isJoinSuccess } =
+  const { isLoading: isJoinConfirming, isSuccess: isJoinSuccessRaw } =
     useWaitForTransactionReceipt({
       hash: joinHash,
     });
+
+  // Detect NEW successful transactions (not stale success from previous tx)
+  const isJoinSuccess = isJoinSuccessRaw && joinHash && joinHash !== lastSuccessfulJoinHash;
+
+  // Track when a transaction succeeds so we don't re-trigger
+  useEffect(() => {
+    if (isJoinSuccessRaw && joinHash && joinHash !== lastSuccessfulJoinHash) {
+      console.log('✅ Join transaction confirmed! Hash:', joinHash);
+      setLastSuccessfulJoinHash(joinHash);
+      // Refetch pool data after successful join
+      refetchPoolData();
+      refetchUserStatus();
+    }
+  }, [isJoinSuccessRaw, joinHash, lastSuccessfulJoinHash, refetchPoolData, refetchUserStatus]);
 
   // Wait for score submission transaction
   const { isLoading: isScoreConfirming, isSuccess: isScoreSuccess } =
@@ -211,8 +212,20 @@ export function useColorDropPool() {
       entryFeeETH: (Number(ENTRY_FEE) / 1e18).toFixed(2) + ' CELO',
     });
 
-    // Ensure we're on the correct chain before transacting
-    await ensureCorrectChain();
+    // CRITICAL: Ensure we're on the correct chain before transacting
+    // This must complete before sending the transaction
+    if (chain?.id !== TARGET_CHAIN.id) {
+      console.log('🔄 Chain mismatch detected, forcing switch to Celo...');
+      try {
+        await switchChainAsync({ chainId: TARGET_CHAIN.id });
+        console.log('✅ Chain switched to Celo, proceeding with transaction');
+        // Small delay to ensure wallet state is updated
+        await new Promise(resolve => setTimeout(resolve, 500));
+      } catch (error) {
+        console.error('❌ User rejected chain switch or switch failed:', error);
+        throw new Error(`Please switch to ${TARGET_CHAIN.name} network to continue`);
+      }
+    }
 
     joinWriteContract({
       address: POOL_ADDRESS,
@@ -220,18 +233,27 @@ export function useColorDropPool() {
       functionName: 'joinPool',
       args: [fid],
       value: ENTRY_FEE,
-      chain: TARGET_CHAIN,
-      account: address,
+      chainId: TARGET_CHAIN.id,
     });
-  }, [address, chain, joinWriteContract, ensureCorrectChain]);
+  }, [address, chain, joinWriteContract, switchChainAsync]);
 
   // Submit score function
   const submitScore = useCallback(async (accuracy: number) => {
     if (!address) throw new Error('Wallet not connected');
     if (!currentPoolId) throw new Error('No active pool');
 
-    // Ensure we're on the correct chain before transacting
-    await ensureCorrectChain();
+    // CRITICAL: Ensure we're on the correct chain before transacting
+    if (chain?.id !== TARGET_CHAIN.id) {
+      console.log('🔄 Chain mismatch detected, forcing switch to Celo...');
+      try {
+        await switchChainAsync({ chainId: TARGET_CHAIN.id });
+        console.log('✅ Chain switched to Celo, proceeding with transaction');
+        await new Promise(resolve => setTimeout(resolve, 500));
+      } catch (error) {
+        console.error('❌ User rejected chain switch or switch failed:', error);
+        throw new Error(`Please switch to ${TARGET_CHAIN.name} network to continue`);
+      }
+    }
 
     // Convert accuracy percentage (0-100) to uint256 with 2 decimal precision
     // Example: 95.67% becomes 9567
@@ -242,16 +264,26 @@ export function useColorDropPool() {
       abi: ColorDropPoolABI.abi,
       functionName: 'submitScore',
       args: [BigInt(scoreValue)],
-      chain: TARGET_CHAIN,
-      account: address,
+      chainId: TARGET_CHAIN.id,
     });
-  }, [address, currentPoolId, scoreWriteContract, ensureCorrectChain]);
+  }, [address, chain, currentPoolId, scoreWriteContract, switchChainAsync]);
 
   // Check if slot limit reached
   const hasReachedSlotLimit = useCallback(() => {
     if (!userStatus) return false;
     return !userStatus.canJoin && userStatus.slotsUsed >= userStatus.slotsAvailable;
   }, [userStatus]);
+
+  // Switch to correct chain function (for UI button)
+  const switchToCorrectChain = useCallback(async () => {
+    try {
+      await switchChainAsync({ chainId: TARGET_CHAIN.id });
+      console.log('✅ Switched to', TARGET_CHAIN.name);
+    } catch (error) {
+      console.error('❌ Failed to switch chain:', error);
+      throw error;
+    }
+  }, [switchChainAsync]);
 
   // Get leaderboard data for a pool
   const getLeaderboard = useCallback(async (poolId: bigint): Promise<PlayerData[]> => {
@@ -286,6 +318,7 @@ export function useColorDropPool() {
     isSwitchingChain,
     targetChain: TARGET_CHAIN,
     connectedChain: chain,
+    switchToCorrectChain,
 
     // Loading states
     isLoading: isLoadingPoolId || isLoadingPoolData || isLoadingUserStatus,
@@ -302,13 +335,13 @@ export function useColorDropPool() {
     joinPool,
     submitScore,
     getLeaderboard,
-    switchToCorrectChain: ensureCorrectChain,
 
     // Join transaction states
     isJoinPending,
     isJoinConfirming,
     isJoinSuccess,
     joinError,
+    joinHash,
 
     // Score transaction states
     isScorePending,
