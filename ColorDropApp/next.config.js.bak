@@ -1,0 +1,70 @@
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  // Optimize dev server performance
+  reactStrictMode: false, // Disable double-render in dev
+  experimental: {
+    optimizePackageImports: [
+      '@reown/appkit',
+      '@reown/appkit-adapter-wagmi',
+      'wagmi',
+      'viem',
+      '@tanstack/react-query',
+    ],
+    serverComponentsExternalPackages: [
+      'pino',
+      'pino-pretty',
+      'snarkjs',
+      '@selfxyz/core',
+      '@selfxyz/common',
+    ],
+  },
+  webpack: (config, { dev, isServer }) => {
+    // Handle Node.js module polyfills for browser
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        'porto': false,
+        'porto/internal': false,
+        'cross-fetch': false,
+        'fs': false,
+        'net': false,
+        'tls': false,
+        'crypto': false,
+        'stream': false,
+        'http': false,
+        'https': false,
+        'zlib': false,
+        'path': false,
+        'os': false,
+      };
+    }
+
+    // Ignore problematic MetaMask SDK modules in dev
+    config.externals = config.externals || [];
+    if (dev) {
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        '@metamask/sdk': false,
+      };
+    }
+
+    // Speed up dev builds
+    if (dev) {
+      config.watchOptions = {
+        poll: 1000,
+        aggregateTimeout: 300,
+        ignored: ['**/node_modules/**', '**/.git/**'],
+      };
+    }
+
+    return config;
+  },
+};
+
+module.exports = nextConfig;

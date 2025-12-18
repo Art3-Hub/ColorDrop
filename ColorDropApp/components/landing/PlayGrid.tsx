@@ -30,7 +30,12 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
     isJoinPending,
     isJoinConfirming,
     isJoinSuccess,
-    joinError
+    joinError,
+    isWrongChain,
+    isSwitchingChain,
+    targetChain,
+    connectedChain,
+    switchToCorrectChain
   } = useColorDropPool();
 
   const [flowState, setFlowState] = useState<FlowState>('idle');
@@ -150,6 +155,24 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
             <div className="mt-3 bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-800">
               <p className="font-semibold">Slot limit reached!</p>
               <p>Verify your age to unlock unlimited slots.</p>
+            </div>
+          )}
+
+          {/* Wrong Chain Warning */}
+          {isWrongChain && (
+            <div className="mt-3 bg-orange-50 border border-orange-200 rounded-lg p-3 text-sm text-orange-800">
+              <p className="font-semibold">⚠️ Wrong Network</p>
+              <p>
+                Connected to {connectedChain?.name || 'Unknown'}.
+                Please switch to {targetChain.name} to play.
+              </p>
+              <button
+                onClick={() => switchToCorrectChain()}
+                disabled={isSwitchingChain}
+                className="mt-2 px-4 py-1.5 bg-orange-600 text-white rounded-lg text-sm font-medium hover:bg-orange-700 disabled:opacity-50"
+              >
+                {isSwitchingChain ? 'Switching...' : `Switch to ${targetChain.name}`}
+              </button>
             </div>
           )}
 

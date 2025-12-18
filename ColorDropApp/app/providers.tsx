@@ -21,12 +21,19 @@ const queryClient = new QueryClient({
   },
 });
 
+// Global flag to prevent double initialization during HMR
+// Uses window object to persist across module re-evaluations
+declare global {
+  interface Window {
+    __APPKIT_INITIALIZED__?: boolean;
+  }
+}
+
 // Create Reown AppKit modal immediately (before component render)
 // This provides the wallet connection UI for browser mode
-let appKitModal: ReturnType<typeof createAppKit> | null = null;
-
-if (typeof window !== 'undefined' && !appKitModal) {
-  appKitModal = createAppKit({
+if (typeof window !== 'undefined' && !window.__APPKIT_INITIALIZED__) {
+  window.__APPKIT_INITIALIZED__ = true;
+  createAppKit({
     adapters: [wagmiAdapter],
     projectId,
     networks,
@@ -41,24 +48,52 @@ if (typeof window !== 'undefined' && !appKitModal) {
   });
 }
 
-// Error suppressor for WalletConnect subscription errors
+// Error/warning suppressor for WalletConnect and Lit library noise
 function ErrorSuppressor({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const originalError = console.error;
+    const originalWarn = console.warn;
+    const originalLog = console.log;
+
     console.error = (...args) => {
       if (
         typeof args[0] === 'string' &&
         (args[0].includes('Connection interrupted') ||
-         args[0].includes('while trying to subscribe'))
+         args[0].includes('while trying to subscribe') ||
+         args[0].includes('already initialized'))
       ) {
-        // Suppress WalletConnect subscription errors on reload
         return;
       }
       originalError.apply(console, args);
     };
 
+    console.warn = (...args) => {
+      if (
+        typeof args[0] === 'string' &&
+        (args[0].includes('Multiple versions of Lit') ||
+         args[0].includes('already initialized') ||
+         args[0].includes('Lit is in dev mode'))
+      ) {
+        return;
+      }
+      originalWarn.apply(console, args);
+    };
+
+    console.log = (...args) => {
+      if (
+        typeof args[0] === 'string' &&
+        (args[0].includes('[WebSocket] Initializing') ||
+         args[0].includes('Multiple versions of Lit'))
+      ) {
+        return;
+      }
+      originalLog.apply(console, args);
+    };
+
     return () => {
       console.error = originalError;
+      console.warn = originalWarn;
+      console.log = originalLog;
     };
   }, []);
 
