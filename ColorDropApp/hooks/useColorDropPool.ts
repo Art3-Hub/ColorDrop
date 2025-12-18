@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useChainId, useSwitchChain } from 'wagmi';
+import { useAccount, useReadContract, useReadContracts, useWriteContract, useWaitForTransactionReceipt, useChainId, useSwitchChain } from 'wagmi';
 import { parseEther } from 'viem';
 import { celo } from 'wagmi/chains';
 import ColorDropPoolABI from '@/contracts/ColorDropPool.json';
@@ -51,9 +51,7 @@ export function useColorDropPool() {
   const { switchChainAsync, isPending: isSwitchingChain } = useSwitchChain();
   const [currentPoolData, setCurrentPoolData] = useState<PoolData | null>(null);
   const [userStatus, setUserStatus] = useState<UserStatus | null>(null);
-
-  // Track transaction hash to detect new successful transactions
-  const [lastSuccessfulJoinHash, setLastSuccessfulJoinHash] = useState<string | null>(null);
+  const [poolPlayerCount, setPoolPlayerCount] = useState<number>(0);
 
   // Check if we need to switch chains
   const isWrongChain = chain && chain.id !== TARGET_CHAIN.id;
@@ -103,6 +101,25 @@ export function useColorDropPool() {
     },
   });
 
+  // Read individual players using getPlayer - need to fetch each slot separately
+  const playerContracts = currentPoolId && poolPlayerCount > 0
+    ? Array.from({ length: poolPlayerCount }, (_, i) => ({
+        address: POOL_ADDRESS,
+        abi: ColorDropPoolABI.abi,
+        functionName: 'getPlayer' as const,
+        args: [currentPoolId, i] as const,
+        chainId: TARGET_CHAIN.id,
+      }))
+    : [];
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: playersData, refetch: refetchPlayers } = useReadContracts({
+    contracts: playerContracts as any,
+    query: {
+      enabled: playerContracts.length > 0,
+    },
+  });
+
   // Log any read errors
   useEffect(() => {
     if (poolIdError) {
@@ -132,25 +149,39 @@ export function useColorDropPool() {
     error: scoreError
   } = useWriteContract();
 
-  // Wait for join transaction
-  const { isLoading: isJoinConfirming, isSuccess: isJoinSuccessRaw } =
+  // Wait for join transaction - explicitly specify Celo chain
+  const { isLoading: isJoinConfirming, isSuccess: isJoinSuccess, status: joinStatus, error: receiptError } =
     useWaitForTransactionReceipt({
       hash: joinHash,
+      chainId: TARGET_CHAIN.id, // Explicitly query on Celo
+      confirmations: 1,
+      query: {
+        refetchInterval: 2000, // Poll every 2 seconds
+      },
     });
 
-  // Detect NEW successful transactions (not stale success from previous tx)
-  const isJoinSuccess = isJoinSuccessRaw && joinHash && joinHash !== lastSuccessfulJoinHash;
-
-  // Track when a transaction succeeds so we don't re-trigger
+  // Debug: Log transaction receipt status
   useEffect(() => {
-    if (isJoinSuccessRaw && joinHash && joinHash !== lastSuccessfulJoinHash) {
+    if (joinHash) {
+      console.log('🔄 Transaction receipt status:', {
+        joinHash: joinHash.slice(0, 12) + '...',
+        joinStatus,
+        isJoinConfirming,
+        isJoinSuccess,
+        receiptError: receiptError?.message || null
+      });
+    }
+  }, [joinHash, joinStatus, isJoinConfirming, isJoinSuccess, receiptError]);
+
+  // Refetch data when transaction succeeds
+  useEffect(() => {
+    if (isJoinSuccess && joinHash) {
       console.log('✅ Join transaction confirmed! Hash:', joinHash);
-      setLastSuccessfulJoinHash(joinHash);
       // Refetch pool data after successful join
       refetchPoolData();
       refetchUserStatus();
     }
-  }, [isJoinSuccessRaw, joinHash, lastSuccessfulJoinHash, refetchPoolData, refetchUserStatus]);
+  }, [isJoinSuccess, joinHash, refetchPoolData, refetchUserStatus]);
 
   // Wait for score submission transaction
   const { isLoading: isScoreConfirming, isSuccess: isScoreSuccess } =
@@ -160,17 +191,57 @@ export function useColorDropPool() {
 
   // Update pool data when contract data changes
   useEffect(() => {
+    console.log('🔍 Raw poolData from contract:', poolData);
     if (poolData && Array.isArray(poolData) && poolData.length >= 5) {
-      const [players, , playerCount, isComplete, isFinalized] = poolData;
+      // Note: Solidity auto-getter for pools mapping returns:
+      // [id, playerCount, isActive, isCompleted, startTime, targetColor]
+      // It does NOT return the players array - we need getPlayer() for that
+      const [id, playerCount, isActive, isComplete, startTime, targetColor] = poolData;
+      const count = Number(playerCount);
+      console.log('📊 Parsed pool data:', {
+        id: id?.toString(),
+        playerCount: count,
+        isActive,
+        isComplete,
+        startTime: Number(startTime),
+        targetColor
+      });
+      // Set player count to trigger the players fetch
+      setPoolPlayerCount(count);
       setCurrentPoolData({
         poolId: currentPoolId as bigint,
-        playerCount: Number(playerCount),
-        players: players as `0x${string}`[],
+        playerCount: count,
+        players: [], // Will be populated by separate getPlayer calls
         isComplete: isComplete as boolean,
-        isFinalized: isFinalized as boolean,
+        isFinalized: isComplete as boolean, // Using isComplete as isFinalized for now
       });
     }
   }, [poolData, currentPoolId]);
+
+  // Update players array when individual player data is fetched
+  useEffect(() => {
+    if (playersData && playersData.length > 0 && currentPoolData) {
+      const playerAddresses: `0x${string}`[] = [];
+      console.log('👥 Raw players data:', playersData);
+
+      for (const playerResult of playersData) {
+        if (playerResult.status === 'success' && playerResult.result) {
+          // getPlayer returns: (wallet, fid, accuracy, timestamp, hasSubmitted)
+          const [wallet] = playerResult.result as [`0x${string}`, bigint, number, number, boolean];
+          playerAddresses.push(wallet);
+          console.log('👤 Player wallet:', wallet);
+        }
+      }
+
+      if (playerAddresses.length > 0) {
+        console.log('📋 All player addresses:', playerAddresses);
+        setCurrentPoolData(prev => prev ? {
+          ...prev,
+          players: playerAddresses,
+        } : null);
+      }
+    }
+  }, [playersData, currentPoolData?.poolId]);
 
   // Update user status
   useEffect(() => {
@@ -191,10 +262,13 @@ export function useColorDropPool() {
       refetchPoolId();
       refetchPoolData();
       refetchUserStatus();
+      if (poolPlayerCount > 0) {
+        refetchPlayers();
+      }
     }, POLL_INTERVAL);
 
     return () => clearInterval(interval);
-  }, [refetchPoolId, refetchPoolData, refetchUserStatus]);
+  }, [refetchPoolId, refetchPoolData, refetchUserStatus, refetchPlayers, poolPlayerCount]);
 
   // Join pool function
   const joinPool = useCallback(async (fid: bigint) => {
@@ -354,6 +428,7 @@ export function useColorDropPool() {
       refetchPoolId();
       refetchPoolData();
       refetchUserStatus();
+      refetchPlayers();
     },
   };
 }
