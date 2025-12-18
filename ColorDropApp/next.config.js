@@ -18,6 +18,7 @@ const nextConfig = {
   webpack: (config) => {
     config.resolve.fallback = {
       ...config.resolve.fallback,
+      'porto': false,
       'porto/internal': false,
     };
     return config;
