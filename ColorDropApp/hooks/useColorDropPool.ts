@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useChainId } from 'wagmi';
+import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useChainId, useSwitchChain } from 'wagmi';
 import { parseEther } from 'viem';
 import { celo } from 'wagmi/chains';
 import ColorDropPoolABI from '@/contracts/ColorDropPool.json';
@@ -46,51 +46,88 @@ export interface PlayerData {
 
 export function useColorDropPool() {
   const { address, chain } = useAccount();
-  const connectedChainId = useChainId();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _connectedChainId = useChainId(); // Keep for potential future use
+  const { switchChainAsync, isPending: isSwitchingChain } = useSwitchChain();
   const [currentPoolData, setCurrentPoolData] = useState<PoolData | null>(null);
   const [userStatus, setUserStatus] = useState<UserStatus | null>(null);
 
+  // Check if we need to switch chains
+  const isWrongChain = chain && chain.id !== TARGET_CHAIN.id;
+
   // Log chain mismatch warnings
   useEffect(() => {
-    if (chain && chain.id !== TARGET_CHAIN.id) {
+    if (isWrongChain) {
       console.warn('⚠️ Chain Mismatch:', {
-        connectedChain: chain.name,
-        connectedChainId: chain.id,
+        connectedChain: chain?.name,
+        connectedChainId: chain?.id,
         targetChain: TARGET_CHAIN.name,
         targetChainId: TARGET_CHAIN.id,
-        message: 'Please switch to the correct network'
+        message: 'Will auto-switch when making a transaction'
       });
     }
-  }, [chain]);
+  }, [chain, isWrongChain]);
 
-  // Read current pool ID
-  const { data: currentPoolId, refetch: refetchPoolId } = useReadContract({
+  // Helper function to ensure correct chain
+  const ensureCorrectChain = useCallback(async () => {
+    if (isWrongChain && switchChainAsync) {
+      console.log('🔄 Switching chain from', chain?.name, 'to', TARGET_CHAIN.name);
+      try {
+        await switchChainAsync({ chainId: TARGET_CHAIN.id });
+        console.log('✅ Chain switched successfully to', TARGET_CHAIN.name);
+        return true;
+      } catch (error) {
+        console.error('❌ Failed to switch chain:', error);
+        throw new Error(`Please switch to ${TARGET_CHAIN.name} network to continue`);
+      }
+    }
+    return true;
+  }, [isWrongChain, switchChainAsync, chain?.name]);
+
+  // Read current pool ID - always read from Celo regardless of connected chain
+  const { data: currentPoolId, refetch: refetchPoolId, isLoading: isLoadingPoolId, error: poolIdError } = useReadContract({
     address: POOL_ADDRESS,
     abi: ColorDropPoolABI.abi,
     functionName: 'currentPoolId',
+    chainId: TARGET_CHAIN.id, // Explicitly read from Celo
   });
 
-  // Read pool data
-  const { data: poolData, refetch: refetchPoolData } = useReadContract({
+  // Read pool data - always read from Celo
+  const { data: poolData, refetch: refetchPoolData, isLoading: isLoadingPoolData, error: poolDataError } = useReadContract({
     address: POOL_ADDRESS,
     abi: ColorDropPoolABI.abi,
     functionName: 'pools',
     args: currentPoolId ? [currentPoolId] : undefined,
+    chainId: TARGET_CHAIN.id, // Explicitly read from Celo
     query: {
       enabled: !!currentPoolId,
     },
   });
 
-  // Read user status
-  const { data: userStatusData, refetch: refetchUserStatus } = useReadContract({
+  // Read user status - always read from Celo
+  const { data: userStatusData, refetch: refetchUserStatus, isLoading: isLoadingUserStatus, error: userStatusError } = useReadContract({
     address: POOL_ADDRESS,
     abi: ColorDropPoolABI.abi,
     functionName: 'getUserStatus',
     args: address ? [address] : undefined,
+    chainId: TARGET_CHAIN.id, // Explicitly read from Celo
     query: {
       enabled: !!address,
     },
   });
+
+  // Log any read errors
+  useEffect(() => {
+    if (poolIdError) {
+      console.error('❌ Failed to read currentPoolId:', poolIdError);
+    }
+    if (poolDataError) {
+      console.error('❌ Failed to read pool data:', poolDataError);
+    }
+    if (userStatusError) {
+      console.error('❌ Failed to read user status:', userStatusError);
+    }
+  }, [poolIdError, poolDataError, userStatusError]);
 
   // Write contract hook for joining pool
   const {
@@ -174,20 +211,27 @@ export function useColorDropPool() {
       entryFeeETH: (Number(ENTRY_FEE) / 1e18).toFixed(2) + ' CELO',
     });
 
+    // Ensure we're on the correct chain before transacting
+    await ensureCorrectChain();
+
     joinWriteContract({
       address: POOL_ADDRESS,
       abi: ColorDropPoolABI.abi,
       functionName: 'joinPool',
       args: [fid],
       value: ENTRY_FEE,
-      chainId: TARGET_CHAIN.id, // Explicitly specify chain ID
+      chain: TARGET_CHAIN,
+      account: address,
     });
-  }, [address, chain, joinWriteContract]);
+  }, [address, chain, joinWriteContract, ensureCorrectChain]);
 
   // Submit score function
   const submitScore = useCallback(async (accuracy: number) => {
     if (!address) throw new Error('Wallet not connected');
     if (!currentPoolId) throw new Error('No active pool');
+
+    // Ensure we're on the correct chain before transacting
+    await ensureCorrectChain();
 
     // Convert accuracy percentage (0-100) to uint256 with 2 decimal precision
     // Example: 95.67% becomes 9567
@@ -198,8 +242,10 @@ export function useColorDropPool() {
       abi: ColorDropPoolABI.abi,
       functionName: 'submitScore',
       args: [BigInt(scoreValue)],
+      chain: TARGET_CHAIN,
+      account: address,
     });
-  }, [address, currentPoolId, scoreWriteContract]);
+  }, [address, currentPoolId, scoreWriteContract, ensureCorrectChain]);
 
   // Check if slot limit reached
   const hasReachedSlotLimit = useCallback(() => {
@@ -235,10 +281,28 @@ export function useColorDropPool() {
     userStatus,
     hasReachedSlotLimit: hasReachedSlotLimit(),
 
+    // Chain status
+    isWrongChain,
+    isSwitchingChain,
+    targetChain: TARGET_CHAIN,
+    connectedChain: chain,
+
+    // Loading states
+    isLoading: isLoadingPoolId || isLoadingPoolData || isLoadingUserStatus,
+    isLoadingPoolId,
+    isLoadingPoolData,
+    isLoadingUserStatus,
+
+    // Read errors
+    poolIdError,
+    poolDataError,
+    userStatusError,
+
     // Actions
     joinPool,
     submitScore,
     getLeaderboard,
+    switchToCorrectChain: ensureCorrectChain,
 
     // Join transaction states
     isJoinPending,

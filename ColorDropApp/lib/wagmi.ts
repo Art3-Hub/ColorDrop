@@ -44,17 +44,13 @@ export const wagmiAdapter = new WagmiAdapter({
 
 // Create unified config with all connectors
 // Supports: Farcaster Mini App, Base Mini App, Browser (MetaMask, WalletConnect, etc.)
+// Note: wagmiAdapter already includes WalletConnect - don't add duplicate connector
 export const config = createConfig({
   chains: [celo],
   connectors: [
     farcasterMiniApp(),                                    // Farcaster Mini App (auto-connects)
     injected({ shimDisconnect: true }),                    // MetaMask, Coinbase Wallet, etc.
-    ...wagmiAdapter.wagmiConfig.connectors,                // Reown AppKit connectors (WalletConnect)
-    walletConnect({                                        // WalletConnect fallback
-      projectId,
-      showQrModal: true,
-      metadata,
-    }),
+    ...wagmiAdapter.wagmiConfig.connectors,                // Reown AppKit connectors (includes WalletConnect)
   ],
   transports: {
     [celo.id]: http(process.env.NEXT_PUBLIC_CELO_RPC_URL || 'https://forno.celo.org'),
