@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import { useAccount } from 'wagmi';
 import { ColorPicker, type HSLColor } from './ColorPicker';
 import { TargetColor } from './TargetColor';
 import { GameTimer } from './GameTimer';
@@ -22,7 +23,10 @@ interface GameScreenProps {
 }
 
 export function GameScreen({ onBackToLobby, slotNumber }: GameScreenProps) {
+  const { address } = useAccount();
   const {
+    poolData,
+    currentPoolId,
     submitScore,
     isScorePending,
     isScoreConfirming,
@@ -40,10 +44,9 @@ export function GameScreen({ onBackToLobby, slotNumber }: GameScreenProps) {
   const ENTRY_FEE_VALUE = parseFloat(process.env.NEXT_PUBLIC_ENTRY_FEE || '0.3');
   const ENTRY_FEE = `${ENTRY_FEE_VALUE} CELO`;
 
-  // Handle score submission success
+  // Handle score submission success - go back to lobby
   useEffect(() => {
     if (isScoreSuccess) {
-      // Score submitted successfully - go back to lobby
       if (onBackToLobby) {
         onBackToLobby();
       }

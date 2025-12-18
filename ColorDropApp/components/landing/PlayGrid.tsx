@@ -24,6 +24,7 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
 
   const {
     poolData,
+    currentPoolId,
     userStatus,
     hasReachedSlotLimit,
     joinPool,
@@ -307,7 +308,7 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
             // Check if THIS slot belongs to the current user
             const isMySlot = isOccupied && poolData && address &&
               poolData.players[slotIndex]?.toLowerCase() === address.toLowerCase();
-            // Check if score has been submitted for this slot
+            // Check if score has been submitted for this slot (on-chain)
             const hasSubmitted = poolData?.playerSlots?.[slotIndex]?.hasSubmitted ?? false;
             // User can play if: they own the slot OR they haven't reached slot limit
             const canPlay = isMySlot || !hasReachedSlotLimit;
@@ -319,7 +320,7 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
 
             // Determine slot styling based on state
             // - My slot + submitted = Green (completed)
-            // - My slot + NOT submitted = Orange/Red (needs action)
+            // - My slot + NOT submitted = Orange (needs to play/submit)
             // - Other player's slot = Gray (filled)
             // - Available = Purple (can buy)
             let slotClassName = '';
@@ -328,7 +329,7 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
                 // Score submitted - show green (completed)
                 slotClassName = 'bg-gradient-to-br from-green-500 to-teal-600 border-green-400 text-white hover:scale-105 hover:shadow-xl active:scale-95';
               } else {
-                // Score NOT submitted - show orange (needs action!) - no animation to avoid eye strain
+                // Score NOT submitted - show orange (needs to play/submit!)
                 slotClassName = 'bg-gradient-to-br from-orange-500 to-amber-600 border-orange-400 text-white hover:scale-105 hover:shadow-xl active:scale-95';
               }
             } else if (isOccupied) {
@@ -361,11 +362,11 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
                       <div className="text-[10px] sm:text-xs opacity-90">Submitted</div>
                     </div>
                   ) : (
-                    // Score NOT submitted - needs to play!
+                    // Score NOT submitted - needs to play and submit!
                     <div className="flex flex-col items-center justify-center gap-1">
-                      <div className="text-xl sm:text-3xl">⚠️</div>
+                      <div className="text-xl sm:text-3xl">🎮</div>
                       <div className="text-xs sm:text-sm font-bold">PLAY NOW</div>
-                      <div className="text-[10px] sm:text-xs opacity-90">Pending</div>
+                      <div className="text-[10px] sm:text-xs opacity-90">Tap to Play</div>
                     </div>
                   )
                 ) : isOccupied ? (
