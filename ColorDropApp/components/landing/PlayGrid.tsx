@@ -61,11 +61,8 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
     console.log('👤 User status:', userStatus);
   }, [isJoinPending, isJoinConfirming, isJoinSuccess, joinHash, pendingSlot, flowState, userStatus]);
 
-  // Check if user can't join (already in active pool)
-  const cannotJoin = userStatus && !userStatus.canJoin;
-
-  // Check if user is already in an active pool (needs to play their game first)
-  const isAlreadyInPool = cannotJoin && userStatus && userStatus.slotsUsed > 0;
+  // User has slots in this pool (but may or may not have submitted scores)
+  const hasActiveSlots = userStatus && userStatus.slotsUsed > 0;
 
   // Handle successful join - track by hash to avoid stale success
   useEffect(() => {
@@ -83,24 +80,47 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
   const handleSlotClick = (slotNumber: number) => {
     const slotIndex = slotNumber - 1;
     // Check if this slot belongs to the current user
-    const isMySlot = poolData && address &&
-      slotIndex < poolData.playerCount &&
+    const isOccupied = poolData && slotIndex < poolData.playerCount;
+    const isMySlot = isOccupied && poolData && address &&
       poolData.players[slotIndex]?.toLowerCase() === address.toLowerCase();
 
-    // If clicking on own slot, go directly to game
+    console.log('🔍 Slot click analysis:', {
+      slotNumber,
+      slotIndex,
+      isOccupied,
+      isMySlot,
+      playerAtSlot: poolData?.players[slotIndex] || 'none',
+      userAddress: address,
+      poolPlayerCount: poolData?.playerCount,
+      allPlayers: poolData?.players,
+      canJoin: userStatus?.canJoin
+    });
+
+    // If clicking on own slot, go directly to game (to continue/submit score)
     if (isMySlot) {
       console.log('🎮 User clicking their own slot, starting game for slot:', slotNumber);
       onStartGame(slotNumber);
       return;
     }
 
-    // If user is already in a pool (different slot), redirect to game instead of payment
-    if (isAlreadyInPool) {
-      console.log('🎮 User already in pool, redirecting to game');
-      onStartGame(slotNumber);
+    // If slot is occupied by someone else, do nothing (shouldn't happen due to button disable)
+    if (isOccupied && !isMySlot) {
+      console.log('🚫 Slot occupied by another player, ignoring click');
       return;
     }
 
+    // IMPORTANT: Smart contract only allows ONE active slot at a time
+    // User must submit their score before buying another slot
+    // Check if user has an unfinished game (canJoin: false means they have an active slot)
+    if (userStatus && !userStatus.canJoin && userStatus.slotsUsed > 0) {
+      console.log('⚠️ User has unfinished game - must complete it first');
+      alert('You have an unfinished game! Please click your orange "PLAY NOW" slot to play and submit your score before buying another slot.');
+      return;
+    }
+
+    // For any available slot (purple), require payment
+    // Each new slot costs 0.1 CELO regardless of how many slots user already has
+    console.log('💰 Opening payment modal for new slot:', slotNumber);
     setSelectedSlot(slotNumber);
 
     // Show verification prompt if not verified and approaching limit
@@ -199,18 +219,31 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
             </div>
           )}
 
-          {hasReachedSlotLimit && !isAlreadyInPool && (
+          {hasReachedSlotLimit && (
             <div className="mt-3 bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-800">
               <p className="font-semibold">Slot limit reached!</p>
               <p>Verify your age to unlock unlimited slots.</p>
             </div>
           )}
 
-          {/* Already in Pool Info */}
-          {isAlreadyInPool && (
-            <div className="mt-3 bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-800">
-              <p className="font-semibold">🎮 You're in this pool!</p>
-              <p>You have {userStatus?.slotsUsed} slot(s). Click your green slot(s) below to play your game and submit your score.</p>
+          {/* Info about user's active slots - show different message based on canJoin */}
+          {hasActiveSlots && userStatus && (
+            <div className={`mt-3 rounded-lg p-3 text-sm ${
+              userStatus.canJoin
+                ? 'bg-green-50 border border-green-200 text-green-800'
+                : 'bg-orange-50 border border-orange-200 text-orange-800'
+            }`}>
+              {userStatus.canJoin ? (
+                <>
+                  <p className="font-semibold">✅ Score submitted! You can buy another slot.</p>
+                  <p>Click any purple slot to pay 0.1 CELO and play again.</p>
+                </>
+              ) : (
+                <>
+                  <p className="font-semibold">⚠️ You have an active game in this pool!</p>
+                  <p>Click your orange &quot;PLAY NOW&quot; slot below to play and submit your score. You must finish before buying another slot.</p>
+                </>
+              )}
             </div>
           )}
 
@@ -274,34 +307,67 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
             // Check if THIS slot belongs to the current user
             const isMySlot = isOccupied && poolData && address &&
               poolData.players[slotIndex]?.toLowerCase() === address.toLowerCase();
-            const canPlay = !hasReachedSlotLimit || isAlreadyInPool; // Allow clicking if already in pool
+            // Check if score has been submitted for this slot
+            const hasSubmitted = poolData?.playerSlots?.[slotIndex]?.hasSubmitted ?? false;
+            // User can play if: they own the slot OR they haven't reached slot limit
+            const canPlay = isMySlot || !hasReachedSlotLimit;
+
+            // Button should be disabled if:
+            // 1. Slot is occupied by someone else (not my slot)
+            // 2. Slot is empty but user has reached slot limit
+            const isDisabled = (isOccupied && !isMySlot) || (!isOccupied && hasReachedSlotLimit);
+
+            // Determine slot styling based on state
+            // - My slot + submitted = Green (completed)
+            // - My slot + NOT submitted = Orange/Red (needs action)
+            // - Other player's slot = Gray (filled)
+            // - Available = Purple (can buy)
+            let slotClassName = '';
+            if (isMySlot) {
+              if (hasSubmitted) {
+                // Score submitted - show green (completed)
+                slotClassName = 'bg-gradient-to-br from-green-500 to-teal-600 border-green-400 text-white hover:scale-105 hover:shadow-xl active:scale-95';
+              } else {
+                // Score NOT submitted - show orange (needs action!) - no animation to avoid eye strain
+                slotClassName = 'bg-gradient-to-br from-orange-500 to-amber-600 border-orange-400 text-white hover:scale-105 hover:shadow-xl active:scale-95';
+              }
+            } else if (isOccupied) {
+              slotClassName = 'bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed';
+            } else if (!canPlay) {
+              slotClassName = 'bg-red-100 border-red-300 text-red-400 cursor-not-allowed';
+            } else {
+              slotClassName = 'bg-gradient-to-br from-purple-500 to-blue-600 border-purple-400 text-white hover:scale-105 hover:shadow-xl active:scale-95';
+            }
 
             return (
               <button
                 key={slotNumber}
                 onClick={() => handleSlotClick(slotNumber)}
-                disabled={isOccupied && !isMySlot || (!canPlay && !isMySlot)}
+                disabled={isDisabled}
                 className={`
                   aspect-square rounded-xl sm:rounded-2xl border-2 font-bold
                   transition-all duration-200 transform
-                  ${isMySlot
-                    ? 'bg-gradient-to-br from-green-500 to-teal-600 border-green-400 text-white hover:scale-105 hover:shadow-xl active:scale-95'
-                    : isOccupied
-                    ? 'bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed'
-                    : !canPlay
-                    ? 'bg-red-100 border-red-300 text-red-400 cursor-not-allowed'
-                    : 'bg-gradient-to-br from-purple-500 to-blue-600 border-purple-400 text-white hover:scale-105 hover:shadow-xl active:scale-95'
-                  }
+                  ${slotClassName}
                   disabled:opacity-50 disabled:cursor-not-allowed
                   text-sm sm:text-lg
                 `}
               >
                 {isMySlot ? (
-                  <div className="flex flex-col items-center justify-center gap-1">
-                    <div className="text-xl sm:text-3xl">▶️</div>
-                    <div className="text-xs sm:text-sm">Continue</div>
-                    <div className="text-[10px] sm:text-xs opacity-90">Your Slot</div>
-                  </div>
+                  hasSubmitted ? (
+                    // Score submitted - completed state
+                    <div className="flex flex-col items-center justify-center gap-1">
+                      <div className="text-xl sm:text-3xl">✅</div>
+                      <div className="text-xs sm:text-sm">Done</div>
+                      <div className="text-[10px] sm:text-xs opacity-90">Submitted</div>
+                    </div>
+                  ) : (
+                    // Score NOT submitted - needs to play!
+                    <div className="flex flex-col items-center justify-center gap-1">
+                      <div className="text-xl sm:text-3xl">⚠️</div>
+                      <div className="text-xs sm:text-sm font-bold">PLAY NOW</div>
+                      <div className="text-[10px] sm:text-xs opacity-90">Pending</div>
+                    </div>
+                  )
                 ) : isOccupied ? (
                   <div className="flex flex-col items-center justify-center gap-1">
                     <div className="text-lg sm:text-2xl">✓</div>
