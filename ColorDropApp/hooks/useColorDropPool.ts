@@ -22,10 +22,16 @@ console.log('🔧 ColorDropPool Hook Configuration - MAINNET ONLY:', {
   ENTRY_FEE_CELO: (Number(ENTRY_FEE) / 1e18).toFixed(2) + ' CELO',
 });
 
+export interface PlayerSlot {
+  wallet: `0x${string}`;
+  hasSubmitted: boolean;
+}
+
 export interface PoolData {
   poolId: bigint;
   playerCount: number;
   players: `0x${string}`[];
+  playerSlots: PlayerSlot[]; // Detailed player data including submission status
   isComplete: boolean;
   isFinalized: boolean;
 }
@@ -212,6 +218,7 @@ export function useColorDropPool() {
         poolId: currentPoolId as bigint,
         playerCount: count,
         players: [], // Will be populated by separate getPlayer calls
+        playerSlots: [], // Will be populated by separate getPlayer calls
         isComplete: isComplete as boolean,
         isFinalized: isComplete as boolean, // Using isComplete as isFinalized for now
       });
@@ -222,22 +229,25 @@ export function useColorDropPool() {
   useEffect(() => {
     if (playersData && playersData.length > 0 && currentPoolData) {
       const playerAddresses: `0x${string}`[] = [];
+      const playerSlots: PlayerSlot[] = [];
       console.log('👥 Raw players data:', playersData);
 
       for (const playerResult of playersData) {
         if (playerResult.status === 'success' && playerResult.result) {
           // getPlayer returns: (wallet, fid, accuracy, timestamp, hasSubmitted)
-          const [wallet] = playerResult.result as [`0x${string}`, bigint, number, number, boolean];
+          const [wallet, , , , hasSubmitted] = playerResult.result as [`0x${string}`, bigint, number, number, boolean];
           playerAddresses.push(wallet);
-          console.log('👤 Player wallet:', wallet);
+          playerSlots.push({ wallet, hasSubmitted });
+          console.log('👤 Player:', { wallet, hasSubmitted });
         }
       }
 
       if (playerAddresses.length > 0) {
-        console.log('📋 All player addresses:', playerAddresses);
+        console.log('📋 All player slots:', playerSlots);
         setCurrentPoolData(prev => prev ? {
           ...prev,
           players: playerAddresses,
+          playerSlots: playerSlots,
         } : null);
       }
     }
@@ -329,15 +339,21 @@ export function useColorDropPool() {
       }
     }
 
-    // Convert accuracy percentage (0-100) to uint256 with 2 decimal precision
+    // Convert accuracy percentage (0-100) to uint16 with 2 decimal precision
     // Example: 95.67% becomes 9567
     const scoreValue = Math.round(accuracy * 100);
+
+    console.log('📊 Submitting score:', {
+      poolId: currentPoolId.toString(),
+      accuracy: accuracy,
+      scoreValue: scoreValue,
+    });
 
     scoreWriteContract({
       address: POOL_ADDRESS,
       abi: ColorDropPoolABI.abi,
       functionName: 'submitScore',
-      args: [BigInt(scoreValue)],
+      args: [currentPoolId, scoreValue], // Contract expects: submitScore(uint256 poolId, uint16 accuracy)
       chainId: TARGET_CHAIN.id,
     });
   }, [address, chain, currentPoolId, scoreWriteContract, switchChainAsync]);

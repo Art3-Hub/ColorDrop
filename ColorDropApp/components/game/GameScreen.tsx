@@ -164,7 +164,7 @@ export function GameScreen({ onBackToLobby, slotNumber }: GameScreenProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             {/* Target Color */}
             <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6">
-              <TargetColor color={targetColor} revealed={false} />
+              <TargetColor color={targetColor} revealed={true} />
             </div>
 
             {/* User Color Picker */}
@@ -175,6 +175,45 @@ export function GameScreen({ onBackToLobby, slotNumber }: GameScreenProps) {
               <ColorPicker onColorChange={handleColorChange} disabled={false} />
             </div>
           </div>
+        </div>
+      )}
+
+      {gameState === 'submitting' && result && (
+        <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-8 space-y-4 sm:space-y-6">
+          {/* Submitting State UI */}
+          <div className="text-center">
+            <div className="text-5xl sm:text-6xl mb-3 animate-pulse">📤</div>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-2 text-purple-600">
+              Submitting Score...
+            </h2>
+            <div className="text-4xl sm:text-5xl font-bold text-gray-900 mb-1">
+              {result.accuracy.toFixed(2)}%
+            </div>
+            <p className="text-sm sm:text-base text-gray-600">Please wait while your score is recorded on-chain</p>
+          </div>
+
+          {/* Progress Indicator */}
+          <div className="flex justify-center">
+            <div className="flex items-center gap-3 px-6 py-3 bg-purple-50 rounded-xl">
+              <div className="animate-spin text-2xl">⏳</div>
+              <span className="text-purple-700 font-medium">
+                {isScorePending ? 'Confirming in wallet...' : 'Waiting for confirmation...'}
+              </span>
+            </div>
+          </div>
+
+          {scoreError && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-800">
+              <p className="font-semibold">Failed to submit score</p>
+              <p className="text-xs mt-1">{scoreError.message}</p>
+              <button
+                onClick={() => setGameState('finished')}
+                className="mt-2 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700"
+              >
+                Try Again
+              </button>
+            </div>
+          )}
         </div>
       )}
 
