@@ -9,6 +9,7 @@ interface PaymentModalProps {
   onConfirm: () => void;
   onCancel: () => void;
   isProcessing?: boolean;
+  error?: Error | null;
 }
 
 export function PaymentModal({
@@ -18,6 +19,7 @@ export function PaymentModal({
   onConfirm,
   onCancel,
   isProcessing = false,
+  error = null,
 }: PaymentModalProps) {
   // Close on Escape key
   useEffect(() => {
@@ -87,6 +89,19 @@ export function PaymentModal({
             </div>
           </div>
         </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3 sm:p-4">
+            <div className="flex items-start gap-2">
+              <span className="text-lg">❌</span>
+              <div className="text-xs sm:text-sm text-red-800">
+                <p className="font-semibold mb-1">Transaction Failed:</p>
+                <p>{error.message || 'An unknown error occurred. Please try again.'}</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Important Notice */}
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 sm:p-4">
