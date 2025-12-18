@@ -1,74 +1,61 @@
-import { http, cookieStorage, createStorage, createConfig } from 'wagmi';
-import { celo } from 'wagmi/chains';
-import { farcasterMiniApp } from '@farcaster/miniapp-wagmi-connector';
-import { walletConnect, injected } from 'wagmi/connectors';
-import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
-import { celo as celoCoin } from '@reown/appkit/networks';
+import { http, createConfig } from 'wagmi'
+import { celo } from 'wagmi/chains'
+import { farcasterMiniApp } from '@farcaster/miniapp-wagmi-connector'
+import { walletConnect, injected } from 'wagmi/connectors'
 
-// WalletConnect Project ID (required for WalletConnect / Reown AppKit)
-export const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || '';
+// Get Celo RPC URL from environment or use default
+const CELO_RPC_URL = process.env.NEXT_PUBLIC_CELO_RPC_URL || 'https://forno.celo.org'
+
+// WalletConnect project ID is required for WalletConnect v2
+const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || ''
 
 if (!projectId) {
-  console.warn('Missing NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID - wallet connection may not work properly');
+  console.warn('Missing NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID - WalletConnect may not work properly')
 }
 
-// App metadata for Reown AppKit and WalletConnect
-export const metadata = {
-  name: 'Color Drop Tournament',
+// App metadata for WalletConnect
+const metadata = {
+  name: process.env.NEXT_PUBLIC_APP_NAME || 'Color Drop Tournament',
   description: 'Match colors, win CELO prizes on Farcaster',
-  url: process.env.NEXT_PUBLIC_APP_URL || 'https://colordrop.art3hub.xyz',
-  icons: [`${process.env.NEXT_PUBLIC_APP_URL || 'https://colordrop.art3hub.xyz'}/icon.png`],
-};
+  url: process.env.NEXT_PUBLIC_SITE_URL || 'https://colordrop.art3hub.xyz',
+  icons: [`${process.env.NEXT_PUBLIC_SITE_URL || 'https://colordrop.art3hub.xyz'}/icon.png`],
+}
 
-// Networks configuration for Reown AppKit
-export const networks = [celoCoin];
+// Configure connectors array
+const connectors = [
+  // Farcaster Mini App Connector (auto-activated in Farcaster environment)
+  farcasterMiniApp(),
 
-// MAINNET ONLY - Production configuration
-console.log('🌐 Wagmi Configuration - MAINNET ONLY:', {
-  network: 'celo',
-  chainId: celo.id,
-  chainName: celo.name,
-  rpcUrl: process.env.NEXT_PUBLIC_CELO_RPC_URL || 'https://forno.celo.org',
-});
+  // Injected Connector (for browser extension wallets like MetaMask)
+  injected(),
 
-// Create Wagmi Adapter with Reown AppKit (handles WalletConnect + injected wallets in browser)
-export const wagmiAdapter = new WagmiAdapter({
-  storage: createStorage({
-    storage: cookieStorage,
-    key: 'wagmi.colordrop.v2'
+  // WalletConnect Connector (for mobile wallets and QR code connection)
+  walletConnect({
+    projectId,
+    showQrModal: true,
+    metadata,
   }),
-  ssr: true,
-  projectId,
-  networks: [celoCoin]
-});
+]
 
-// Create unified config with all connectors
-// Supports: Farcaster Mini App, Base Mini App, Browser (MetaMask, WalletConnect, etc.)
-// Note: wagmiAdapter already includes WalletConnect - don't add duplicate connector
+// Create wagmi config - CELO MAINNET ONLY
 export const config = createConfig({
   chains: [celo],
-  connectors: [
-    farcasterMiniApp(),                                    // Farcaster Mini App (auto-connects)
-    injected({ shimDisconnect: true }),                    // MetaMask, Coinbase Wallet, etc.
-    ...wagmiAdapter.wagmiConfig.connectors,                // Reown AppKit connectors (includes WalletConnect)
-  ],
   transports: {
-    [celo.id]: http(process.env.NEXT_PUBLIC_CELO_RPC_URL || 'https://forno.celo.org'),
+    [celo.id]: http(CELO_RPC_URL),
   },
-  ssr: true,
-  storage: createStorage({
-    storage: cookieStorage,
-    key: 'wagmi.colordrop.v2'
-  }),
-});
+  connectors,
+})
 
-console.log('🔌 Connectors:', config.connectors.map(c => c.name));
+console.log('🌐 Wagmi Configuration - CELO MAINNET ONLY:', {
+  chainId: celo.id,
+  chainName: celo.name,
+  rpcUrl: CELO_RPC_URL,
+})
 
-// Export network info for display - MAINNET ONLY
+// Export network info for display
 export const NETWORK_INFO = {
   name: 'Celo Mainnet',
   chainId: celo.id,
   isTestnet: false,
-  faucet: null,
   explorer: 'https://celoscan.io',
-};
+}

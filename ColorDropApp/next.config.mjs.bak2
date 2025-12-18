@@ -1,0 +1,49 @@
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  // Server external packages
+  serverExternalPackages: [
+    'pino',
+    'pino-pretty',
+  ],
+  // Transpile WalletConnect packages for browser compatibility
+  transpilePackages: [
+    '@walletconnect/ethereum-provider',
+    '@walletconnect/universal-provider',
+  ],
+  webpack: (config, { isServer }) => {
+    // Fix for WalletConnect's pino logger in browser
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+      };
+    }
+
+    // Stub out unused Solana/Base dependencies that are pulled in by wagmi connectors
+    // We only use Celo, not Base/Solana - these are optional deps we don't need
+    const stubPath = path.resolve(__dirname, 'lib/stubs/empty-module.js');
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'pino-pretty': stubPath,
+      '@solana/kit': stubPath,
+      '@solana-program/system': stubPath,
+      '@solana-program/token': stubPath,
+      '@coinbase/cdp-sdk': stubPath,
+      '@base-org/account': stubPath,
+    };
+
+    return config;
+  },
+}
+
+export default nextConfig

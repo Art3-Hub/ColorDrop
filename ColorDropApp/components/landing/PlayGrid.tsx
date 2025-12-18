@@ -31,6 +31,7 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
     isJoinConfirming,
     isJoinSuccess,
     joinError,
+    joinHash,
     isWrongChain,
     isSwitchingChain,
     targetChain,
@@ -40,20 +41,25 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
 
   const [flowState, setFlowState] = useState<FlowState>('idle');
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
+  const [pendingSlot, setPendingSlot] = useState<number | null>(null); // Track slot during transaction
+  const [lastProcessedHash, setLastProcessedHash] = useState<string | null>(null);
 
   const POOL_SIZE = 9; // 9-player pools for faster games
   const ENTRY_FEE_VALUE = parseFloat(process.env.NEXT_PUBLIC_ENTRY_FEE || '0.1');
   const ENTRY_FEE = `${ENTRY_FEE_VALUE} CELO`;
 
-  // Handle successful join
+  // Handle successful join - track by hash to avoid stale success
   useEffect(() => {
-    if (isJoinSuccess && selectedSlot) {
+    if (isJoinSuccess && joinHash && joinHash !== lastProcessedHash && pendingSlot) {
+      console.log('🎮 Transaction confirmed! Starting game for slot:', pendingSlot);
+      setLastProcessedHash(joinHash);
       // Start the game for this slot
-      onStartGame(selectedSlot);
+      onStartGame(pendingSlot);
       setFlowState('idle');
       setSelectedSlot(null);
+      setPendingSlot(null);
     }
-  }, [isJoinSuccess, selectedSlot, onStartGame]);
+  }, [isJoinSuccess, joinHash, lastProcessedHash, pendingSlot, onStartGame]);
 
   const handleSlotClick = (slotNumber: number) => {
     setSelectedSlot(slotNumber);
@@ -81,6 +87,10 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
     if (!selectedSlot || !address) return;
 
     try {
+      // Store the slot we're paying for BEFORE starting transaction
+      setPendingSlot(selectedSlot);
+      console.log('💰 Starting payment for slot:', selectedSlot);
+
       // Get user's FID from Farcaster context
       let fid = BigInt(1); // Default fallback
 
@@ -99,6 +109,8 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
       await joinPool(fid);
     } catch (error) {
       console.error('Failed to join pool:', error);
+      // Reset pending slot on error
+      setPendingSlot(null);
     }
   };
 
@@ -106,12 +118,14 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
     if (!isJoinPending && !isJoinConfirming) {
       setFlowState('idle');
       setSelectedSlot(null);
+      setPendingSlot(null);
     }
   };
 
   const handleCancelVerification = () => {
     setFlowState('idle');
     setSelectedSlot(null);
+    setPendingSlot(null);
   };
 
   const slotsRemaining = userStatus

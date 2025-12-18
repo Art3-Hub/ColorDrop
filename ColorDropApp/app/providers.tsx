@@ -3,12 +3,11 @@
 import React, { useEffect, useState } from 'react';
 import { WagmiProvider, cookieToInitialState } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { config, projectId, metadata, networks, wagmiAdapter } from '@/lib/wagmi';
+import { config } from '@/lib/wagmi';
 import { initializeFarcaster } from '@/lib/farcaster';
 import { detectPlatform } from '@/lib/platform';
 import { SelfProvider } from '@/contexts/SelfContext';
 import { AutoConnect } from '@/components/auto-connect';
-import { createAppKit } from '@reown/appkit/react';
 
 // Create QueryClient at module level (Farcaster Mini App pattern)
 const queryClient = new QueryClient({
@@ -20,33 +19,6 @@ const queryClient = new QueryClient({
     },
   },
 });
-
-// Global flag to prevent double initialization during HMR
-// Uses window object to persist across module re-evaluations
-declare global {
-  interface Window {
-    __APPKIT_INITIALIZED__?: boolean;
-  }
-}
-
-// Create Reown AppKit modal immediately (before component render)
-// This provides the wallet connection UI for browser mode
-if (typeof window !== 'undefined' && !window.__APPKIT_INITIALIZED__) {
-  window.__APPKIT_INITIALIZED__ = true;
-  createAppKit({
-    adapters: [wagmiAdapter],
-    projectId,
-    networks,
-    defaultNetwork: networks[0],
-    metadata,
-    features: {
-      analytics: true,
-      email: false,
-      socials: false,
-    },
-    featuresOrder: ['injected', 'eip6963', 'walletConnect'],
-  });
-}
 
 // Error/warning suppressor for WalletConnect and Lit library noise
 function ErrorSuppressor({ children }: { children: React.ReactNode }) {
@@ -148,11 +120,11 @@ export function Providers({ children, cookies }: { children: React.ReactNode; co
     <ErrorSuppressor>
       <WagmiProvider config={config} initialState={initialState}>
         <QueryClientProvider client={queryClient}>
-          <AutoConnect>
-            <SelfProvider>
+          <SelfProvider>
+            <AutoConnect>
               {children}
-            </SelfProvider>
-          </AutoConnect>
+            </AutoConnect>
+          </SelfProvider>
         </QueryClientProvider>
       </WagmiProvider>
     </ErrorSuppressor>
