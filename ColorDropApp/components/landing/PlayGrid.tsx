@@ -42,11 +42,30 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
   const [flowState, setFlowState] = useState<FlowState>('idle');
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [pendingSlot, setPendingSlot] = useState<number | null>(null); // Track slot during transaction
-  const [lastProcessedHash, setLastProcessedHash] = useState<string | null>(null);
+  const [lastProcessedHash, setLastProcessedHash] = useState<`0x${string}` | null>(null);
 
   const POOL_SIZE = 9; // 9-player pools for faster games
   const ENTRY_FEE_VALUE = parseFloat(process.env.NEXT_PUBLIC_ENTRY_FEE || '0.1');
   const ENTRY_FEE = `${ENTRY_FEE_VALUE} CELO`;
+
+  // Debug: Log transaction states and user status
+  useEffect(() => {
+    console.log('📊 Transaction state:', {
+      isJoinPending,
+      isJoinConfirming,
+      isJoinSuccess,
+      joinHash: joinHash ? `${joinHash.slice(0, 10)}...` : null,
+      pendingSlot,
+      flowState
+    });
+    console.log('👤 User status:', userStatus);
+  }, [isJoinPending, isJoinConfirming, isJoinSuccess, joinHash, pendingSlot, flowState, userStatus]);
+
+  // Check if user can't join (already in active pool)
+  const cannotJoin = userStatus && !userStatus.canJoin;
+
+  // Check if user is already in an active pool (needs to play their game first)
+  const isAlreadyInPool = cannotJoin && userStatus && userStatus.slotsUsed > 0;
 
   // Handle successful join - track by hash to avoid stale success
   useEffect(() => {
@@ -62,6 +81,26 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
   }, [isJoinSuccess, joinHash, lastProcessedHash, pendingSlot, onStartGame]);
 
   const handleSlotClick = (slotNumber: number) => {
+    const slotIndex = slotNumber - 1;
+    // Check if this slot belongs to the current user
+    const isMySlot = poolData && address &&
+      slotIndex < poolData.playerCount &&
+      poolData.players[slotIndex]?.toLowerCase() === address.toLowerCase();
+
+    // If clicking on own slot, go directly to game
+    if (isMySlot) {
+      console.log('🎮 User clicking their own slot, starting game for slot:', slotNumber);
+      onStartGame(slotNumber);
+      return;
+    }
+
+    // If user is already in a pool (different slot), redirect to game instead of payment
+    if (isAlreadyInPool) {
+      console.log('🎮 User already in pool, redirecting to game');
+      onStartGame(slotNumber);
+      return;
+    }
+
     setSelectedSlot(slotNumber);
 
     // Show verification prompt if not verified and approaching limit
@@ -122,11 +161,6 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
     }
   };
 
-  const handleCancelVerification = () => {
-    setFlowState('idle');
-    setSelectedSlot(null);
-    setPendingSlot(null);
-  };
 
   const slotsRemaining = userStatus
     ? Math.max(0, userStatus.slotsAvailable - userStatus.slotsUsed)
@@ -165,10 +199,18 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
             </div>
           )}
 
-          {hasReachedSlotLimit && (
+          {hasReachedSlotLimit && !isAlreadyInPool && (
             <div className="mt-3 bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-800">
               <p className="font-semibold">Slot limit reached!</p>
               <p>Verify your age to unlock unlimited slots.</p>
+            </div>
+          )}
+
+          {/* Already in Pool Info */}
+          {isAlreadyInPool && (
+            <div className="mt-3 bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-800">
+              <p className="font-semibold">🎮 You're in this pool!</p>
+              <p>You have {userStatus?.slotsUsed} slot(s). Click your green slot(s) below to play your game and submit your score.</p>
             </div>
           )}
 
@@ -229,17 +271,22 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
           {Array.from({ length: POOL_SIZE }, (_, i) => i + 1).map((slotNumber) => {
             const slotIndex = slotNumber - 1;
             const isOccupied = poolData && slotIndex < poolData.playerCount;
-            const canPlay = !hasReachedSlotLimit;
+            // Check if THIS slot belongs to the current user
+            const isMySlot = isOccupied && poolData && address &&
+              poolData.players[slotIndex]?.toLowerCase() === address.toLowerCase();
+            const canPlay = !hasReachedSlotLimit || isAlreadyInPool; // Allow clicking if already in pool
 
             return (
               <button
                 key={slotNumber}
                 onClick={() => handleSlotClick(slotNumber)}
-                disabled={isOccupied || !canPlay}
+                disabled={isOccupied && !isMySlot || (!canPlay && !isMySlot)}
                 className={`
                   aspect-square rounded-xl sm:rounded-2xl border-2 font-bold
                   transition-all duration-200 transform
-                  ${isOccupied
+                  ${isMySlot
+                    ? 'bg-gradient-to-br from-green-500 to-teal-600 border-green-400 text-white hover:scale-105 hover:shadow-xl active:scale-95'
+                    : isOccupied
                     ? 'bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed'
                     : !canPlay
                     ? 'bg-red-100 border-red-300 text-red-400 cursor-not-allowed'
@@ -249,7 +296,13 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
                   text-sm sm:text-lg
                 `}
               >
-                {isOccupied ? (
+                {isMySlot ? (
+                  <div className="flex flex-col items-center justify-center gap-1">
+                    <div className="text-xl sm:text-3xl">▶️</div>
+                    <div className="text-xs sm:text-sm">Continue</div>
+                    <div className="text-[10px] sm:text-xs opacity-90">Your Slot</div>
+                  </div>
+                ) : isOccupied ? (
                   <div className="flex flex-col items-center justify-center gap-1">
                     <div className="text-lg sm:text-2xl">✓</div>
                     <div className="text-[10px] sm:text-xs">Filled</div>
