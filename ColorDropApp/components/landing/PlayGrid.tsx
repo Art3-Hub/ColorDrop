@@ -29,7 +29,8 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
     joinPool,
     isJoinPending,
     isJoinConfirming,
-    isJoinSuccess
+    isJoinSuccess,
+    joinError
   } = useColorDropPool();
 
   const [flowState, setFlowState] = useState<FlowState>('idle');
@@ -316,6 +317,7 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
         onConfirm={handleConfirmPayment}
         onCancel={handleCancelPayment}
         isProcessing={isJoinPending || isJoinConfirming}
+        error={joinError}
       />
     </>
   );
