@@ -9,7 +9,7 @@ import { PlayGrid } from '@/components/landing/PlayGrid';
 import { GameScreen } from '@/components/game/GameScreen';
 import { LeaderboardView } from '@/components/pool/LeaderboardView';
 import { PastGames } from '@/components/pool/PastGames';
-import { isFarcaster } from '@/lib/platform';
+import { useFarcaster } from '@/contexts/FarcasterContext';
 import { NETWORK_INFO } from '@/lib/wagmi';
 import { useColorDropPool } from '@/hooks/useColorDropPool';
 
@@ -18,10 +18,9 @@ type AppState = 'landing' | 'game' | 'leaderboard' | 'pastGames';
 export default function Home() {
   const { address, isConnected } = useAccount();
   const { poolData, currentPoolId } = useColorDropPool();
+  const { isInMiniApp, isAuthenticated } = useFarcaster();
   const [appState, setAppState] = useState<AppState>('landing');
   const [currentSlot, setCurrentSlot] = useState<number>(1);
-  const [isMiniApp, setIsMiniApp] = useState(false);
-  const platformIsFarcaster = isFarcaster();
 
   const ENTRY_FEE_VALUE = parseFloat(process.env.NEXT_PUBLIC_ENTRY_FEE || '0.1');
 
@@ -29,11 +28,8 @@ export default function Home() {
   useEffect(() => {
     async function initFarcaster() {
       try {
-        const result = await sdk.isInMiniApp();
-        setIsMiniApp(result);
-
-        if (result) {
-          // Call ready() to hide Farcaster splash screen
+        // Call ready() if in mini app to hide Farcaster splash screen
+        if (isInMiniApp) {
           sdk.actions.ready();
           console.log('[ColorDrop] 🎯 Farcaster MiniApp detected');
           console.log('[ColorDrop] 📱 SDK ready() called - splash screen hidden');
@@ -43,21 +39,20 @@ export default function Home() {
         }
       } catch (error) {
         console.error('[ColorDrop] ❌ Failed to initialize Farcaster SDK:', error);
-        setIsMiniApp(false);
       }
     }
 
     initFarcaster();
-  }, []);
+  }, [isInMiniApp]);
 
   // Log wallet connection status for debugging
   useEffect(() => {
-    if (platformIsFarcaster && address) {
+    if (isInMiniApp && address) {
       console.log('[ColorDrop] ✅ Farcaster wallet auto-connected:', address);
-    } else if (platformIsFarcaster && !address) {
+    } else if (isInMiniApp && !address) {
       console.log('[ColorDrop] ⏳ Waiting for Farcaster wallet auto-connection...');
     }
-  }, [platformIsFarcaster, address]);
+  }, [isInMiniApp, address]);
 
   const handleStartGame = (slot: number) => {
     setCurrentSlot(slot);
@@ -103,7 +98,7 @@ export default function Home() {
                   )}
                 </div>
                 <p className="text-[10px] sm:text-xs text-gray-600 hidden sm:block">
-                  {platformIsFarcaster ? 'Farcaster Mini App' : 'Tournament Game'}
+                  {isInMiniApp ? 'Farcaster Mini App' : 'Tournament Game'}
                 </p>
               </div>
             </div>

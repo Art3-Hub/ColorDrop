@@ -7,6 +7,7 @@ import { config } from '@/lib/wagmi';
 import { initializeFarcaster } from '@/lib/farcaster';
 import { detectPlatform } from '@/lib/platform';
 import { SelfProvider } from '@/contexts/SelfContext';
+import { FarcasterProvider } from '@/contexts/FarcasterContext';
 import { AutoConnect } from '@/components/auto-connect';
 
 // Create QueryClient at module level (Farcaster Mini App pattern)
@@ -120,11 +121,13 @@ export function Providers({ children, cookies }: { children: React.ReactNode; co
     <ErrorSuppressor>
       <WagmiProvider config={config} initialState={initialState}>
         <QueryClientProvider client={queryClient}>
-          <SelfProvider>
-            <AutoConnect>
-              {children}
-            </AutoConnect>
-          </SelfProvider>
+          <FarcasterProvider>
+            <SelfProvider>
+              <AutoConnect>
+                {children}
+              </AutoConnect>
+            </SelfProvider>
+          </FarcasterProvider>
         </QueryClientProvider>
       </WagmiProvider>
     </ErrorSuppressor>

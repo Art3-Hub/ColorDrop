@@ -2,10 +2,8 @@
 
 import { useAccount, useDisconnect, useConnect, useChainId, useSwitchChain } from 'wagmi';
 import { celo } from 'wagmi/chains';
-import { isFarcaster } from '@/lib/platform';
-import { getCurrentUser } from '@/lib/farcaster';
+import { useFarcaster } from '@/contexts/FarcasterContext';
 import { useState, useEffect } from 'react';
-import type { FarcasterUser } from '@/lib/farcaster';
 
 export function ConnectButton() {
   const { address, isConnected, connector } = useAccount();
@@ -13,10 +11,9 @@ export function ConnectButton() {
   const { connect, connectors, isPending } = useConnect();
   const chainId = useChainId();
   const { switchChain, isPending: isSwitchingChain } = useSwitchChain();
-  const [farcasterUser, setFarcasterUser] = useState<FarcasterUser | null>(null);
+  const { user: farcasterUser, isAuthenticated, isInMiniApp } = useFarcaster();
   const [showConnectorMenu, setShowConnectorMenu] = useState(false);
 
-  const platformIsFarcaster = isFarcaster();
   const isWrongNetwork = isConnected && chainId !== celo.id;
 
   // Auto-switch to Celo mainnet if on wrong network
@@ -26,17 +23,6 @@ export function ConnectButton() {
       switchChain({ chainId: celo.id });
     }
   }, [isWrongNetwork, isSwitchingChain, switchChain, chainId]);
-
-  // Auto-load user from Farcaster context (no auth needed)
-  useEffect(() => {
-    if (platformIsFarcaster) {
-      getCurrentUser().then(user => {
-        if (user) {
-          setFarcasterUser(user);
-        }
-      });
-    }
-  }, [platformIsFarcaster]);
 
   // Log connector info for debugging
   useEffect(() => {
@@ -68,7 +54,7 @@ export function ConnectButton() {
   };
 
   // Farcaster Mode - wallet is automatically connected, just display user info
-  if (platformIsFarcaster) {
+  if (isInMiniApp) {
     // Wallet is auto-connected in Farcaster MiniApp via useAccount()
     // Show user profile if available
     if (farcasterUser && address) {

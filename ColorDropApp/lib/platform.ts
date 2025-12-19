@@ -28,7 +28,7 @@ export async function detectPlatformAsync(): Promise<{
       return { platform: 'browser', isInMiniApp: false, hasFarcasterUser: false };
     }
 
-    const clientPlatform = context?.client?.platform;
+    const clientPlatform = (context?.client as { platform?: string })?.platform;
     const hasFarcasterUser = !!(context?.user?.fid && context.user.fid > 0);
     const fid = context?.user?.fid;
 

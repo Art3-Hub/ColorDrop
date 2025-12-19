@@ -1,20 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { getPlatformConfig } from '@/lib/platform';
+import { useFarcaster } from '@/contexts/FarcasterContext';
 
 export function PlatformIndicator() {
-  const [config, setConfig] = useState<ReturnType<typeof getPlatformConfig> | null>(null);
+  const { isInMiniApp, loading } = useFarcaster();
 
-  useEffect(() => {
-    setConfig(getPlatformConfig());
-  }, []);
-
-  if (!config) return null;
+  // Don't show anything while loading to avoid flash
+  if (loading) return null;
 
   return (
     <div className="fixed top-[60px] left-4 px-3 py-1.5 bg-black/80 text-white text-xs rounded-full backdrop-blur-sm shadow-lg z-40">
-      {config.isFarcaster ? '🟣 Farcaster Mode' : '🌐 Browser Mode'}
+      {isInMiniApp ? '🟣 Farcaster Mode' : '🌐 Browser Mode'}
     </div>
   );
 }
