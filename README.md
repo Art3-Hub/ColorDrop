@@ -116,6 +116,60 @@ Color Drop Tournament is a **skill-based mini app** where players compete in 12-
 - **Fair play enforcement** — On-chain slot limits prevent system abuse
 - **No repeated verification** — Verify once, stored permanently on Celo blockchain
 
+### 📱 Platform-Aware Verification Flow
+
+Color Drop automatically detects the user's platform and provides the optimal verification experience:
+
+| Platform | Method | User Experience |
+|----------|--------|-----------------|
+| **Browser** (Desktop/Mobile) | QR Code | Scan with SELF mobile app |
+| **Farcaster Web** (Browser) | QR Code | Scan with SELF mobile app |
+| **Farcaster Mobile** (App) | Deep Link | Opens SELF app directly |
+
+#### How It Works
+
+1. **Platform Detection** (`usePlatformDetection` hook)
+   - Detects if running in browser, Farcaster web, or Farcaster mobile
+   - Uses `@farcaster/miniapp-sdk` to check Mini App environment
+   - Returns `shouldShowQRCode` or `shouldUseDeeplink` flag
+
+2. **QR Code Flow** (Browser/Farcaster Web)
+   ```
+   User clicks "Verify Age" → QR Code displayed (SelfQRcodeWrapper)
+   → User scans with SELF app → SELF app sends proof to backend
+   → Backend verifies proof → Backend calls setUserVerification()
+   → Frontend polls /api/verify-self/check → User verified ✅
+   ```
+
+3. **Deep Link Flow** (Farcaster Mobile)
+   ```
+   User clicks "Open SELF App" → Universal link opens SELF app
+   → User completes verification → SELF app sends proof to backend
+   → Backend verifies proof → Backend calls setUserVerification()
+   → Frontend polls /api/verify-self/check → User verified ✅
+   ```
+
+#### Technical Implementation
+
+**Platform Detection Hook** (`hooks/usePlatformDetection.ts`):
+```typescript
+export function usePlatformDetection() {
+  // Returns: platform, shouldShowQRCode, shouldUseDeeplink
+  // Platform types: 'browser' | 'farcaster-browser' | 'farcaster-mobile'
+}
+```
+
+**SELF Context** (`contexts/SelfContext.tsx`):
+- `initiateSelfVerification()` — Opens SELF app (browser/desktop)
+- `initiateDeeplinkVerification()` — Opens SELF app via deep link (mobile)
+- `startPolling()` — Polls backend for verification status after QR scan
+- `checkVerificationStatus()` — Checks `/api/verify-self/check` endpoint
+
+**Verification Modal** (`components/SelfVerificationModal.tsx`):
+- Shows QR code when `shouldShowQRCode` is true
+- Shows "Open SELF App" button when `shouldUseDeeplink` is true
+- Displays verification progress indicator during polling
+
 ### 🚫 Why Not Just Frontend Checks?
 Without on-chain verification, players could:
 - Call the smart contract directly from Etherscan/MetaMask

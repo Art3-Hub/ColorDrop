@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 // Declare global type for verification cache
+// Only stores verified status (18+), no personal data
 declare global {
   var verificationCache: Map<string, {
     verified: boolean
-    date_of_birth?: string
-    name?: string
-    nationality?: string
     timestamp: number
   }> | undefined
 }
@@ -53,7 +51,6 @@ export async function POST(request: NextRequest) {
 
       console.log(`[${requestId}] ✅ Found verification:`, {
         verified: verification.verified,
-        hasDOB: !!verification.date_of_birth,
         ageMinutes
       })
 
@@ -66,11 +63,9 @@ export async function POST(request: NextRequest) {
         })
       }
 
+      // Return only verified status - no personal data
       return NextResponse.json({
-        verified: verification.verified,
-        date_of_birth: verification.date_of_birth,
-        name: verification.name,
-        nationality: verification.nationality
+        verified: verification.verified
       })
     }
 

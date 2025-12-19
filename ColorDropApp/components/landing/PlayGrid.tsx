@@ -6,6 +6,7 @@ import { PaymentModal } from '../PaymentModal';
 import { SelfVerificationModal } from '../SelfVerificationModal';
 import { useSelf } from '@/contexts/SelfContext';
 import { useColorDropPool } from '@/hooks/useColorDropPool';
+import { usePlatformDetection } from '@/hooks/usePlatformDetection';
 import { getCurrentUser } from '@/lib/farcaster';
 
 interface PlayGridProps {
@@ -19,8 +20,12 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
   const { address } = useAccount();
   const {
     isVerified,
-    initiateSelfVerification
+    initiateSelfVerification,
+    initiateDeeplinkVerification,
+    stopPolling,
+    clearVerification
   } = useSelf();
+  const { shouldUseDeeplink } = usePlatformDetection();
 
   const {
     poolData,
@@ -44,6 +49,15 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [pendingSlot, setPendingSlot] = useState<number | null>(null); // Track slot during transaction
   const [lastProcessedHash, setLastProcessedHash] = useState<`0x${string}` | null>(null);
+
+  // Auto-proceed to payment when verification completes
+  useEffect(() => {
+    if (isVerified && flowState === 'verification_prompt') {
+      console.log('✅ Verification completed! Proceeding to payment...');
+      stopPolling(); // Stop polling since we're verified
+      setFlowState('payment');
+    }
+  }, [isVerified, flowState, stopPolling]);
 
   const POOL_SIZE = 9; // 9-player pools for faster games
   const ENTRY_FEE_VALUE = parseFloat(process.env.NEXT_PUBLIC_ENTRY_FEE || '0.1');
@@ -70,13 +84,19 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
     if (isJoinSuccess && joinHash && joinHash !== lastProcessedHash && pendingSlot) {
       console.log('🎮 Transaction confirmed! Starting game for slot:', pendingSlot);
       setLastProcessedHash(joinHash);
+
+      // IMPORTANT: Clear SELF verification after each successful payment
+      // User must re-verify for every slot click (per user requirement)
+      clearVerification();
+      console.log('🔄 SELF verification cleared - will require fresh verification for next slot');
+
       // Start the game for this slot
       onStartGame(pendingSlot);
       setFlowState('idle');
       setSelectedSlot(null);
       setPendingSlot(null);
     }
-  }, [isJoinSuccess, joinHash, lastProcessedHash, pendingSlot, onStartGame]);
+  }, [isJoinSuccess, joinHash, lastProcessedHash, pendingSlot, onStartGame, clearVerification]);
 
   const handleSlotClick = (slotNumber: number) => {
     const slotIndex = slotNumber - 1;
@@ -146,19 +166,29 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
     console.log('💰 Opening payment modal for new slot:', slotNumber);
     setSelectedSlot(slotNumber);
 
-    // Show verification prompt if not verified and approaching limit
-    if (!isVerified && userStatus && userStatus.slotsUsed >= 2) {
+    // IMPORTANT: Always require SELF verification for EVERY slot click
+    // User must verify before each payment (per user requirement)
+    if (!isVerified) {
+      console.log('🔐 SELF verification required before payment');
       setFlowState('verification_prompt');
     } else {
-      // Skip directly to payment
+      // Already verified in this session (shouldn't happen since we clear after payment)
       setFlowState('payment');
     }
   };
 
   const handleVerifySelf = async () => {
-    await initiateSelfVerification();
-    // After verification starts, proceed to payment
-    setFlowState('payment');
+    // Use deeplink for Farcaster mobile, otherwise QR code handles it via modal
+    if (shouldUseDeeplink) {
+      await initiateDeeplinkVerification();
+      // After verification starts, proceed to payment
+      setFlowState('payment');
+    } else {
+      // For browser/farcaster-browser, the QR code is shown in the modal
+      // and polling starts when QR is scanned - no need to call initiateSelfVerification here
+      // The modal will handle the QR code display and polling
+      // Just keep the verification_prompt state until user completes or skips
+    }
   };
 
   const handleSkipVerification = () => {
@@ -221,33 +251,14 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
             Pay {ENTRY_FEE} per slot • Top 3 players win prizes!
           </p>
 
-          {/* User Status Banner */}
+          {/* User Status Banner - SELF verification required for each slot */}
           {userStatus && (
-            <div className={`mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${
-              isVerified
-                ? 'bg-green-100 text-green-800 border border-green-300'
-                : 'bg-yellow-100 text-yellow-800 border border-yellow-300'
-            }`}>
-              {isVerified ? (
-                <>
-                  <span>✅</span>
-                  <span>Verified - Unlimited Slots</span>
-                </>
-              ) : (
-                <>
-                  <span>⚠️</span>
-                  <span>{slotsRemaining} {slotsRemaining === 1 ? 'slot' : 'slots'} remaining (4 max)</span>
-                </>
-              )}
+            <div className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-blue-100 text-blue-800 border border-blue-300">
+              <span>🔐</span>
+              <span>SELF verification required for each slot</span>
             </div>
           )}
 
-          {hasReachedSlotLimit && (
-            <div className="mt-3 bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-800">
-              <p className="font-semibold">Slot limit reached!</p>
-              <p>Verify your age to unlock unlimited slots.</p>
-            </div>
-          )}
 
           {/* Info about user's active slots - show different message based on canJoin */}
           {hasActiveSlots && userStatus && (
