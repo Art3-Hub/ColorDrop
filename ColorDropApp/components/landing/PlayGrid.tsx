@@ -162,21 +162,24 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
     console.log('💰 Opening payment modal for new slot:', slotNumber);
     setSelectedSlot(slotNumber);
 
-    // Check if user needs SELF verification
-    // Unverified users: max 2 slots
-    // Verified users: unlimited slots
-    const slotsUsedNow = userStatus?.slotsUsed || 0;
+    // v3.9.0: Show SELF verification on EVERY slot click for unverified users
+    // This encourages verification without blocking gameplay
+    // slotsUsed from contract is now PER-POOL (not lifetime)
+    const slotsInCurrentPool = userStatus?.slotsUsed || 0;
 
-    if (!isVerified && slotsUsedNow >= MAX_UNVERIFIED_SLOTS) {
-      // User has reached unverified limit - must verify to continue
-      console.log('🔐 SELF verification required - user at slot limit');
-      setFlowState('verification_prompt');
-    } else if (!isVerified && slotsUsedNow >= 1) {
-      // Show verification option (can skip) after first slot
-      console.log('🔐 Offering SELF verification option');
+    if (!isVerified) {
+      // Always show verification prompt for unverified users
+      // They can skip if under the per-pool limit (2 slots)
+      if (slotsInCurrentPool >= MAX_UNVERIFIED_SLOTS) {
+        // At limit - must verify to continue (can't skip)
+        console.log('🔐 SELF verification REQUIRED - at per-pool slot limit');
+      } else {
+        // Under limit - can skip but we still encourage verification
+        console.log('🔐 Offering SELF verification (can skip)');
+      }
       setFlowState('verification_prompt');
     } else {
-      // Go directly to payment (verified user or first slot)
+      // Verified user - go directly to payment (unlimited slots)
       setFlowState('payment');
     }
   };
@@ -195,10 +198,11 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
     }
   };
 
-  // Check if user can skip verification (only if under slot limit)
-  const currentSlots = userStatus?.slotsUsed || 0;
-  const MAX_UNVERIFIED_SLOTS = 2;
-  const canSkipVerification = currentSlots < MAX_UNVERIFIED_SLOTS;
+  // Check if user can skip verification (only if under per-pool slot limit)
+  // v3.9.0: This is now PER-POOL slots, not lifetime
+  const currentPoolSlots = userStatus?.slotsUsed || 0;
+  const MAX_UNVERIFIED_SLOTS = 2; // Must match contract UNVERIFIED_POOL_SLOT_LIMIT
+  const canSkipVerification = currentPoolSlots < MAX_UNVERIFIED_SLOTS;
 
   const handleSkipVerification = () => {
     if (canSkipVerification) {
@@ -274,7 +278,7 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
                     ? 'bg-green-50 text-green-700 border border-green-200'
                     : 'bg-amber-50 text-amber-700 border border-amber-200'
                 }`}>
-                  {isVerified ? '✓ Unlimited' : `${Math.max(0, MAX_UNVERIFIED_SLOTS - currentSlots)}/${MAX_UNVERIFIED_SLOTS} left`}
+                  {isVerified ? '✓ Unlimited' : `${Math.max(0, MAX_UNVERIFIED_SLOTS - currentPoolSlots)}/${MAX_UNVERIFIED_SLOTS} left`}
                 </div>
               )}
             </div>
@@ -316,7 +320,7 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
                   </>
                 ) : (
                   <>
-                    <span className="font-bold">{Math.max(0, MAX_UNVERIFIED_SLOTS - currentSlots)}</span>
+                    <span className="font-bold">{Math.max(0, MAX_UNVERIFIED_SLOTS - currentPoolSlots)}</span>
                     <span>/ {MAX_UNVERIFIED_SLOTS} slots left</span>
                   </>
                 )}
@@ -545,7 +549,7 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
         onVerify={handleVerifySelf}
         onSkip={handleSkipVerification}
         onCancel={handleCancelVerification}
-        slotsRemaining={Math.max(0, MAX_UNVERIFIED_SLOTS - currentSlots)}
+        slotsRemaining={Math.max(0, MAX_UNVERIFIED_SLOTS - currentPoolSlots)}
         canSkip={canSkipVerification}
       />
 

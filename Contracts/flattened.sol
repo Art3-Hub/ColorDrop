@@ -5325,8 +5325,14 @@ pragma solidity ^0.8.22;
 /**
  * @title ColorDropPool
  * @dev Upgradeable tournament-style pool for Color Drop game on Farcaster x Celo
- * @notice 12 players compete @ 0.1 CELO, top 3 win prizes (0.6, 0.3, 0.1 CELO)
+ * @notice 16 players compete @ 0.1 CELO, top 3 win prizes (0.70, 0.50, 0.25 CELO)
  * @custom:security-contact security@colordrop.app
+ *
+ * v3.9.0 Changes:
+ * - Added per-pool slot tracking (poolSlotCount) - 2 slots max per pool for unverified
+ * - Added lifetime statistics (UserStats) - track winnings, games played, wins
+ * - Changed slot limit from lifetime to per-pool for unverified users
+ * - Added getUserFullStats() for comprehensive user data
  */
 contract ColorDropPool is
     Initializable,
@@ -5338,15 +5344,17 @@ contract ColorDropPool is
     // Role definitions
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
-    // Constants
+    // Constants - 16 players x 0.1 CELO = 1.6 CELO total pool
     uint256 public constant ENTRY_FEE = 0.1 ether; // 0.1 CELO per player
-    uint8 public constant POOL_SIZE = 12;
-    uint8 public constant UNVERIFIED_SLOT_LIMIT = 4; // Max slots for unverified users
-    uint256 public constant PRIZE_1ST = 0.6 ether; // 50% of prize pool
-    uint256 public constant PRIZE_2ND = 0.3 ether; // 25% of prize pool
-    uint256 public constant PRIZE_3RD = 0.1 ether; // 8.33% of prize pool
-    uint256 public constant SYSTEM_FEE = 0.2 ether; // 16.67% of total pool
-    uint256 public constant FINALIZATION_TIMEOUT = 2 minutes; // Reduced from 5 minutes
+    uint8 public constant POOL_SIZE = 16; // Pool size (16 players)
+    uint8 public constant STORAGE_POOL_SIZE = 16; // Storage array size
+    uint8 public constant UNVERIFIED_SLOT_LIMIT = 4; // Legacy: lifetime max (kept for compatibility)
+    uint8 public constant UNVERIFIED_POOL_SLOT_LIMIT = 2; // Max slots per pool for unverified users
+    uint256 public constant PRIZE_1ST = 0.7 ether; // 43.75% of prize pool (0.70 CELO = 7× entry)
+    uint256 public constant PRIZE_2ND = 0.5 ether; // 31.25% of prize pool (0.50 CELO = 5× entry)
+    uint256 public constant PRIZE_3RD = 0.25 ether; // 15.625% of prize pool (0.25 CELO = 2.5× entry)
+    uint256 public constant SYSTEM_FEE = 0.15 ether; // 9.375% of total pool
+    uint256 public constant FINALIZATION_TIMEOUT = 2 minutes;
 
     // Structs
     struct Player {
@@ -5359,12 +5367,22 @@ contract ColorDropPool is
 
     struct Pool {
         uint256 id;
-        Player[POOL_SIZE] players;
+        Player[STORAGE_POOL_SIZE] players; // Storage array kept at 16 for upgrade compatibility
         uint8 playerCount;
         bool isActive;
         bool isCompleted;
         uint32 startTime;
         bytes32 targetColor; // RGB color hash
+    }
+
+    // User lifetime statistics (v3.9.0+)
+    struct UserStats {
+        uint256 totalClaimed;      // Total CELO claimed from winnings
+        uint256 totalSpent;        // Total CELO spent on entries
+        uint32 gamesPlayed;        // Total pools participated in
+        uint16 wins1st;            // Times won 1st place
+        uint16 wins2nd;            // Times won 2nd place
+        uint16 wins3rd;            // Times won 3rd place
     }
 
     // State variables
@@ -5378,8 +5396,22 @@ contract ColorDropPool is
     address public treasury1;
     address public treasury2;
 
+    // Prize claiming (v3.6.0+)
+    // Maps poolId => rank (1,2,3) => winner address
+    mapping(uint256 => mapping(uint8 => address)) public poolWinners;
+    // Maps poolId => rank (1,2,3) => claimed status
+    mapping(uint256 => mapping(uint8 => bool)) public prizeClaimed;
+    // Maps user => total unclaimed prizes
+    mapping(address => uint256) public unclaimedPrizes;
+
     // Backend verifier wallet (calls setUserVerification after SELF proof validation)
     address public verifier;
+
+    // Per-pool slot tracking (v3.9.0+) - tracks slots per user per pool
+    mapping(uint256 => mapping(address => uint8)) public poolSlotCount;
+
+    // User lifetime statistics (v3.9.0+)
+    mapping(address => UserStats) public userStats;
 
     // SELF Age Verification Architecture:
     // - Backend validates SELF zero-knowledge proofs (18+ age verification)
@@ -5399,10 +5431,13 @@ contract ColorDropPool is
         address third
     );
     event PrizePaid(address indexed winner, uint256 amount);
+    event PrizeClaimed(uint256 indexed poolId, address indexed winner, uint8 rank, uint256 amount);
     event SystemFeePaid(address indexed treasury, uint256 amount);
     event TreasuryUpdated(address indexed treasury1, address indexed treasury2);
     event UserVerified(address indexed user, bool verified);
     event VerifierUpdated(address indexed oldVerifier, address indexed newVerifier);
+    event ActivePoolIdReset(address indexed user);
+    event PlayerSlotCountReset(address indexed user);
 
     // Custom errors (gas efficient)
     error InvalidTreasuryAddress();
@@ -5420,6 +5455,8 @@ contract ColorDropPool is
     error PoolNotActive();
     error SlotLimitExceeded();
     error UnauthorizedVerifier();
+    error NoPrizeToClaim();
+    error PrizeAlreadyClaimed();
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -5470,16 +5507,17 @@ contract ColorDropPool is
     /**
      * @dev Join current pool with 0.1 CELO entry fee
      * @param fid Farcaster ID of the player
-     * @notice Enforces 4-slot limit for unverified users, unlimited for SELF-verified (18+)
+     * @notice Enforces 2-slot per-pool limit for unverified users, unlimited for SELF-verified (18+)
      */
     function joinPool(uint256 fid) external payable nonReentrant whenNotPaused {
         if (msg.value != ENTRY_FEE) revert InvalidEntryFee();
         if (fid == 0) revert InvalidFID();
         if (activePoolId[msg.sender] != 0) revert AlreadyInActivePool();
 
-        // Enforce slot limits: 4 for unverified, unlimited for verified
+        // Enforce PER-POOL slot limits: 2 per pool for unverified, unlimited for verified
         bool isVerified = verifiedUsers[msg.sender];
-        if (!isVerified && playerSlotCount[msg.sender] >= UNVERIFIED_SLOT_LIMIT) {
+        uint8 userPoolSlots = poolSlotCount[currentPoolId][msg.sender];
+        if (!isVerified && userPoolSlots >= UNVERIFIED_POOL_SLOT_LIMIT) {
             revert SlotLimitExceeded();
         }
 
@@ -5497,7 +5535,15 @@ contract ColorDropPool is
 
         pool.playerCount++;
         activePoolId[msg.sender] = currentPoolId;
-        playerSlotCount[msg.sender]++; // Increment slot usage
+        playerSlotCount[msg.sender]++; // Increment lifetime slot count (for tracking)
+        poolSlotCount[currentPoolId][msg.sender]++; // Increment per-pool slot count (for limits)
+
+        // Update user stats (v3.9.0+)
+        userStats[msg.sender].totalSpent += ENTRY_FEE;
+        // Only increment gamesPlayed on first slot in this pool
+        if (userPoolSlots == 0) {
+            userStats[msg.sender].gamesPlayed++;
+        }
 
         emit PlayerJoined(currentPoolId, msg.sender, fid);
 
@@ -5516,6 +5562,7 @@ contract ColorDropPool is
      * @dev Submit accuracy score for current pool
      * @param poolId Pool ID to submit score for
      * @param accuracy Accuracy score (0-10000 basis points)
+     * @notice Players can submit scores immediately after paying, no need to wait for pool to fill
      */
     function submitScore(uint256 poolId, uint16 accuracy)
         external
@@ -5527,14 +5574,14 @@ contract ColorDropPool is
         if (activePoolId[msg.sender] != poolId) revert NotInPool();
 
         Pool storage pool = pools[poolId];
-        if (!pool.isActive || pool.isCompleted) revert PoolNotActive();
+        // Only check if pool is already completed, allow submission before pool is full
+        if (pool.isCompleted) revert PoolNotActive();
 
-        // Find player and update score
+        // Find player's FIRST unsubmitted slot and update score
+        // This handles multi-slot users correctly - finds the first slot that hasn't submitted yet
         bool found = false;
         for (uint8 i = 0; i < pool.playerCount; i++) {
-            if (pool.players[i].wallet == msg.sender) {
-                if (pool.players[i].hasSubmitted) revert AlreadySubmitted();
-
+            if (pool.players[i].wallet == msg.sender && !pool.players[i].hasSubmitted) {
                 pool.players[i].accuracy = accuracy;
                 pool.players[i].timestamp = uint32(block.timestamp);
                 pool.players[i].hasSubmitted = true;
@@ -5543,7 +5590,11 @@ contract ColorDropPool is
             }
         }
 
-        if (!found) revert NotInPool();
+        if (!found) revert AlreadySubmitted();
+
+        // Clear activePoolId so user can join another slot
+        // This allows buying multiple slots in the same pool
+        activePoolId[msg.sender] = 0;
 
         emit ScoreSubmitted(poolId, msg.sender, accuracy);
 
@@ -5592,12 +5643,19 @@ contract ColorDropPool is
 
     /**
      * @dev Check if pool is ready for completion
+     * @notice Only distributes prizes when pool is FULL (16 players) AND all have submitted
      */
     function _checkPoolCompletion(uint256 poolId) private {
         Pool storage pool = pools[poolId];
 
+        // Pool must be full (16 players) before we can distribute
+        if (pool.playerCount < POOL_SIZE) {
+            return;
+        }
+
+        // Check if all 16 players have submitted
         bool allSubmitted = true;
-        for (uint8 i = 0; i < pool.playerCount; i++) {
+        for (uint8 i = 0; i < POOL_SIZE; i++) {
             if (!pool.players[i].hasSubmitted) {
                 allSubmitted = false;
                 break;
@@ -5610,7 +5668,8 @@ contract ColorDropPool is
     }
 
     /**
-     * @dev Distribute prizes to top 3 players and system fees to dual treasuries
+     * @dev Finalize pool and record winners for prize claiming
+     * @notice System fees are auto-distributed, but player prizes must be claimed manually
      */
     function _distributePrizes(uint256 poolId) private {
         Pool storage pool = pools[poolId];
@@ -5621,16 +5680,20 @@ contract ColorDropPool is
         // Find top 3 players
         address[3] memory winners = _getTopThree(poolId);
 
-        // Split system fee 50/50 between treasury wallets
+        // Split system fee 50/50 between treasury wallets (auto-distributed)
         uint256 feePerTreasury = SYSTEM_FEE / 2;
-
         _payFee(treasury1, feePerTreasury);
         _payFee(treasury2, feePerTreasury);
 
-        // Pay prizes
-        _payPrize(winners[0], PRIZE_1ST);
-        _payPrize(winners[1], PRIZE_2ND);
-        _payPrize(winners[2], PRIZE_3RD);
+        // Record winners and their unclaimed prizes (manual claiming)
+        uint256[3] memory prizes = [PRIZE_1ST, PRIZE_2ND, PRIZE_3RD];
+        for (uint8 i = 0; i < 3; i++) {
+            if (winners[i] != address(0)) {
+                uint8 rank = i + 1;
+                poolWinners[poolId][rank] = winners[i];
+                unclaimedPrizes[winners[i]] += prizes[i];
+            }
+        }
 
         // Clear active pool for all players
         for (uint8 i = 0; i < pool.playerCount; i++) {
@@ -5638,6 +5701,90 @@ contract ColorDropPool is
         }
 
         emit PoolCompleted(poolId, winners[0], winners[1], winners[2]);
+    }
+
+    /**
+     * @dev Claim prize for a specific pool
+     * @param poolId Pool ID to claim prize from
+     * @notice Winners call this to receive their CELO prize and can then share on social
+     */
+    function claimPrize(uint256 poolId) external nonReentrant whenNotPaused {
+        Pool storage pool = pools[poolId];
+        if (!pool.isCompleted) revert PoolNotActive();
+
+        // Find which rank the caller won (if any)
+        uint8 winnerRank = 0;
+        for (uint8 i = 1; i <= 3; i++) {
+            if (poolWinners[poolId][i] == msg.sender && !prizeClaimed[poolId][i]) {
+                winnerRank = i;
+                break;
+            }
+        }
+
+        if (winnerRank == 0) revert NoPrizeToClaim();
+
+        // Mark as claimed
+        prizeClaimed[poolId][winnerRank] = true;
+
+        // Calculate prize amount
+        uint256 prizeAmount;
+        if (winnerRank == 1) prizeAmount = PRIZE_1ST;
+        else if (winnerRank == 2) prizeAmount = PRIZE_2ND;
+        else prizeAmount = PRIZE_3RD;
+
+        // Update unclaimed balance
+        unclaimedPrizes[msg.sender] -= prizeAmount;
+
+        // Update user stats (v3.9.0+) - track lifetime claimed amount and win counts
+        userStats[msg.sender].totalClaimed += prizeAmount;
+        if (winnerRank == 1) userStats[msg.sender].wins1st++;
+        else if (winnerRank == 2) userStats[msg.sender].wins2nd++;
+        else userStats[msg.sender].wins3rd++;
+
+        // Transfer prize
+        (bool success, ) = msg.sender.call{value: prizeAmount}("");
+        if (!success) revert TransferFailed();
+
+        emit PrizeClaimed(poolId, msg.sender, winnerRank, prizeAmount);
+    }
+
+    /**
+     * @dev Get winner info for a pool
+     * @param poolId Pool ID to check
+     * @return winners Array of winner addresses [1st, 2nd, 3rd]
+     * @return claimed Array of claimed status [1st, 2nd, 3rd]
+     */
+    function getPoolWinners(uint256 poolId) external view returns (
+        address[3] memory winners,
+        bool[3] memory claimed
+    ) {
+        for (uint8 i = 1; i <= 3; i++) {
+            winners[i-1] = poolWinners[poolId][i];
+            claimed[i-1] = prizeClaimed[poolId][i];
+        }
+    }
+
+    /**
+     * @dev Check if user has unclaimed prizes in a specific pool
+     * @param poolId Pool ID to check
+     * @param user Address to check
+     * @return rank Winner rank (0 if not a winner or already claimed)
+     * @return amount Prize amount available
+     */
+    function getUserPrizeInPool(uint256 poolId, address user) external view returns (
+        uint8 rank,
+        uint256 amount
+    ) {
+        for (uint8 i = 1; i <= 3; i++) {
+            if (poolWinners[poolId][i] == user && !prizeClaimed[poolId][i]) {
+                uint256 prizeAmount;
+                if (i == 1) prizeAmount = PRIZE_1ST;
+                else if (i == 2) prizeAmount = PRIZE_2ND;
+                else prizeAmount = PRIZE_3RD;
+                return (i, prizeAmount);
+            }
+        }
+        return (0, 0);
     }
 
     /**
@@ -5650,43 +5797,44 @@ contract ColorDropPool is
     }
 
     /**
-     * @dev Pay prize to winner
-     */
-    function _payPrize(address winner, uint256 amount) private {
-        if (winner == address(0)) return; // Skip if no winner at this position
-
-        (bool success, ) = winner.call{value: amount}("");
-        if (!success) revert TransferFailed();
-
-        emit PrizePaid(winner, amount);
-    }
-
-    /**
      * @dev Get top 3 players by accuracy (with timestamp tiebreaker)
+     * @notice Fixed in v3.6.2 to properly handle multi-slot users by tracking
+     *         player indices instead of addresses. This ensures each slot is
+     *         evaluated independently for prize eligibility.
      */
     function _getTopThree(uint256 poolId) private view returns (address[3] memory) {
         Pool storage pool = pools[poolId];
         address[3] memory topPlayers;
+        // Track indices instead of addresses to handle multi-slot users correctly
+        uint8[3] memory topIndices = [type(uint8).max, type(uint8).max, type(uint8).max];
 
-        // Simple bubble sort for top 3 (sufficient for 12 players)
+        // Simple insertion sort for top 3 (sufficient for 9 players)
         for (uint8 i = 0; i < pool.playerCount; i++) {
+            Player storage current = pool.players[i];
+
+            // Skip players who haven't submitted
+            if (!current.hasSubmitted) continue;
+
             for (uint8 j = 0; j < 3; j++) {
-                if (topPlayers[j] == address(0)) {
-                    topPlayers[j] = pool.players[i].wallet;
+                if (topIndices[j] == type(uint8).max) {
+                    // Empty slot, insert here
+                    topIndices[j] = i;
+                    topPlayers[j] = current.wallet;
                     break;
                 }
 
-                // Compare with current top player
-                Player storage current = pool.players[i];
-                Player storage top = _getPlayer(poolId, topPlayers[j]);
+                // Compare with current top player at index topIndices[j]
+                Player storage top = pool.players[topIndices[j]];
 
                 // Better accuracy or same accuracy but earlier submission
                 if (current.accuracy > top.accuracy ||
                     (current.accuracy == top.accuracy && current.timestamp < top.timestamp)) {
                     // Shift down and insert
                     for (uint8 k = 2; k > j; k--) {
+                        topIndices[k] = topIndices[k-1];
                         topPlayers[k] = topPlayers[k-1];
                     }
+                    topIndices[j] = i;
                     topPlayers[j] = current.wallet;
                     break;
                 }
@@ -5694,19 +5842,6 @@ contract ColorDropPool is
         }
 
         return topPlayers;
-    }
-
-    /**
-     * @dev Get player by wallet address
-     */
-    function _getPlayer(uint256 poolId, address wallet) private view returns (Player storage) {
-        Pool storage pool = pools[poolId];
-        for (uint8 i = 0; i < pool.playerCount; i++) {
-            if (pool.players[i].wallet == wallet) {
-                return pool.players[i];
-            }
-        }
-        revert NotInPool();
     }
 
     /**
@@ -5790,12 +5925,56 @@ contract ColorDropPool is
     }
 
     /**
+     * @dev Reset activePoolId for a user (admin only)
+     * @param user Address to reset
+     * @notice Use this to fix users who submitted scores before v3.5.0 upgrade
+     *         and have a stuck activePoolId value
+     */
+    function resetActivePoolId(address user) external onlyRole(ADMIN_ROLE) {
+        activePoolId[user] = 0;
+        emit ActivePoolIdReset(user);
+    }
+
+    /**
+     * @dev Batch reset activePoolId for multiple users (admin only)
+     * @param users Array of addresses to reset
+     */
+    function batchResetActivePoolId(address[] calldata users) external onlyRole(ADMIN_ROLE) {
+        for (uint256 i = 0; i < users.length; i++) {
+            activePoolId[users[i]] = 0;
+            emit ActivePoolIdReset(users[i]);
+        }
+    }
+
+    /**
+     * @dev Reset playerSlotCount for a user (admin only)
+     * @param user Address to reset
+     * @notice Use this to reset slot count for unverified users who have reached the 4-slot limit
+     *         so they can continue playing without needing SELF verification
+     */
+    function resetPlayerSlotCount(address user) external onlyRole(ADMIN_ROLE) {
+        playerSlotCount[user] = 0;
+        emit PlayerSlotCountReset(user);
+    }
+
+    /**
+     * @dev Batch reset playerSlotCount for multiple users (admin only)
+     * @param users Array of addresses to reset
+     */
+    function batchResetPlayerSlotCount(address[] calldata users) external onlyRole(ADMIN_ROLE) {
+        for (uint256 i = 0; i < users.length; i++) {
+            playerSlotCount[users[i]] = 0;
+            emit PlayerSlotCountReset(users[i]);
+        }
+    }
+
+    /**
      * @dev Get user verification status and slot availability
      * @param user Address to check
      * @return isVerified Whether user is SELF-verified (18+)
-     * @return slotsUsed Number of slots currently used
-     * @return slotsAvailable Total slots available (4 or unlimited)
-     * @return canJoin Whether user can join a new pool
+     * @return slotsUsed Number of slots in CURRENT pool
+     * @return slotsAvailable Max slots per pool (2 or unlimited)
+     * @return canJoin Whether user can join current pool
      */
     function getUserStatus(address user) external view returns (
         bool isVerified,
@@ -5804,9 +5983,63 @@ contract ColorDropPool is
         bool canJoin
     ) {
         isVerified = verifiedUsers[user];
-        slotsUsed = playerSlotCount[user];
-        slotsAvailable = isVerified ? type(uint8).max : UNVERIFIED_SLOT_LIMIT;
-        canJoin = activePoolId[user] == 0 && (isVerified || slotsUsed < UNVERIFIED_SLOT_LIMIT);
+        // v3.9.0: Return per-pool slot count instead of lifetime
+        slotsUsed = poolSlotCount[currentPoolId][user];
+        slotsAvailable = isVerified ? type(uint8).max : UNVERIFIED_POOL_SLOT_LIMIT;
+        canJoin = activePoolId[user] == 0 && (isVerified || slotsUsed < UNVERIFIED_POOL_SLOT_LIMIT);
+    }
+
+    /**
+     * @dev Get comprehensive user statistics (v3.9.0+)
+     * @param user Address to check
+     * @return isVerified Whether user is SELF-verified (18+)
+     * @return currentPoolSlots Slots used in current pool
+     * @return maxPoolSlots Max slots per pool (2 or unlimited)
+     * @return lifetimeSlots Total slots ever purchased
+     * @return canJoin Whether user can join current pool
+     * @return totalClaimed Total CELO claimed from winnings
+     * @return totalSpent Total CELO spent on entries
+     * @return gamesPlayed Total pools participated in
+     * @return wins1st Times won 1st place
+     * @return wins2nd Times won 2nd place
+     * @return wins3rd Times won 3rd place
+     */
+    function getUserFullStats(address user) external view returns (
+        bool isVerified,
+        uint8 currentPoolSlots,
+        uint8 maxPoolSlots,
+        uint8 lifetimeSlots,
+        bool canJoin,
+        uint256 totalClaimed,
+        uint256 totalSpent,
+        uint32 gamesPlayed,
+        uint16 wins1st,
+        uint16 wins2nd,
+        uint16 wins3rd
+    ) {
+        isVerified = verifiedUsers[user];
+        currentPoolSlots = poolSlotCount[currentPoolId][user];
+        maxPoolSlots = isVerified ? type(uint8).max : UNVERIFIED_POOL_SLOT_LIMIT;
+        lifetimeSlots = playerSlotCount[user];
+        canJoin = activePoolId[user] == 0 && (isVerified || currentPoolSlots < UNVERIFIED_POOL_SLOT_LIMIT);
+
+        UserStats storage stats = userStats[user];
+        totalClaimed = stats.totalClaimed;
+        totalSpent = stats.totalSpent;
+        gamesPlayed = stats.gamesPlayed;
+        wins1st = stats.wins1st;
+        wins2nd = stats.wins2nd;
+        wins3rd = stats.wins3rd;
+    }
+
+    /**
+     * @dev Get user's slot count in a specific pool
+     * @param poolId Pool ID to check
+     * @param user Address to check
+     * @return slots Number of slots user has in that pool
+     */
+    function getUserPoolSlots(uint256 poolId, address user) external view returns (uint8 slots) {
+        return poolSlotCount[poolId][user];
     }
 
     /**
@@ -5837,7 +6070,7 @@ contract ColorDropPool is
      * @dev Get contract version for upgrade tracking
      */
     function version() external pure returns (string memory) {
-        return "3.0.1";
+        return "3.9.0";
     }
 
     /**
