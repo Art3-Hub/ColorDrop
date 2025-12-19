@@ -53,9 +53,16 @@ console.log('🌐 Wagmi Configuration - CELO MAINNET ONLY:', {
 })
 
 // Export network info for display
-export const NETWORK_INFO = {
+export const NETWORK_INFO: {
+  name: string;
+  chainId: number;
+  isTestnet: boolean;
+  explorer: string;
+  faucet?: string;
+} = {
   name: 'Celo Mainnet',
   chainId: celo.id,
   isTestnet: false,
   explorer: 'https://celoscan.io',
+  // No faucet for mainnet
 }

@@ -7,7 +7,9 @@ import { config } from '@/lib/wagmi';
 import { initializeFarcaster } from '@/lib/farcaster';
 import { detectPlatform } from '@/lib/platform';
 import { SelfProvider } from '@/contexts/SelfContext';
+import { FarcasterProvider } from '@/contexts/FarcasterContext';
 import { AutoConnect } from '@/components/auto-connect';
+import { initAppKit } from '@/lib/appkit';
 
 // Create QueryClient at module level (Farcaster Mini App pattern)
 const queryClient = new QueryClient({
@@ -85,10 +87,17 @@ export function Providers({ children, cookies }: { children: React.ReactNode; co
       const platform = detectPlatform();
       console.log('[Providers] 🔍 Detected platform:', platform);
 
+      // Always initialize Reown AppKit first (needed for useAppKit hook to work)
+      // This must be called before any component uses useAppKit()
+      console.log('[Providers] 🔧 Initializing Reown AppKit...');
+      initAppKit();
+
       if (platform === 'farcaster' || platform === 'base') {
         const initialized = await initializeFarcaster();
         setIsFarcasterEnv(initialized);
         console.log('[Providers] 📱 Farcaster SDK initialized:', initialized);
+      } else {
+        console.log('[Providers] 🌐 Browser mode - AppKit modal will be used for wallet connection');
       }
 
       setIsLoading(false);
@@ -120,11 +129,13 @@ export function Providers({ children, cookies }: { children: React.ReactNode; co
     <ErrorSuppressor>
       <WagmiProvider config={config} initialState={initialState}>
         <QueryClientProvider client={queryClient}>
-          <SelfProvider>
-            <AutoConnect>
-              {children}
-            </AutoConnect>
-          </SelfProvider>
+          <FarcasterProvider>
+            <SelfProvider>
+              <AutoConnect>
+                {children}
+              </AutoConnect>
+            </SelfProvider>
+          </FarcasterProvider>
         </QueryClientProvider>
       </WagmiProvider>
     </ErrorSuppressor>
