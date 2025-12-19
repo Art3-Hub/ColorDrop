@@ -309,79 +309,75 @@ export function usePastGames(limit: number = 10) {
               }
             }
 
-            // Sort players by accuracy (descending) then by timestamp (ascending for tiebreaker)
-            players.sort((a, b) => {
-              if (b.accuracy !== a.accuracy) {
-                return b.accuracy - a.accuracy;
-              }
-              return a.timestamp - b.timestamp;
-            });
-
             // Check if this pool has winners recorded in contract (v3.6.0+)
             const contractWinners = contractWinnersMap.get(poolId.toString());
             const hasClaimablePrizes = contractWinners
               ? contractWinners.winners.some(w => w !== '0x0000000000000000000000000000000000000000')
               : false;
 
-            // Get top 3 winners with claim status from contract
-            // Track which contract winner positions have been used (for multi-slot same user)
-            const usedContractPositions = new Set<number>();
+            // Create a map of player data by address for quick lookup
+            const playerDataByAddress = new Map<string, { fid: bigint; accuracy: number }>();
+            players.forEach(p => {
+              const addrLower = p.address.toLowerCase();
+              // If same address appears multiple times, keep the highest accuracy
+              const existing = playerDataByAddress.get(addrLower);
+              if (!existing || p.accuracy > existing.accuracy) {
+                playerDataByAddress.set(addrLower, { fid: p.fid, accuracy: p.accuracy });
+              }
+            });
 
-            const winners: Winner[] = players.slice(0, 3).map((player, index) => {
-              const rank = (index + 1) as 1 | 2 | 3;
+            // Build winners list based on CONTRACT data (source of truth for claiming)
+            // This ensures the UI shows exactly what the contract says can be claimed
+            let winners: Winner[] = [];
 
-              // Check if this winner is recorded in contract and if claimed
-              let isClaimed = false;
-              let isClaimable = false;
+            if (hasClaimablePrizes && contractWinners) {
+              // Use contract winners directly - these are the addresses that can claim
+              for (let i = 0; i < 3; i++) {
+                const winnerAddress = contractWinners.winners[i];
+                if (winnerAddress && winnerAddress !== '0x0000000000000000000000000000000000000000') {
+                  const rank = (i + 1) as 1 | 2 | 3;
+                  const winnerAddrLower = winnerAddress.toLowerCase();
+                  const playerData = playerDataByAddress.get(winnerAddrLower);
 
-              if (contractWinners) {
-                const playerAddressLower = player.address.toLowerCase();
+                  winners.push({
+                    address: winnerAddress,
+                    fid: playerData?.fid || BigInt(0),
+                    accuracy: playerData?.accuracy || 0,
+                    prize: PRIZE_AMOUNTS[rank],
+                    rank,
+                    claimed: contractWinners.claimed[i],
+                    isClaimable: true, // Contract winners are always claimable (if not claimed)
+                  });
 
-                // Find a matching contract winner position that:
-                // 1. Matches the player's address
-                // 2. Hasn't been used yet (for multi-slot same user scenarios)
-                for (let i = 0; i < 3; i++) {
-                  if (usedContractPositions.has(i)) continue;
-
-                  const contractWinnerAddress = contractWinners.winners[i]?.toLowerCase();
-                  if (contractWinnerAddress === playerAddressLower) {
-                    usedContractPositions.add(i);
-                    isClaimable = true;
-                    isClaimed = contractWinners.claimed[i];
-
-                    // Debug logging for multi-winner cases
-                    if (process.env.NODE_ENV === 'development') {
-                      console.log(`[usePastGames] Pool ${poolId} Rank ${rank} matched contract position ${i + 1}:`, {
-                        contractWinnerAddress,
-                        playerAddressLower,
-                        isClaimable,
-                        isClaimed,
-                      });
-                    }
-                    break;
+                  if (process.env.NODE_ENV === 'development') {
+                    console.log(`[usePastGames] Pool ${poolId} Winner ${rank}:`, {
+                      address: winnerAddress,
+                      claimed: contractWinners.claimed[i],
+                      accuracy: playerData?.accuracy,
+                    });
                   }
                 }
-
-                // If no match found, log for debugging
-                if (!isClaimable && process.env.NODE_ENV === 'development') {
-                  console.log(`[usePastGames] Pool ${poolId} Rank ${rank} - NO MATCH:`, {
-                    playerAddressLower,
-                    contractWinners: contractWinners.winners.map(w => w?.toLowerCase()),
-                    usedPositions: Array.from(usedContractPositions),
-                  });
-                }
               }
+            } else {
+              // Legacy pool (pre-v3.6.0) - show top 3 by accuracy for display only
+              // These pools had prizes auto-distributed, no claiming needed
+              players.sort((a, b) => {
+                if (b.accuracy !== a.accuracy) {
+                  return b.accuracy - a.accuracy;
+                }
+                return a.timestamp - b.timestamp;
+              });
 
-              return {
+              winners = players.slice(0, 3).map((player, index) => ({
                 address: player.address,
                 fid: player.fid,
                 accuracy: player.accuracy,
-                prize: PRIZE_AMOUNTS[rank],
-                rank,
-                claimed: isClaimed,
-                isClaimable, // true only if recorded in contract
-              };
-            });
+                prize: PRIZE_AMOUNTS[(index + 1) as 1 | 2 | 3],
+                rank: (index + 1) as 1 | 2 | 3,
+                claimed: true, // Legacy pools are considered already distributed
+                isClaimable: false,
+              }));
+            }
 
             winnersDataIndex++;
 
