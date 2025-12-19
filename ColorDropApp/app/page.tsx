@@ -21,6 +21,7 @@ export default function Home() {
   const { isInMiniApp, isAuthenticated } = useFarcaster();
   const [appState, setAppState] = useState<AppState>('landing');
   const [currentSlot, setCurrentSlot] = useState<number>(1);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const ENTRY_FEE_VALUE = parseFloat(process.env.NEXT_PUBLIC_ENTRY_FEE || '0.1');
 
@@ -87,15 +88,25 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 sm:py-4">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="text-2xl sm:text-3xl">🎨</div>
+              {/* Mobile Menu Button - Only show when connected */}
+              {isConnected && (
+                <button
+                  onClick={() => setMobileMenuOpen(true)}
+                  className="sm:hidden p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+                  aria-label="Open menu"
+                >
+                  <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                </button>
+              )}
+              <img src="/icon.png" alt="Color Drop" className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg" />
               <div>
                 <div className="flex items-center gap-1.5 sm:gap-2">
-                  <h1 className="text-lg sm:text-xl font-bold text-gray-900">Color Drop</h1>
-                  {NETWORK_INFO.isTestnet && (
-                    <span className="px-1.5 py-0.5 bg-yellow-100 text-yellow-800 text-[10px] font-semibold rounded-full border border-yellow-300">
-                      TEST
-                    </span>
-                  )}
+                  <h1 className="text-md sm:text-xl font-bold text-gray-900 leading-tight">
+                    <span className="block sm:inline">Color</span>
+                    <span className="block sm:inline sm:ml-1">Drop</span>
+                  </h1>
                 </div>
               </div>
             </div>
@@ -107,6 +118,86 @@ export default function Home() {
           </div>
         </div>
       </header>
+
+      {/* Mobile Menu Overlay */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-[60] sm:hidden">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+
+          {/* Menu Panel */}
+          <div className="absolute left-0 top-0 bottom-0 w-64 bg-white shadow-xl animate-slide-in-left">
+            {/* Menu Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <img src="/icon.png" alt="Color Drop" className="w-8 h-8 rounded-lg" />
+                <span className="font-bold text-gray-900">Menu</span>
+              </div>
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+                aria-label="Close menu"
+              >
+                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Menu Items */}
+            <nav className="p-3">
+              <button
+                onClick={() => {
+                  setAppState('landing');
+                  setMobileMenuOpen(false);
+                }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors ${
+                  appState === 'landing'
+                    ? 'bg-purple-100 text-purple-700'
+                    : 'hover:bg-gray-50 text-gray-700'
+                }`}
+              >
+                <span className="text-xl">🎮</span>
+                <div>
+                  <div className="font-semibold">Play Now</div>
+                  <div className="text-xs text-gray-500">Join a pool & compete</div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => {
+                  setAppState('pastGames');
+                  setMobileMenuOpen(false);
+                }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors mt-1 ${
+                  appState === 'pastGames'
+                    ? 'bg-purple-100 text-purple-700'
+                    : 'hover:bg-gray-50 text-gray-700'
+                }`}
+              >
+                <span className="text-xl">💰</span>
+                <div>
+                  <div className="font-semibold">Claim Prizes</div>
+                  <div className="text-xs text-gray-500">View past games & claim</div>
+                </div>
+              </button>
+            </nav>
+
+            {/* Menu Footer */}
+            <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100 bg-gray-50">
+              <div className="flex items-center justify-center gap-2 text-xs text-gray-400">
+                <span>Built on</span>
+                <span className="font-semibold text-green-600">Celo</span>
+                <span>•</span>
+                <span className="font-semibold text-purple-600">Farcaster</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="py-4 sm:py-8">
