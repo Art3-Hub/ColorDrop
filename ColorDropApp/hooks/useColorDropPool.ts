@@ -222,11 +222,19 @@ export function useColorDropPool() {
   useEffect(() => {
     if (isJoinSuccess && joinHash) {
       console.log('✅ Join transaction confirmed! Hash:', joinHash);
-      // Refetch pool data after successful join
-      refetchPoolData();
-      refetchUserStatus();
+      console.log('🔄 Triggering immediate refetch of poolData, userStatus, AND activePoolIdForUser...');
+      // CRITICAL FIX: Also refetch activePoolIdForUser to avoid race condition
+      // When user joins a pool, their activePoolId changes from 0 to the pool ID
+      // We must refetch this BEFORE the game starts so submitScore has the correct pool ID
+      Promise.all([
+        refetchPoolData(),
+        refetchUserStatus(),
+        refetchActivePoolId()
+      ]).then(() => {
+        console.log('✅ All contract data refetch complete after join');
+      });
     }
-  }, [isJoinSuccess, joinHash, refetchPoolData, refetchUserStatus]);
+  }, [isJoinSuccess, joinHash, refetchPoolData, refetchUserStatus, refetchActivePoolId]);
 
   // Wait for score submission transaction
   const { isLoading: isScoreConfirming, isSuccess: isScoreSuccess } =
@@ -392,15 +400,35 @@ export function useColorDropPool() {
     // CRITICAL FIX: Use the user's activePoolId instead of currentPoolId
     // When a pool fills up, currentPoolId advances to the next pool,
     // but the user's score should go to the pool they joined (their activePoolId)
-    const poolIdToSubmit = activePoolIdForUser;
+    let poolIdToSubmit: bigint | undefined = activePoolIdForUser as bigint | undefined;
 
-    if (!poolIdToSubmit || BigInt(poolIdToSubmit.toString()) === BigInt(0)) {
-      console.error('❌ No active pool for user:', {
-        activePoolIdForUser: activePoolIdForUser?.toString(),
-        currentPoolId: currentPoolId?.toString(),
-        address
+    // RACE CONDITION FIX: If activePoolIdForUser is 0, force a refetch and retry
+    // This can happen if the game started before the refetch completed after joinPool
+    if (!poolIdToSubmit || poolIdToSubmit === BigInt(0)) {
+      console.log('⚠️ activePoolIdForUser is 0, attempting forced refetch...');
+
+      // Force refetch and wait for it
+      const refetchResult = await refetchActivePoolId();
+      const newPoolId = refetchResult.data as bigint | undefined;
+
+      console.log('🔄 Refetch result:', {
+        newPoolId: newPoolId?.toString(),
+        previousPoolId: (activePoolIdForUser as bigint | undefined)?.toString()
       });
-      throw new Error('No active pool for user - you may have already submitted your score');
+
+      if (newPoolId && newPoolId !== BigInt(0)) {
+        poolIdToSubmit = newPoolId;
+        console.log('✅ Got valid poolId after refetch:', poolIdToSubmit.toString());
+      } else {
+        // Still no valid poolId - this is a real error
+        console.error('❌ No active pool for user even after refetch:', {
+          activePoolIdForUser: (activePoolIdForUser as bigint | undefined)?.toString(),
+          refetchedPoolId: newPoolId?.toString(),
+          currentPoolId: currentPoolId?.toString(),
+          address
+        });
+        throw new Error('No active pool for user - you may have already submitted your score');
+      }
     }
 
     // CRITICAL: Ensure we're on the correct chain before transacting
@@ -444,7 +472,7 @@ export function useColorDropPool() {
       console.error('❌ Error calling scoreWriteContract:', err);
       throw err;
     }
-  }, [address, chain, currentPoolId, activePoolIdForUser, scoreWriteContract, switchChainAsync]);
+  }, [address, chain, currentPoolId, activePoolIdForUser, scoreWriteContract, switchChainAsync, refetchActivePoolId]);
 
   // Check if slot limit reached
   const hasReachedSlotLimit = useCallback(() => {
