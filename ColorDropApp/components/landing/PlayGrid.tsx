@@ -59,7 +59,7 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
     }
   }, [isVerified, flowState, stopPolling]);
 
-  const POOL_SIZE = 9; // 9-player pools for faster games
+  const POOL_SIZE = 16; // 16-player pools for attractive economics
   const ENTRY_FEE_VALUE = parseFloat(process.env.NEXT_PUBLIC_ENTRY_FEE || '0.1');
   const ENTRY_FEE = `${ENTRY_FEE_VALUE} CELO`;
 
@@ -258,280 +258,256 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
 
   return (
     <>
-      <div className="max-w-6xl mx-auto px-3 sm:px-4">
-        {/* Header */}
-        <div className="text-center mb-6 sm:mb-8">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-            Pool #{poolData?.poolId?.toString() || '...'} - Choose Your Slot
+      <div className="max-w-lg mx-auto px-3 sm:px-4">
+        {/* Compact Header */}
+        <div className="text-center mb-4 sm:mb-6">
+          <div className="inline-flex items-center gap-2 bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-semibold mb-2">
+            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+            Pool #{poolData?.poolId?.toString() || '...'}
+          </div>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">
+            Choose Your Slot
           </h2>
-          <p className="text-sm sm:text-base text-gray-600">
-            Pay {ENTRY_FEE} per slot • Top 3 players win prizes!
+          <p className="text-xs sm:text-sm text-gray-500">
+            {ENTRY_FEE} per slot • Top 3 win!
           </p>
 
-          {/* User Status Banner */}
+          {/* User Status Badge - More compact */}
           {userStatus && (
-            <div className={`mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${
+            <div className={`mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${
               isVerified
-                ? 'bg-green-100 text-green-800 border border-green-300'
-                : 'bg-yellow-100 text-yellow-800 border border-yellow-300'
+                ? 'bg-green-50 text-green-700 border border-green-200'
+                : 'bg-amber-50 text-amber-700 border border-amber-200'
             }`}>
               {isVerified ? (
                 <>
-                  <span>✅</span>
-                  <span>Verified - Unlimited Slots</span>
+                  <span>✓</span>
+                  <span>Unlimited Slots</span>
                 </>
               ) : (
                 <>
-                  <span>⚠️</span>
-                  <span>{Math.max(0, MAX_UNVERIFIED_SLOTS - currentSlots)} {MAX_UNVERIFIED_SLOTS - currentSlots === 1 ? 'slot' : 'slots'} remaining ({MAX_UNVERIFIED_SLOTS} max)</span>
+                  <span className="font-bold">{Math.max(0, MAX_UNVERIFIED_SLOTS - currentSlots)}</span>
+                  <span>/ {MAX_UNVERIFIED_SLOTS} slots left</span>
                 </>
               )}
             </div>
           )}
 
 
-          {/* Info about user's active slots - show different message based on canJoin */}
-          {hasActiveSlots && userStatus && (
-            <div className={`mt-3 rounded-lg p-3 text-sm ${
-              userStatus.canJoin
-                ? 'bg-green-50 border border-green-200 text-green-800'
-                : 'bg-orange-50 border border-orange-200 text-orange-800'
-            }`}>
-              {userStatus.canJoin ? (
-                <>
-                  <p className="font-semibold">✅ Score submitted! You can buy another slot.</p>
-                  <p>Click any purple slot to pay 0.1 CELO and play again.</p>
-                </>
-              ) : (
-                <>
-                  <p className="font-semibold">⚠️ You have an active game in this pool!</p>
-                  <p>Click your orange &quot;PLAY NOW&quot; slot below to play and submit your score. You must finish before buying another slot.</p>
-                </>
-              )}
+          {/* Info about user's active slots - compact banner */}
+          {hasActiveSlots && userStatus && !userStatus.canJoin && (
+            <div className="mt-2 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2 text-xs text-orange-700">
+              <span className="font-semibold">⚠️ Active game!</span> Tap your orange slot to play.
             </div>
           )}
 
-          {/* Wrong Chain Warning */}
+          {/* Wrong Chain Warning - Compact */}
           {isWrongChain && (
-            <div className="mt-3 bg-orange-50 border border-orange-200 rounded-lg p-3 text-sm text-orange-800">
-              <p className="font-semibold">⚠️ Wrong Network</p>
-              <p>
-                Connected to {connectedChain?.name || 'Unknown'}.
-                Please switch to {targetChain.name} to play.
-              </p>
+            <div className="mt-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-xs text-red-700 flex items-center justify-between gap-2">
+              <span><span className="font-semibold">Wrong Network:</span> {connectedChain?.name || 'Unknown'}</span>
               <button
                 onClick={() => switchToCorrectChain()}
                 disabled={isSwitchingChain}
-                className="mt-2 px-4 py-1.5 bg-orange-600 text-white rounded-lg text-sm font-medium hover:bg-orange-700 disabled:opacity-50"
+                className="px-3 py-1 bg-red-600 text-white rounded-md text-xs font-medium hover:bg-red-700 disabled:opacity-50 whitespace-nowrap"
               >
-                {isSwitchingChain ? 'Switching...' : `Switch to ${targetChain.name}`}
+                {isSwitchingChain ? '...' : `Switch`}
               </button>
             </div>
           )}
 
-          {/* Prize Pool - 9 players x 0.1 CELO = 0.9 CELO total */}
-          <div className="grid grid-cols-3 gap-2 sm:gap-4 mt-4 sm:mt-6 max-w-3xl mx-auto">
-            {/* 1st Place - 0.45 CELO (50%) */}
-            <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl sm:rounded-2xl p-3 sm:p-4 border-2 border-yellow-300 shadow-lg">
-              <div className="text-3xl sm:text-4xl mb-1 sm:mb-2">🥇</div>
-              <div className="text-lg sm:text-2xl font-bold text-yellow-700">
-                {(ENTRY_FEE_VALUE * 4.5).toFixed(2)}
+          {/* Prize Pool - Better visibility */}
+          <div className="bg-gradient-to-r from-purple-50 via-blue-50 to-purple-50 rounded-xl p-4 mt-4 border border-purple-100">
+            <div className="text-xs text-gray-500 text-center mb-3 font-medium">🏆 Prize Pool</div>
+            <div className="flex items-center justify-center gap-4">
+              <div className="text-center">
+                <div className="text-2xl mb-1">🥇</div>
+                <div className="text-xl font-bold text-yellow-600">{(ENTRY_FEE_VALUE * 7).toFixed(2)}</div>
+                <div className="text-xs text-gray-500">CELO</div>
               </div>
-              <div className="text-xs sm:text-sm font-semibold text-yellow-600">CELO</div>
-              <div className="text-[10px] sm:text-xs text-yellow-700 mt-1 font-medium">1st Place</div>
-            </div>
-
-            {/* 2nd Place - 0.225 CELO (25%) */}
-            <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl sm:rounded-2xl p-3 sm:p-4 border-2 border-gray-300 shadow-lg">
-              <div className="text-3xl sm:text-4xl mb-1 sm:mb-2">🥈</div>
-              <div className="text-lg sm:text-2xl font-bold text-gray-700">
-                {(ENTRY_FEE_VALUE * 2.25).toFixed(3)}
+              <div className="text-center">
+                <div className="text-2xl mb-1">🥈</div>
+                <div className="text-xl font-bold text-gray-500">{(ENTRY_FEE_VALUE * 5).toFixed(2)}</div>
+                <div className="text-xs text-gray-500">CELO</div>
               </div>
-              <div className="text-xs sm:text-sm font-semibold text-gray-600">CELO</div>
-              <div className="text-[10px] sm:text-xs text-gray-700 mt-1 font-medium">2nd Place</div>
-            </div>
-
-            {/* 3rd Place - 0.075 CELO (8.33%) */}
-            <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl sm:rounded-2xl p-3 sm:p-4 border-2 border-orange-300 shadow-lg">
-              <div className="text-3xl sm:text-4xl mb-1 sm:mb-2">🥉</div>
-              <div className="text-lg sm:text-2xl font-bold text-orange-700">
-                {(ENTRY_FEE_VALUE * 0.75).toFixed(3)}
+              <div className="text-center">
+                <div className="text-2xl mb-1">🥉</div>
+                <div className="text-xl font-bold text-orange-500">{(ENTRY_FEE_VALUE * 2.5).toFixed(2)}</div>
+                <div className="text-xs text-gray-500">CELO</div>
               </div>
-              <div className="text-xs sm:text-sm font-semibold text-orange-600">CELO</div>
-              <div className="text-[10px] sm:text-xs text-orange-700 mt-1 font-medium">3rd Place</div>
             </div>
           </div>
         </div>
 
-        {/* Play Grid - 9 slots in 3x3 grid */}
-        <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-8 max-w-md mx-auto">
-          {Array.from({ length: POOL_SIZE }, (_, i) => i + 1).map((slotNumber) => {
-            const slotIndex = slotNumber - 1;
-            const isOccupied = poolData && slotIndex < poolData.playerCount;
-            // Check if THIS slot belongs to the current user
-            const isMySlot = isOccupied && poolData && address &&
-              poolData.players[slotIndex]?.toLowerCase() === address.toLowerCase();
-            // Check if score has been submitted for this slot (on-chain)
-            const hasSubmitted = poolData?.playerSlots?.[slotIndex]?.hasSubmitted ?? false;
-            // User can play if: they own the slot OR they haven't reached slot limit
-            const canPlay = isMySlot || !hasReachedSlotLimit;
+        {/* Play Grid - 16 slots in 4x4 grid */}
+        <div className="bg-white rounded-2xl shadow-lg p-3 sm:p-4 mb-4">
+          <div className="grid grid-cols-4 gap-2 sm:gap-3">
+            {Array.from({ length: POOL_SIZE }, (_, i) => i + 1).map((slotNumber) => {
+              const slotIndex = slotNumber - 1;
+              const isOccupied = poolData && slotIndex < poolData.playerCount;
+              // Check if THIS slot belongs to the current user
+              const isMySlot = isOccupied && poolData && address &&
+                poolData.players[slotIndex]?.toLowerCase() === address.toLowerCase();
+              // Check if score has been submitted for this slot (on-chain)
+              const hasSubmitted = poolData?.playerSlots?.[slotIndex]?.hasSubmitted ?? false;
+              // User can play if: they own the slot OR they haven't reached slot limit
+              const canPlay = isMySlot || !hasReachedSlotLimit;
 
-            // Button should be disabled if:
-            // 1. Slot is occupied by someone else (not my slot)
-            // 2. Slot is empty but user has reached slot limit
-            // 3. My slot but score already submitted (completed - can't play again)
-            const isDisabled = Boolean((isOccupied && !isMySlot) || (!isOccupied && hasReachedSlotLimit) || (isMySlot && hasSubmitted));
+              // Button should be disabled if:
+              // 1. Slot is occupied by someone else (not my slot)
+              // 2. Slot is empty but user has reached slot limit
+              // 3. My slot but score already submitted (completed - can't play again)
+              const isDisabled = Boolean((isOccupied && !isMySlot) || (!isOccupied && hasReachedSlotLimit) || (isMySlot && hasSubmitted));
 
-            // Determine slot styling based on state
-            // - My slot + submitted = Green (completed, disabled)
-            // - My slot + NOT submitted = Orange (needs to play/submit)
-            // - Other player's slot = Gray (filled)
-            // - Available = Purple (can buy)
-            let slotClassName = '';
-            if (isMySlot) {
-              if (hasSubmitted) {
-                // Score submitted - show green (completed, no hover - disabled)
-                slotClassName = 'bg-gradient-to-br from-green-500 to-teal-600 border-green-400 text-white cursor-default';
+              // Determine slot styling based on state
+              let slotClassName = '';
+              if (isMySlot) {
+                if (hasSubmitted) {
+                  slotClassName = 'bg-gradient-to-br from-emerald-400 to-teal-500 border-emerald-300 text-white';
+                } else {
+                  slotClassName = 'bg-gradient-to-br from-orange-400 to-amber-500 border-orange-300 text-white hover:scale-[1.02] active:scale-[0.98] shadow-md hover:shadow-lg';
+                }
+              } else if (isOccupied) {
+                slotClassName = 'bg-gray-100 border-gray-200 text-gray-400';
+              } else if (!canPlay) {
+                slotClassName = 'bg-gray-50 border-gray-200 text-gray-300';
               } else {
-                // Score NOT submitted - show orange (needs to play/submit!)
-                slotClassName = 'bg-gradient-to-br from-orange-500 to-amber-600 border-orange-400 text-white hover:scale-105 hover:shadow-xl active:scale-95';
+                slotClassName = 'bg-gradient-to-br from-purple-500 to-indigo-600 border-purple-400 text-white hover:scale-[1.02] active:scale-[0.98] shadow-md hover:shadow-lg';
               }
-            } else if (isOccupied) {
-              slotClassName = 'bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed';
-            } else if (!canPlay) {
-              slotClassName = 'bg-red-100 border-red-300 text-red-400 cursor-not-allowed';
-            } else {
-              slotClassName = 'bg-gradient-to-br from-purple-500 to-blue-600 border-purple-400 text-white hover:scale-105 hover:shadow-xl active:scale-95';
-            }
 
-            return (
-              <button
-                key={slotNumber}
-                onClick={() => handleSlotClick(slotNumber)}
-                disabled={isDisabled}
-                className={`
-                  aspect-square rounded-xl sm:rounded-2xl border-2 font-bold
-                  transition-all duration-200 transform
-                  ${slotClassName}
-                  disabled:opacity-50 disabled:cursor-not-allowed
-                  text-sm sm:text-lg
-                `}
-              >
-                {isMySlot ? (
-                  hasSubmitted ? (
-                    // Score submitted - completed state
-                    <div className="flex flex-col items-center justify-center gap-1">
-                      <div className="text-xl sm:text-3xl">✅</div>
-                      <div className="text-xs sm:text-sm">Done</div>
-                      <div className="text-[10px] sm:text-xs opacity-90">Submitted</div>
-                    </div>
+              return (
+                <button
+                  key={slotNumber}
+                  onClick={() => handleSlotClick(slotNumber)}
+                  disabled={isDisabled}
+                  className={`
+                    aspect-square rounded-xl border-2 font-semibold
+                    transition-all duration-150 transform
+                    ${slotClassName}
+                    disabled:cursor-not-allowed
+                    flex flex-col items-center justify-center
+                  `}
+                >
+                  {isMySlot ? (
+                    hasSubmitted ? (
+                      <>
+                        <span className="text-2xl sm:text-3xl">✓</span>
+                        <span className="text-[10px] sm:text-xs mt-0.5 opacity-90">Done</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-2xl sm:text-3xl">▶</span>
+                        <span className="text-[10px] sm:text-xs mt-0.5 font-bold">PLAY</span>
+                      </>
+                    )
+                  ) : isOccupied ? (
+                    <>
+                      <span className="text-xl sm:text-2xl">●</span>
+                      <span className="text-[10px] sm:text-xs mt-0.5">Taken</span>
+                    </>
+                  ) : !canPlay ? (
+                    <>
+                      <span className="text-xl sm:text-2xl">🔒</span>
+                      <span className="text-[10px] sm:text-xs mt-0.5">Limit</span>
+                    </>
                   ) : (
-                    // Score NOT submitted - needs to play and submit!
-                    <div className="flex flex-col items-center justify-center gap-1">
-                      <div className="text-xl sm:text-3xl">🎮</div>
-                      <div className="text-xs sm:text-sm font-bold">PLAY NOW</div>
-                      <div className="text-[10px] sm:text-xs opacity-90">Tap to Play</div>
-                    </div>
-                  )
-                ) : isOccupied ? (
-                  <div className="flex flex-col items-center justify-center gap-1">
-                    <div className="text-lg sm:text-2xl">✓</div>
-                    <div className="text-[10px] sm:text-xs">Filled</div>
-                  </div>
-                ) : !canPlay ? (
-                  <div className="flex flex-col items-center justify-center gap-1">
-                    <div className="text-lg sm:text-2xl">🔒</div>
-                    <div className="text-[10px] sm:text-xs">Limit</div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center gap-1">
-                    <div className="text-xl sm:text-3xl">🎮</div>
-                    <div className="text-xs sm:text-sm">Play</div>
-                    <div className="text-[10px] sm:text-xs opacity-90">{ENTRY_FEE}</div>
-                  </div>
-                )}
-              </button>
-            );
-          })}
-        </div>
+                    <>
+                      <span className="text-[10px] sm:text-xs font-bold">TAP TO</span>
+                      <span className="text-[10px] sm:text-xs font-bold">PLAY</span>
+                      <span className="text-[9px] sm:text-[10px] mt-0.5 opacity-80">{ENTRY_FEE_VALUE} CELO</span>
+                    </>
+                  )}
+                </button>
+              );
+            })}
+          </div>
 
-        {/* Info Section */}
-        <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6">
-          <h3 className="font-bold text-gray-900 mb-3 sm:mb-4 text-sm sm:text-base">
-            How to Play
-          </h3>
-          <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm text-gray-700">
-            <div className="flex items-start gap-2 sm:gap-3">
-              <span className="text-lg sm:text-2xl flex-shrink-0">1️⃣</span>
-              <div>
-                <div className="font-semibold">Choose a slot and pay {ENTRY_FEE}</div>
-                <div className="text-gray-600">Click any available slot to start</div>
-              </div>
+          {/* Legend - compact */}
+          <div className="flex items-center justify-center gap-4 mt-3 pt-3 border-t border-gray-100 text-[10px] text-gray-500">
+            <div className="flex items-center gap-1">
+              <span className="w-3 h-3 rounded bg-gradient-to-br from-purple-500 to-indigo-600"></span>
+              <span>Available</span>
             </div>
-            <div className="flex items-start gap-2 sm:gap-3">
-              <span className="text-lg sm:text-2xl flex-shrink-0">2️⃣</span>
-              <div>
-                <div className="font-semibold">Match the target color in 10 seconds</div>
-                <div className="text-gray-600">Use Hue, Saturation, and Lightness sliders</div>
-              </div>
+            <div className="flex items-center gap-1">
+              <span className="w-3 h-3 rounded bg-gradient-to-br from-orange-400 to-amber-500"></span>
+              <span>Your Turn</span>
             </div>
-            <div className="flex items-start gap-2 sm:gap-3">
-              <span className="text-lg sm:text-2xl flex-shrink-0">3️⃣</span>
-              <div>
-                <div className="font-semibold">Top 3 most accurate players win prizes</div>
-                <div className="text-gray-600">Winners are determined by color accuracy</div>
-              </div>
+            <div className="flex items-center gap-1">
+              <span className="w-3 h-3 rounded bg-gradient-to-br from-emerald-400 to-teal-500"></span>
+              <span>Complete</span>
             </div>
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="mt-6 grid grid-cols-3 gap-3 sm:gap-4 text-center">
-          <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 shadow">
-            <div className="text-xl sm:text-2xl font-bold text-purple-600">
+        {/* How to Play - Horizontal 3-column layout */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4 p-3">
+          <h3 className="text-sm font-bold text-gray-800 mb-2 text-center">How to Play</h3>
+          <div className="grid grid-cols-3 gap-2">
+            <div className="flex flex-col items-center text-center">
+              <span className="w-6 h-6 rounded-full bg-purple-500 text-white flex items-center justify-center text-xs font-bold mb-1">1</span>
+              <div className="text-xs font-semibold text-gray-800">Pay {ENTRY_FEE}</div>
+              <div className="text-[10px] text-gray-500">Tap slot to join</div>
+            </div>
+            <div className="flex flex-col items-center text-center">
+              <span className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-bold mb-1">2</span>
+              <div className="text-xs font-semibold text-gray-800">Match Color</div>
+              <div className="text-[10px] text-gray-500">10s with sliders</div>
+            </div>
+            <div className="flex flex-col items-center text-center">
+              <span className="w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center text-xs font-bold mb-1">3</span>
+              <div className="text-xs font-semibold text-gray-800">Win Prizes!</div>
+              <div className="text-[10px] text-gray-500">Top 3 win CELO</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Bar - Compact inline */}
+        <div className="flex items-center justify-between bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100 mb-4">
+          <div className="text-center">
+            <div className="text-lg font-bold text-purple-600">
               {poolData ? POOL_SIZE - poolData.playerCount : POOL_SIZE}
             </div>
-            <div className="text-[10px] sm:text-xs text-gray-600">Slots Available</div>
+            <div className="text-[10px] text-gray-500">Open</div>
           </div>
-          <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 shadow">
-            <div className="text-xl sm:text-2xl font-bold text-blue-600">
-              {poolData?.playerCount || 0}
+          <div className="h-8 w-px bg-gray-200"></div>
+          <div className="text-center">
+            <div className="text-lg font-bold text-blue-600">
+              {poolData?.playerCount || 0}/{POOL_SIZE}
             </div>
-            <div className="text-[10px] sm:text-xs text-gray-600">Slots Filled</div>
+            <div className="text-[10px] text-gray-500">Filled</div>
           </div>
-          <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 shadow">
-            <div className="text-xl sm:text-2xl font-bold text-green-600">
-              {(ENTRY_FEE_VALUE * POOL_SIZE).toFixed(2)}
+          <div className="h-8 w-px bg-gray-200"></div>
+          <div className="text-center">
+            <div className="text-lg font-bold text-green-600">
+              {(ENTRY_FEE_VALUE * POOL_SIZE).toFixed(1)}
             </div>
-            <div className="text-[10px] sm:text-xs text-gray-600">Total Prize Pool</div>
+            <div className="text-[10px] text-gray-500">Prize Pool</div>
           </div>
         </div>
 
-        {/* View Leaderboard Button - Show if pool is complete */}
-        {poolData?.isComplete && onViewLeaderboard && (
-          <div className="mt-6">
+        {/* Action Buttons */}
+        <div className="space-y-2">
+          {/* View Leaderboard Button - Show if pool is complete */}
+          {poolData?.isComplete && onViewLeaderboard && (
             <button
               onClick={onViewLeaderboard}
-              className="w-full px-6 py-4 bg-gradient-to-r from-yellow-500 to-orange-600 text-white font-bold rounded-xl hover:from-yellow-600 hover:to-orange-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+              className="w-full px-4 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-semibold rounded-xl hover:from-yellow-600 hover:to-orange-600 transition-all shadow-md flex items-center justify-center gap-2"
             >
-              <span className="text-2xl">🏆</span>
-              <span>View Pool Results</span>
+              <span className="text-lg">🏆</span>
+              <span>View Results</span>
             </button>
-          </div>
-        )}
+          )}
 
-        {/* Past Games Navigation */}
-        {onViewPastGames && (
-          <div className="mt-6">
+          {/* Past Games Navigation */}
+          {onViewPastGames && (
             <button
               onClick={onViewPastGames}
-              className="w-full px-6 py-3 bg-white border-2 border-purple-300 text-purple-700 font-semibold rounded-xl hover:bg-purple-50 hover:border-purple-400 transition-all shadow flex items-center justify-center gap-2"
+              className="w-full px-4 py-2.5 bg-white border border-gray-200 text-gray-600 font-medium rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center gap-2 text-sm"
             >
-              <span className="text-xl">📜</span>
-              <span>View Past Games & Claim Prizes</span>
+              <span>📜</span>
+              <span>Past Games & Prizes</span>
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* SELF Verification Modal */}

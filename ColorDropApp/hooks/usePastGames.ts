@@ -44,9 +44,9 @@ export interface UserPrize {
 }
 
 const PRIZE_AMOUNTS = {
-  1: 0.45,  // 1st place
-  2: 0.225, // 2nd place
-  3: 0.075, // 3rd place
+  1: 0.70,  // 1st place (43.75% of 1.6 CELO pool = 7× entry)
+  2: 0.50,  // 2nd place (31.25% of pool = 5× entry)
+  3: 0.25,  // 3rd place (15.625% of pool = 2.5× entry)
 };
 
 export function usePastGames(limit: number = 10) {
@@ -156,7 +156,7 @@ export function usePastGames(limit: number = 10) {
           // Fetch players for completed pools OR full pools that need finalization
           if ((isCompleted || isPoolFull) && playerCount > 0) {
             // Fetch all players for this pool
-            for (let i = 0; i < Math.min(playerCount, 9); i++) {
+            for (let i = 0; i < Math.min(playerCount, 16); i++) {
               contracts.push({
                 address: POOL_ADDRESS,
                 abi: ColorDropPoolABI.abi,
@@ -284,7 +284,7 @@ export function usePastGames(limit: number = 10) {
               timestamp: number;
             }> = [];
 
-            const numPlayers = Math.min(playerCount, 9);
+            const numPlayers = Math.min(playerCount, 16);
             for (let i = 0; i < numPlayers; i++) {
               if (playersData && playersData[playerDataIndex]) {
                 const playerResult = playersData[playerDataIndex];
@@ -402,7 +402,7 @@ export function usePastGames(limit: number = 10) {
             });
 
             // Still need to skip player data
-            playerDataIndex += Math.min(playerCount, 9);
+            playerDataIndex += Math.min(playerCount, 16);
           } else {
             // Skip non-completed, non-full pools' player data (shouldn't have any)
             // but just in case

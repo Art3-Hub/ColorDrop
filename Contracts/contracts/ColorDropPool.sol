@@ -10,7 +10,7 @@ import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 /**
  * @title ColorDropPool
  * @dev Upgradeable tournament-style pool for Color Drop game on Farcaster x Celo
- * @notice 9 players compete @ 0.1 CELO, top 3 win prizes (0.45, 0.225, 0.075 CELO)
+ * @notice 16 players compete @ 0.1 CELO, top 3 win prizes (0.70, 0.50, 0.25 CELO)
  * @custom:security-contact security@colordrop.app
  */
 contract ColorDropPool is
@@ -23,15 +23,15 @@ contract ColorDropPool is
     // Role definitions
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
-    // Constants - 9 players x 0.1 CELO = 0.9 CELO total pool
+    // Constants - 16 players x 0.1 CELO = 1.6 CELO total pool
     uint256 public constant ENTRY_FEE = 0.1 ether; // 0.1 CELO per player
-    uint8 public constant POOL_SIZE = 9; // Logical pool size (9 players)
-    uint8 public constant STORAGE_POOL_SIZE = 12; // Storage array size (for upgrade compatibility)
+    uint8 public constant POOL_SIZE = 16; // Pool size (16 players)
+    uint8 public constant STORAGE_POOL_SIZE = 16; // Storage array size
     uint8 public constant UNVERIFIED_SLOT_LIMIT = 4; // Max slots for unverified users
-    uint256 public constant PRIZE_1ST = 0.45 ether; // 50% of prize pool
-    uint256 public constant PRIZE_2ND = 0.225 ether; // 25% of prize pool
-    uint256 public constant PRIZE_3RD = 0.075 ether; // 8.33% of prize pool
-    uint256 public constant SYSTEM_FEE = 0.15 ether; // 16.67% of total pool
+    uint256 public constant PRIZE_1ST = 0.7 ether; // 43.75% of prize pool (0.70 CELO = 7× entry)
+    uint256 public constant PRIZE_2ND = 0.5 ether; // 31.25% of prize pool (0.50 CELO = 5× entry)
+    uint256 public constant PRIZE_3RD = 0.25 ether; // 15.625% of prize pool (0.25 CELO = 2.5× entry)
+    uint256 public constant SYSTEM_FEE = 0.15 ether; // 9.375% of total pool
     uint256 public constant FINALIZATION_TIMEOUT = 2 minutes;
 
     // Structs
@@ -45,7 +45,7 @@ contract ColorDropPool is
 
     struct Pool {
         uint256 id;
-        Player[STORAGE_POOL_SIZE] players; // Storage array kept at 12 for upgrade compatibility
+        Player[STORAGE_POOL_SIZE] players; // Storage array kept at 16 for upgrade compatibility
         uint8 playerCount;
         bool isActive;
         bool isCompleted;
@@ -296,17 +296,17 @@ contract ColorDropPool is
 
     /**
      * @dev Check if pool is ready for completion
-     * @notice Only distributes prizes when pool is FULL (9 players) AND all have submitted
+     * @notice Only distributes prizes when pool is FULL (16 players) AND all have submitted
      */
     function _checkPoolCompletion(uint256 poolId) private {
         Pool storage pool = pools[poolId];
 
-        // Pool must be full (9 players) before we can distribute
+        // Pool must be full (16 players) before we can distribute
         if (pool.playerCount < POOL_SIZE) {
             return;
         }
 
-        // Check if all 9 players have submitted
+        // Check if all 16 players have submitted
         bool allSubmitted = true;
         for (uint8 i = 0; i < POOL_SIZE; i++) {
             if (!pool.players[i].hasSubmitted) {
@@ -663,7 +663,7 @@ contract ColorDropPool is
      * @dev Get contract version for upgrade tracking
      */
     function version() external pure returns (string memory) {
-        return "3.6.2";
+        return "3.8.0";
     }
 
     /**
