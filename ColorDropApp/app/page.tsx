@@ -84,30 +84,25 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
       {/* Header */}
       <header className="border-b border-gray-200 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 sm:py-4">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="text-2xl sm:text-3xl">🎨</div>
               <div>
-                <div className="flex items-center gap-1 sm:gap-2">
-                  <h1 className="text-base sm:text-xl font-bold text-gray-900">Color Drop</h1>
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <h1 className="text-lg sm:text-xl font-bold text-gray-900">Color Drop</h1>
                   {NETWORK_INFO.isTestnet && (
-                    <span className="px-1.5 sm:px-2 py-0.5 bg-yellow-100 text-yellow-800 text-[10px] sm:text-xs font-semibold rounded-full border border-yellow-300">
-                      TESTNET
+                    <span className="px-1.5 py-0.5 bg-yellow-100 text-yellow-800 text-[10px] font-semibold rounded-full border border-yellow-300">
+                      TEST
                     </span>
                   )}
                 </div>
-                <p className="text-[10px] sm:text-xs text-gray-600 hidden sm:block">
-                  {isInMiniApp ? 'Farcaster Mini App' : 'Tournament Game'}
-                </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-4">
+            <div className="flex items-center gap-2 sm:gap-3">
               {process.env.NODE_ENV === 'development' && <PlatformIndicator />}
-              <div className="min-w-[140px] sm:min-w-[200px]">
-                <ConnectButton />
-              </div>
+              <ConnectButton />
             </div>
           </div>
         </div>
@@ -117,67 +112,113 @@ export default function Home() {
       <main className="py-4 sm:py-8">
         {!isConnected && (
           <div className="max-w-2xl mx-auto px-3 sm:px-4">
-            <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-12 text-center space-y-4 sm:space-y-6">
-              <div className="text-5xl sm:text-7xl">🎨</div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
-                Welcome to Color Drop!
-              </h2>
-              <p className="text-base sm:text-lg text-gray-600 max-w-md mx-auto">
-                Pay {ENTRY_FEE_VALUE} CELO, match colors in 10 seconds, win prizes!
-              </p>
-              <div className="pt-4">
+            <div className="bg-white rounded-2xl shadow-xl p-5 sm:p-10 text-center">
+              {/* Hero Section */}
+              <div className="mb-6 sm:mb-8">
+                <div className="text-5xl sm:text-7xl mb-4">🎨</div>
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                  Color Drop Tournament
+                </h2>
+                <p className="text-base sm:text-lg text-gray-600 max-w-md mx-auto">
+                  Match colors in 10 seconds. Top 3 win CELO prizes!
+                </p>
+              </div>
+
+              {/* Prize Highlight */}
+              <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-4 sm:p-6 mb-6">
+                <div className="text-sm text-gray-600 mb-3">Prize Pool per Game</div>
+                <div className="flex justify-center items-center gap-3 sm:gap-6 flex-wrap">
+                  <div className="text-center">
+                    <div className="text-2xl mb-1">🥇</div>
+                    <div className="text-lg sm:text-xl font-bold text-yellow-600">{(ENTRY_FEE_VALUE * 7).toFixed(2)}</div>
+                    <div className="text-xs text-gray-500">CELO</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl mb-1">🥈</div>
+                    <div className="text-lg sm:text-xl font-bold text-gray-500">{(ENTRY_FEE_VALUE * 5).toFixed(2)}</div>
+                    <div className="text-xs text-gray-500">CELO</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl mb-1">🥉</div>
+                    <div className="text-lg sm:text-xl font-bold text-orange-500">{(ENTRY_FEE_VALUE * 2.5).toFixed(2)}</div>
+                    <div className="text-xs text-gray-500">CELO</div>
+                  </div>
+                </div>
+                <div className="text-xs text-gray-500 mt-3">
+                  Entry: {ENTRY_FEE_VALUE} CELO • 16 players per pool
+                </div>
+              </div>
+
+              {/* Connect CTA */}
+              <div className="mb-6">
                 <p className="text-sm text-gray-500 mb-4">
                   Connect your wallet to start playing
                 </p>
-                {NETWORK_INFO.isTestnet && NETWORK_INFO.faucet && (
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                    <p className="text-sm text-yellow-800 mb-2">
-                      🧪 <strong>Testing on {NETWORK_INFO.name}</strong>
-                    </p>
-                    <p className="text-xs text-yellow-700 mb-3">
-                      Need test tokens? Get free CELO from the faucet:
-                    </p>
-                    <a
-                      href={NETWORK_INFO.faucet}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white text-sm font-medium rounded-lg transition-colors"
-                    >
-                      Get Test CELO
-                      <span>→</span>
-                    </a>
-                  </div>
-                )}
+                <div className="flex justify-center">
+                  <ConnectButton />
+                </div>
               </div>
 
+              {NETWORK_INFO.isTestnet && NETWORK_INFO.faucet && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                  <p className="text-sm text-yellow-800 mb-2">
+                    🧪 <strong>Testing on {NETWORK_INFO.name}</strong>
+                  </p>
+                  <p className="text-xs text-yellow-700 mb-3">
+                    Need test tokens? Get free CELO from the faucet:
+                  </p>
+                  <a
+                    href={NETWORK_INFO.faucet}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white text-sm font-medium rounded-lg transition-colors"
+                  >
+                    Get Test CELO →
+                  </a>
+                </div>
+              )}
+
               {/* How It Works */}
-              <div className="bg-gray-50 rounded-xl p-6 text-left mt-8">
-                <h3 className="font-bold text-gray-900 mb-4">How It Works</h3>
-                <div className="space-y-3 text-sm text-gray-700">
+              <div className="bg-gray-50 rounded-xl p-5 sm:p-6 text-left">
+                <h3 className="font-bold text-gray-900 mb-4 text-center">How It Works</h3>
+                <div className="space-y-4 text-sm text-gray-700">
                   <div className="flex items-start gap-3">
-                    <span className="text-2xl">🎮</span>
+                    <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                      <span className="text-lg">1</span>
+                    </div>
                     <div>
-                      <div className="font-semibold">Choose a Slot & Pay {ENTRY_FEE_VALUE} CELO</div>
-                      <div className="text-gray-600">Pick any available slot to start</div>
+                      <div className="font-semibold text-gray-900">Choose a Slot</div>
+                      <div className="text-gray-600">Pay {ENTRY_FEE_VALUE} CELO to join the pool</div>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <span className="text-2xl">🎯</span>
+                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                      <span className="text-lg">2</span>
+                    </div>
                     <div>
-                      <div className="font-semibold">Match the Color in 8 Seconds</div>
-                      <div className="text-gray-600">Use HSL sliders to match the target</div>
+                      <div className="font-semibold text-gray-900">Match the Color</div>
+                      <div className="text-gray-600">10 seconds to match using HSL sliders</div>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <span className="text-2xl">🏆</span>
+                    <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                      <span className="text-lg">3</span>
+                    </div>
                     <div>
-                      <div className="font-semibold">Top 3 Win Prizes</div>
-                      <div className="text-gray-600">
-                        {ENTRY_FEE_VALUE * 6} CELO • {ENTRY_FEE_VALUE * 3} CELO • {ENTRY_FEE_VALUE * 1} CELO
-                      </div>
+                      <div className="font-semibold text-gray-900">Win Prizes</div>
+                      <div className="text-gray-600">Top 3 most accurate players win CELO</div>
                     </div>
                   </div>
                 </div>
+              </div>
+
+              {/* Built on Celo badge */}
+              <div className="mt-6 flex items-center justify-center gap-2 text-xs text-gray-400">
+                <span>Built on</span>
+                <span className="font-semibold text-green-600">Celo</span>
+                <span>•</span>
+                <span>Powered by</span>
+                <span className="font-semibold text-purple-600">Farcaster</span>
               </div>
             </div>
           </div>
@@ -205,20 +246,27 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-gray-200 bg-white mt-12">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="text-center text-sm text-gray-600">
-            <p>
-              Built on Celo • Powered by Farcaster •{' '}
-              <a
-                href="https://github.com"
-                className="text-purple-600 hover:text-purple-700 font-medium"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                View on GitHub
-              </a>
-            </p>
+      <footer className="border-t border-gray-200 bg-white/80 backdrop-blur-sm mt-8">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 text-xs sm:text-sm text-gray-500">
+            <div className="flex items-center gap-1.5">
+              <span>Built on</span>
+              <span className="font-semibold text-green-600">Celo</span>
+            </div>
+            <span className="hidden sm:inline">•</span>
+            <div className="flex items-center gap-1.5">
+              <span>Powered by</span>
+              <span className="font-semibold text-purple-600">Farcaster</span>
+            </div>
+            <span className="hidden sm:inline">•</span>
+            <a
+              href="https://github.com/art3hub/colordrop"
+              className="text-gray-500 hover:text-purple-600 font-medium transition-colors"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              View on GitHub
+            </a>
           </div>
         </div>
       </footer>

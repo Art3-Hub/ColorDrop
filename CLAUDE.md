@@ -8,7 +8,7 @@ Last Updated: December 2025
 
 ## 📋 Project Overview
 
-Color Drop Tournament is a skill-based Farcaster Mini App where 9 players compete to match colors in 10 seconds, with winners receiving CELO prizes (0.45, 0.225, 0.075 CELO). The project integrates:
+Color Drop Tournament is a skill-based Farcaster Mini App where 12 players compete to match colors in 10 seconds, with winners receiving CELO prizes (0.60, 0.30, 0.10 CELO). The project integrates:
 
 - **Frontend**: Next.js 16 + React + TypeScript
 - **Blockchain**: Celo (Solidity 0.8.20 upgradeable contracts)
@@ -18,11 +18,11 @@ Color Drop Tournament is a skill-based Farcaster Mini App where 9 players compet
 
 ### Core Game Mechanics
 - **Entry Fee**: 0.1 CELO per slot
-- **Pool Size**: 9 slots per game (3×3 grid for faster games)
+- **Pool Size**: 12 slots per game (4×3 grid)
 - **Game Duration**: 10 seconds to match color
 - **Color System**: HSL sliders (Hue, Saturation, Lightness)
 - **Scoring**: Delta E 2000 color difference algorithm
-- **Winners**: Top 3 most accurate matches (0.45, 0.225, 0.075 CELO)
+- **Winners**: Top 3 most accurate matches (0.60, 0.30, 0.10 CELO)
 - **Multi-Slot**: Users can play multiple slots per pool
   - Unverified: Maximum 4 slots
   - SELF-verified (18+): Unlimited slots
