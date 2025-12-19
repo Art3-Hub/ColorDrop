@@ -12,18 +12,18 @@ import { getCurrentUser } from '@/lib/farcaster';
 interface PlayGridProps {
   onStartGame: (slot: number) => void;
   onViewLeaderboard?: () => void;
+  onViewPastGames?: () => void;
 }
 
 type FlowState = 'idle' | 'verification_prompt' | 'payment' | 'playing';
 
-export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
+export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: PlayGridProps) {
   const { address } = useAccount();
   const {
     isVerified,
     initiateSelfVerification,
     initiateDeeplinkVerification,
-    stopPolling,
-    clearVerification
+    stopPolling
   } = useSelf();
   const { shouldUseDeeplink } = usePlatformDetection();
 
@@ -85,18 +85,14 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
       console.log('🎮 Transaction confirmed! Starting game for slot:', pendingSlot);
       setLastProcessedHash(joinHash);
 
-      // IMPORTANT: Clear SELF verification after each successful payment
-      // User must re-verify for every slot click (per user requirement)
-      clearVerification();
-      console.log('🔄 SELF verification cleared - will require fresh verification for next slot');
-
       // Start the game for this slot
+      // Note: SELF verification persists in session - verified users get unlimited slots
       onStartGame(pendingSlot);
       setFlowState('idle');
       setSelectedSlot(null);
       setPendingSlot(null);
     }
-  }, [isJoinSuccess, joinHash, lastProcessedHash, pendingSlot, onStartGame, clearVerification]);
+  }, [isJoinSuccess, joinHash, lastProcessedHash, pendingSlot, onStartGame]);
 
   const handleSlotClick = (slotNumber: number) => {
     const slotIndex = slotNumber - 1;
@@ -166,13 +162,21 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
     console.log('💰 Opening payment modal for new slot:', slotNumber);
     setSelectedSlot(slotNumber);
 
-    // IMPORTANT: Always require SELF verification for EVERY slot click
-    // User must verify before each payment (per user requirement)
-    if (!isVerified) {
-      console.log('🔐 SELF verification required before payment');
+    // Check if user needs SELF verification
+    // Unverified users: max 2 slots
+    // Verified users: unlimited slots
+    const slotsUsedNow = userStatus?.slotsUsed || 0;
+
+    if (!isVerified && slotsUsedNow >= MAX_UNVERIFIED_SLOTS) {
+      // User has reached unverified limit - must verify to continue
+      console.log('🔐 SELF verification required - user at slot limit');
+      setFlowState('verification_prompt');
+    } else if (!isVerified && slotsUsedNow >= 1) {
+      // Show verification option (can skip) after first slot
+      console.log('🔐 Offering SELF verification option');
       setFlowState('verification_prompt');
     } else {
-      // Already verified in this session (shouldn't happen since we clear after payment)
+      // Go directly to payment (verified user or first slot)
       setFlowState('payment');
     }
   };
@@ -191,8 +195,26 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
     }
   };
 
+  // Check if user can skip verification (only if under slot limit)
+  const currentSlots = userStatus?.slotsUsed || 0;
+  const MAX_UNVERIFIED_SLOTS = 2;
+  const canSkipVerification = currentSlots < MAX_UNVERIFIED_SLOTS;
+
   const handleSkipVerification = () => {
-    setFlowState('payment');
+    if (canSkipVerification) {
+      // User can skip - proceed to payment
+      setFlowState('payment');
+    } else {
+      // User at limit - cancel and go back to idle
+      setFlowState('idle');
+      setSelectedSlot(null);
+    }
+  };
+
+  const handleCancelVerification = () => {
+    // Cancel always goes back to idle
+    setFlowState('idle');
+    setSelectedSlot(null);
   };
 
   const handleConfirmPayment = async () => {
@@ -234,11 +256,6 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
     }
   };
 
-
-  const slotsRemaining = userStatus
-    ? Math.max(0, userStatus.slotsAvailable - userStatus.slotsUsed)
-    : 4;
-
   return (
     <>
       <div className="max-w-6xl mx-auto px-3 sm:px-4">
@@ -251,11 +268,24 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
             Pay {ENTRY_FEE} per slot • Top 3 players win prizes!
           </p>
 
-          {/* User Status Banner - SELF verification required for each slot */}
+          {/* User Status Banner */}
           {userStatus && (
-            <div className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-blue-100 text-blue-800 border border-blue-300">
-              <span>🔐</span>
-              <span>SELF verification required for each slot</span>
+            <div className={`mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${
+              isVerified
+                ? 'bg-green-100 text-green-800 border border-green-300'
+                : 'bg-yellow-100 text-yellow-800 border border-yellow-300'
+            }`}>
+              {isVerified ? (
+                <>
+                  <span>✅</span>
+                  <span>Verified - Unlimited Slots</span>
+                </>
+              ) : (
+                <>
+                  <span>⚠️</span>
+                  <span>{Math.max(0, MAX_UNVERIFIED_SLOTS - currentSlots)} {MAX_UNVERIFIED_SLOTS - currentSlots === 1 ? 'slot' : 'slots'} remaining ({MAX_UNVERIFIED_SLOTS} max)</span>
+                </>
+              )}
             </div>
           )}
 
@@ -489,6 +519,19 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
             </button>
           </div>
         )}
+
+        {/* Past Games Navigation */}
+        {onViewPastGames && (
+          <div className="mt-6">
+            <button
+              onClick={onViewPastGames}
+              className="w-full px-6 py-3 bg-white border-2 border-purple-300 text-purple-700 font-semibold rounded-xl hover:bg-purple-50 hover:border-purple-400 transition-all shadow flex items-center justify-center gap-2"
+            >
+              <span className="text-xl">📜</span>
+              <span>View Past Games & Claim Prizes</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* SELF Verification Modal */}
@@ -496,8 +539,9 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
         isOpen={flowState === 'verification_prompt'}
         onVerify={handleVerifySelf}
         onSkip={handleSkipVerification}
-        slotsRemaining={slotsRemaining}
-        isUnlimited={isVerified}
+        onCancel={handleCancelVerification}
+        slotsRemaining={Math.max(0, MAX_UNVERIFIED_SLOTS - currentSlots)}
+        canSkip={canSkipVerification}
       />
 
       {/* Payment Modal */}

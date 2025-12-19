@@ -8,11 +8,12 @@ import { PlatformIndicator } from '@/components/PlatformIndicator';
 import { PlayGrid } from '@/components/landing/PlayGrid';
 import { GameScreen } from '@/components/game/GameScreen';
 import { LeaderboardView } from '@/components/pool/LeaderboardView';
+import { PastGames } from '@/components/pool/PastGames';
 import { isFarcaster } from '@/lib/platform';
 import { NETWORK_INFO } from '@/lib/wagmi';
 import { useColorDropPool } from '@/hooks/useColorDropPool';
 
-type AppState = 'landing' | 'game' | 'leaderboard';
+type AppState = 'landing' | 'game' | 'leaderboard' | 'pastGames';
 
 export default function Home() {
   const { address, isConnected } = useAccount();
@@ -69,6 +70,10 @@ export default function Home() {
 
   const handleViewLeaderboard = () => {
     setAppState('leaderboard');
+  };
+
+  const handleViewPastGames = () => {
+    setAppState('pastGames');
   };
 
   // Auto-show leaderboard when pool completes
@@ -184,7 +189,11 @@ export default function Home() {
         )}
 
         {isConnected && appState === 'landing' && (
-          <PlayGrid onStartGame={handleStartGame} onViewLeaderboard={handleViewLeaderboard} />
+          <PlayGrid
+            onStartGame={handleStartGame}
+            onViewLeaderboard={handleViewLeaderboard}
+            onViewPastGames={handleViewPastGames}
+          />
         )}
 
         {isConnected && appState === 'game' && (
@@ -194,6 +203,10 @@ export default function Home() {
         {isConnected && appState === 'leaderboard' && currentPoolId !== undefined && typeof currentPoolId === 'bigint' ? (
           <LeaderboardView poolId={currentPoolId} onBackToLobby={handleBackToLanding} />
         ) : null}
+
+        {isConnected && appState === 'pastGames' && (
+          <PastGames onBack={handleBackToLanding} />
+        )}
       </main>
 
       {/* Footer */}

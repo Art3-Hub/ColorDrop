@@ -64,6 +64,14 @@ contract ColorDropPool is
     address public treasury1;
     address public treasury2;
 
+    // Prize claiming (v3.6.0+)
+    // Maps poolId => rank (1,2,3) => winner address
+    mapping(uint256 => mapping(uint8 => address)) public poolWinners;
+    // Maps poolId => rank (1,2,3) => claimed status
+    mapping(uint256 => mapping(uint8 => bool)) public prizeClaimed;
+    // Maps user => total unclaimed prizes
+    mapping(address => uint256) public unclaimedPrizes;
+
     // Backend verifier wallet (calls setUserVerification after SELF proof validation)
     address public verifier;
 
@@ -85,6 +93,7 @@ contract ColorDropPool is
         address third
     );
     event PrizePaid(address indexed winner, uint256 amount);
+    event PrizeClaimed(uint256 indexed poolId, address indexed winner, uint8 rank, uint256 amount);
     event SystemFeePaid(address indexed treasury, uint256 amount);
     event TreasuryUpdated(address indexed treasury1, address indexed treasury2);
     event UserVerified(address indexed user, bool verified);
@@ -107,6 +116,8 @@ contract ColorDropPool is
     error PoolNotActive();
     error SlotLimitExceeded();
     error UnauthorizedVerifier();
+    error NoPrizeToClaim();
+    error PrizeAlreadyClaimed();
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -309,7 +320,8 @@ contract ColorDropPool is
     }
 
     /**
-     * @dev Distribute prizes to top 3 players and system fees to dual treasuries
+     * @dev Finalize pool and record winners for prize claiming
+     * @notice System fees are auto-distributed, but player prizes must be claimed manually
      */
     function _distributePrizes(uint256 poolId) private {
         Pool storage pool = pools[poolId];
@@ -320,16 +332,20 @@ contract ColorDropPool is
         // Find top 3 players
         address[3] memory winners = _getTopThree(poolId);
 
-        // Split system fee 50/50 between treasury wallets
+        // Split system fee 50/50 between treasury wallets (auto-distributed)
         uint256 feePerTreasury = SYSTEM_FEE / 2;
-
         _payFee(treasury1, feePerTreasury);
         _payFee(treasury2, feePerTreasury);
 
-        // Pay prizes
-        _payPrize(winners[0], PRIZE_1ST);
-        _payPrize(winners[1], PRIZE_2ND);
-        _payPrize(winners[2], PRIZE_3RD);
+        // Record winners and their unclaimed prizes (manual claiming)
+        uint256[3] memory prizes = [PRIZE_1ST, PRIZE_2ND, PRIZE_3RD];
+        for (uint8 i = 0; i < 3; i++) {
+            if (winners[i] != address(0)) {
+                uint8 rank = i + 1;
+                poolWinners[poolId][rank] = winners[i];
+                unclaimedPrizes[winners[i]] += prizes[i];
+            }
+        }
 
         // Clear active pool for all players
         for (uint8 i = 0; i < pool.playerCount; i++) {
@@ -340,24 +356,90 @@ contract ColorDropPool is
     }
 
     /**
+     * @dev Claim prize for a specific pool
+     * @param poolId Pool ID to claim prize from
+     * @notice Winners call this to receive their CELO prize and can then share on social
+     */
+    function claimPrize(uint256 poolId) external nonReentrant whenNotPaused {
+        Pool storage pool = pools[poolId];
+        if (!pool.isCompleted) revert PoolNotActive();
+
+        // Find which rank the caller won (if any)
+        uint8 winnerRank = 0;
+        for (uint8 i = 1; i <= 3; i++) {
+            if (poolWinners[poolId][i] == msg.sender && !prizeClaimed[poolId][i]) {
+                winnerRank = i;
+                break;
+            }
+        }
+
+        if (winnerRank == 0) revert NoPrizeToClaim();
+
+        // Mark as claimed
+        prizeClaimed[poolId][winnerRank] = true;
+
+        // Calculate prize amount
+        uint256 prizeAmount;
+        if (winnerRank == 1) prizeAmount = PRIZE_1ST;
+        else if (winnerRank == 2) prizeAmount = PRIZE_2ND;
+        else prizeAmount = PRIZE_3RD;
+
+        // Update unclaimed balance
+        unclaimedPrizes[msg.sender] -= prizeAmount;
+
+        // Transfer prize
+        (bool success, ) = msg.sender.call{value: prizeAmount}("");
+        if (!success) revert TransferFailed();
+
+        emit PrizeClaimed(poolId, msg.sender, winnerRank, prizeAmount);
+    }
+
+    /**
+     * @dev Get winner info for a pool
+     * @param poolId Pool ID to check
+     * @return winners Array of winner addresses [1st, 2nd, 3rd]
+     * @return claimed Array of claimed status [1st, 2nd, 3rd]
+     */
+    function getPoolWinners(uint256 poolId) external view returns (
+        address[3] memory winners,
+        bool[3] memory claimed
+    ) {
+        for (uint8 i = 1; i <= 3; i++) {
+            winners[i-1] = poolWinners[poolId][i];
+            claimed[i-1] = prizeClaimed[poolId][i];
+        }
+    }
+
+    /**
+     * @dev Check if user has unclaimed prizes in a specific pool
+     * @param poolId Pool ID to check
+     * @param user Address to check
+     * @return rank Winner rank (0 if not a winner or already claimed)
+     * @return amount Prize amount available
+     */
+    function getUserPrizeInPool(uint256 poolId, address user) external view returns (
+        uint8 rank,
+        uint256 amount
+    ) {
+        for (uint8 i = 1; i <= 3; i++) {
+            if (poolWinners[poolId][i] == user && !prizeClaimed[poolId][i]) {
+                uint256 prizeAmount;
+                if (i == 1) prizeAmount = PRIZE_1ST;
+                else if (i == 2) prizeAmount = PRIZE_2ND;
+                else prizeAmount = PRIZE_3RD;
+                return (i, prizeAmount);
+            }
+        }
+        return (0, 0);
+    }
+
+    /**
      * @dev Pay system fee to treasury
      */
     function _payFee(address treasury, uint256 amount) private {
         (bool success, ) = treasury.call{value: amount}("");
         if (!success) revert TransferFailed();
         emit SystemFeePaid(treasury, amount);
-    }
-
-    /**
-     * @dev Pay prize to winner
-     */
-    function _payPrize(address winner, uint256 amount) private {
-        if (winner == address(0)) return; // Skip if no winner at this position
-
-        (bool success, ) = winner.call{value: amount}("");
-        if (!success) revert TransferFailed();
-
-        emit PrizePaid(winner, amount);
     }
 
     /**
@@ -558,7 +640,7 @@ contract ColorDropPool is
      * @dev Get contract version for upgrade tracking
      */
     function version() external pure returns (string memory) {
-        return "3.5.2";
+        return "3.6.0";
     }
 
     /**
