@@ -15,6 +15,41 @@ import { useColorDropPool } from '@/hooks/useColorDropPool';
 
 type AppState = 'landing' | 'game' | 'leaderboard' | 'pastGames';
 
+// Share pool on Farcaster to invite friends
+async function sharePoolOnFarcaster(poolId: bigint | undefined, prizePool: number, slotsRemaining: number) {
+  const poolIdStr = poolId?.toString() || '???';
+
+  // Dynamic messaging based on slots remaining
+  let emoji: string;
+  let callToAction: string;
+
+  if (slotsRemaining <= 3) {
+    emoji = '🔥';
+    callToAction = `Almost full! Only ${slotsRemaining} slots left! ⚡`;
+  } else if (slotsRemaining <= 6) {
+    emoji = '🎯';
+    callToAction = `${slotsRemaining} slots left - join now! 🚀`;
+  } else {
+    emoji = '🎮';
+    callToAction = `Come and win fast! ${slotsRemaining} slots open 🚀`;
+  }
+
+  const text = `${emoji} Join me in Color Drop Pool #${poolIdStr}!\n\n🎨 Match colors in 10 seconds\n💰 Prize Pool: ${prizePool.toFixed(2)} CELO\n🏆 Top 3 win prizes!\n\n${callToAction}`;
+  const embedUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://colordrop.app';
+
+  try {
+    const isInMiniApp = await sdk.isInMiniApp();
+    if (isInMiniApp) {
+      await sdk.actions.openUrl(`https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(embedUrl)}`);
+    } else {
+      window.open(`https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(embedUrl)}`, '_blank');
+    }
+  } catch (error) {
+    console.error('Failed to share on Farcaster:', error);
+    window.open(`https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(embedUrl)}`, '_blank');
+  }
+}
+
 export default function Home() {
   const { address, isConnected } = useAccount();
   const { poolData, currentPoolId } = useColorDropPool();
@@ -23,6 +58,7 @@ export default function Home() {
   const [currentSlot, setCurrentSlot] = useState<number>(1);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const POOL_SIZE = 16;
   const ENTRY_FEE_VALUE = parseFloat(process.env.NEXT_PUBLIC_ENTRY_FEE || '0.1');
 
   // Initialize Farcaster SDK and call ready() to hide splash screen
@@ -113,7 +149,25 @@ export default function Home() {
 
             <div className="flex items-center gap-2 sm:gap-3">
               {process.env.NODE_ENV === 'development' && <PlatformIndicator />}
-              <ConnectButton />
+              {/* Share Button - Only show when connected */}
+              {isConnected && (
+                <button
+                  onClick={() => sharePoolOnFarcaster(
+                    poolData?.poolId,
+                    ENTRY_FEE_VALUE * POOL_SIZE,
+                    poolData ? POOL_SIZE - poolData.playerCount : POOL_SIZE
+                  )}
+                  className="inline-flex items-center gap-1 px-3 py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg text-sm font-medium hover:from-purple-700 hover:to-blue-700 transition-all shadow-sm"
+                  title="Invite friends to play"
+                >
+                  <span>Share and Win</span>
+                  <span className="hidden xs:inline">Share</span>
+                </button>
+              )}
+              {/* Connect Button - Hidden on mobile when connected (moved to hamburger menu) */}
+              <div className={isConnected ? 'hidden sm:block' : ''}>
+                <ConnectButton />
+              </div>
             </div>
           </div>
         </div>
@@ -184,6 +238,14 @@ export default function Home() {
                   <div className="text-xs text-gray-500">View past games & claim</div>
                 </div>
               </button>
+
+              {/* Wallet Section - Mobile only */}
+              <div className="mt-3 pt-3 border-t border-gray-100">
+                <div className="px-4 py-2 text-xs text-gray-400 font-medium">Wallet</div>
+                <div className="px-4">
+                  <ConnectButton />
+                </div>
+              </div>
             </nav>
 
             {/* Menu Footer */}
