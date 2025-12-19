@@ -97,10 +97,19 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
       canJoin: userStatus?.canJoin
     });
 
-    // If clicking on own slot, go directly to game (to continue/submit score)
-    if (isMySlot) {
-      console.log('🎮 User clicking their own slot, starting game for slot:', slotNumber);
+    // Check if score has been submitted for this slot
+    const hasSubmitted = poolData?.playerSlots?.[slotIndex]?.hasSubmitted ?? false;
+
+    // If clicking on own slot that has NOT submitted, go to game to play/submit
+    if (isMySlot && !hasSubmitted) {
+      console.log('🎮 User clicking their own slot (not submitted), starting game for slot:', slotNumber);
       onStartGame(slotNumber);
+      return;
+    }
+
+    // If clicking on own slot that HAS already submitted, do nothing (slot is complete)
+    if (isMySlot && hasSubmitted) {
+      console.log('✅ Slot already submitted, cannot play again');
       return;
     }
 
@@ -316,18 +325,19 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
             // Button should be disabled if:
             // 1. Slot is occupied by someone else (not my slot)
             // 2. Slot is empty but user has reached slot limit
-            const isDisabled = (isOccupied && !isMySlot) || (!isOccupied && hasReachedSlotLimit);
+            // 3. My slot but score already submitted (completed - can't play again)
+            const isDisabled = Boolean((isOccupied && !isMySlot) || (!isOccupied && hasReachedSlotLimit) || (isMySlot && hasSubmitted));
 
             // Determine slot styling based on state
-            // - My slot + submitted = Green (completed)
+            // - My slot + submitted = Green (completed, disabled)
             // - My slot + NOT submitted = Orange (needs to play/submit)
             // - Other player's slot = Gray (filled)
             // - Available = Purple (can buy)
             let slotClassName = '';
             if (isMySlot) {
               if (hasSubmitted) {
-                // Score submitted - show green (completed)
-                slotClassName = 'bg-gradient-to-br from-green-500 to-teal-600 border-green-400 text-white hover:scale-105 hover:shadow-xl active:scale-95';
+                // Score submitted - show green (completed, no hover - disabled)
+                slotClassName = 'bg-gradient-to-br from-green-500 to-teal-600 border-green-400 text-white cursor-default';
               } else {
                 // Score NOT submitted - show orange (needs to play/submit!)
                 slotClassName = 'bg-gradient-to-br from-orange-500 to-amber-600 border-orange-400 text-white hover:scale-105 hover:shadow-xl active:scale-95';
