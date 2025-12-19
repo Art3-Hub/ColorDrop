@@ -22,7 +22,12 @@ export function SelfVerificationModal({
   canSkip,
 }: SelfVerificationModalProps) {
   const { isVerifying, error, selfApp, startPolling } = useSelf();
-  const { shouldShowQRCode, shouldUseDeeplink, isLoading: platformLoading } = usePlatformDetection();
+  const {
+    shouldShowQRCode,
+    shouldUseDeeplink,
+    isFarcaster,
+    isLoading: platformLoading
+  } = usePlatformDetection();
 
   if (!isOpen) return null;
 
@@ -106,21 +111,53 @@ export function SelfVerificationModal({
             </div>
           )}
 
-          {/* QR Code for Browser / Farcaster Browser */}
-          {shouldShowQRCode && selfApp && !isVerifying && !platformLoading && (
-            <div className="space-y-3">
-              <div className="bg-white p-4 rounded-lg border-2 border-purple-200 mx-auto inline-block">
-                <SelfQRcodeWrapper
-                  selfApp={selfApp}
-                  onSuccess={handleQRSuccess}
-                  onError={(err) => {
-                    console.error('QR verification error:', err);
-                  }}
-                />
-              </div>
-              <p className="text-xs text-gray-500">
-                Scan with SELF Protocol mobile app to verify
-              </p>
+          {/* Verification Options */}
+          {!isVerifying && !platformLoading && selfApp && (
+            <div className="space-y-4">
+              {/* Farcaster: Show deeplink button first (primary action for mobile users) */}
+              {shouldUseDeeplink && (
+                <div className="space-y-3">
+                  <button
+                    onClick={onVerify}
+                    className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-4 rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition-all text-lg"
+                  >
+                    📱 Open SELF App to Verify
+                  </button>
+                  <p className="text-xs text-gray-500">
+                    Opens SELF app for verification, then returns here
+                  </p>
+                </div>
+              )}
+
+              {/* Divider when showing both options */}
+              {shouldUseDeeplink && shouldShowQRCode && (
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 h-px bg-gray-200"></div>
+                  <span className="text-xs text-gray-400">or scan QR code</span>
+                  <div className="flex-1 h-px bg-gray-200"></div>
+                </div>
+              )}
+
+              {/* QR code option */}
+              {shouldShowQRCode && (
+                <div className="space-y-3">
+                  <div className="bg-white p-4 rounded-lg border-2 border-purple-200 mx-auto inline-block">
+                    <SelfQRcodeWrapper
+                      selfApp={selfApp}
+                      onSuccess={handleQRSuccess}
+                      onError={(err) => {
+                        console.error('QR verification error:', err);
+                      }}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    {isFarcaster
+                      ? 'Or scan with SELF app on another device'
+                      : 'Scan with SELF Protocol mobile app to verify'
+                    }
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
@@ -139,24 +176,6 @@ export function SelfVerificationModal({
 
           {/* Action Buttons */}
           <div className="flex flex-col gap-3 pt-2">
-            {/* Deep link button for Farcaster mobile */}
-            {shouldUseDeeplink && !platformLoading && (
-              <button
-                onClick={onVerify}
-                disabled={isVerifying}
-                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isVerifying ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="animate-spin">⏳</span>
-                    Verifying...
-                  </span>
-                ) : (
-                  '🔐 Open SELF App to Verify'
-                )}
-              </button>
-            )}
-
             {/* Skip button - only show if user can skip */}
             {canSkip && (
               <button
