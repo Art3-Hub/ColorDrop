@@ -2,48 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
-import { sdk } from '@farcaster/miniapp-sdk';
 import { PaymentModal } from '../PaymentModal';
 import { SelfVerificationModal } from '../SelfVerificationModal';
 import { useSelf } from '@/contexts/SelfContext';
 import { useColorDropPool } from '@/hooks/useColorDropPool';
 import { usePlatformDetection } from '@/hooks/usePlatformDetection';
 import { getCurrentUser } from '@/lib/farcaster';
-
-// Share pool on Farcaster to invite friends
-async function sharePoolOnFarcaster(poolId: bigint | undefined, prizePool: number, slotsRemaining: number) {
-  const poolIdStr = poolId?.toString() || '???';
-
-  // Dynamic messaging based on slots remaining
-  let emoji: string;
-  let callToAction: string;
-
-  if (slotsRemaining <= 3) {
-    emoji = '🔥';
-    callToAction = `Almost full! Only ${slotsRemaining} slots left! ⚡`;
-  } else if (slotsRemaining <= 6) {
-    emoji = '🎯';
-    callToAction = `${slotsRemaining} slots left - join now! 🚀`;
-  } else {
-    emoji = '🎮';
-    callToAction = `Come and win fast! ${slotsRemaining} slots open 🚀`;
-  }
-
-  const text = `${emoji} Join me in Color Drop Pool #${poolIdStr}!\n\n🎨 Match colors in 10 seconds\n💰 Prize Pool: ${prizePool.toFixed(2)} CELO\n🏆 Top 3 win prizes!\n\n${callToAction}`;
-  const embedUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://colordrop.app';
-
-  try {
-    const isInMiniApp = await sdk.isInMiniApp();
-    if (isInMiniApp) {
-      await sdk.actions.openUrl(`https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(embedUrl)}`);
-    } else {
-      window.open(`https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(embedUrl)}`, '_blank');
-    }
-  } catch (error) {
-    console.error('Failed to share on Farcaster:', error);
-    window.open(`https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(embedUrl)}`, '_blank');
-  }
-}
 
 interface PlayGridProps {
   onStartGame: (slot: number) => void;
@@ -313,18 +277,6 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
                   {isVerified ? '✓ Unlimited' : `${Math.max(0, MAX_UNVERIFIED_SLOTS - currentSlots)}/${MAX_UNVERIFIED_SLOTS} left`}
                 </div>
               )}
-              {/* Compact Share Button - Mobile */}
-              <button
-                onClick={() => sharePoolOnFarcaster(
-                  poolData?.poolId,
-                  ENTRY_FEE_VALUE * POOL_SIZE,
-                  poolData ? POOL_SIZE - poolData.playerCount : POOL_SIZE
-                )}
-                className="inline-flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-full text-xs font-medium hover:from-purple-700 hover:to-blue-700 transition-all"
-              >
-                <span>📣</span>
-                <span>Share</span>
-              </button>
             </div>
             {/* Motivating headline */}
             <div className="text-sm font-bold text-gray-800 mb-1">
@@ -563,20 +515,6 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
 
         {/* Action Buttons */}
         <div className="space-y-2">
-          {/* Share & Win Button - Invite friends to play */}
-          <button
-            onClick={() => sharePoolOnFarcaster(
-              poolData?.poolId,
-              ENTRY_FEE_VALUE * POOL_SIZE,
-              poolData ? POOL_SIZE - poolData.playerCount : POOL_SIZE
-            )}
-            className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all shadow-md flex items-center justify-center gap-2"
-          >
-            <span className="text-lg">📣</span>
-            <span>Share & Win</span>
-            <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">Invite Friends</span>
-          </button>
-
           {/* View Leaderboard Button - Show if pool is complete */}
           {poolData?.isComplete && onViewLeaderboard && (
             <button
