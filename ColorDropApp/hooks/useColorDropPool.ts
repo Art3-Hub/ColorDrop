@@ -239,13 +239,16 @@ export function useColorDropPool() {
   useEffect(() => {
     if (isScoreSuccess && scoreHash) {
       console.log('🎉 Score submission confirmed! Hash:', scoreHash);
-      console.log('🔄 Triggering immediate refetch of userStatus...');
-      // Force refetch user status immediately after score submission
-      refetchUserStatus().then(() => {
-        console.log('✅ userStatus refetch complete');
+      console.log('🔄 Triggering immediate refetch of userStatus and activePoolId...');
+      // Force refetch user status and activePoolId immediately after score submission
+      Promise.all([
+        refetchUserStatus(),
+        refetchActivePoolId()
+      ]).then(() => {
+        console.log('✅ userStatus and activePoolId refetch complete');
       });
     }
-  }, [isScoreSuccess, scoreHash, refetchUserStatus]);
+  }, [isScoreSuccess, scoreHash, refetchUserStatus, refetchActivePoolId]);
 
   // Update pool data when contract data changes
   useEffect(() => {
@@ -385,7 +388,20 @@ export function useColorDropPool() {
   // Submit score function
   const submitScore = useCallback(async (accuracy: number) => {
     if (!address) throw new Error('Wallet not connected');
-    if (!currentPoolId) throw new Error('No active pool');
+
+    // CRITICAL FIX: Use the user's activePoolId instead of currentPoolId
+    // When a pool fills up, currentPoolId advances to the next pool,
+    // but the user's score should go to the pool they joined (their activePoolId)
+    const poolIdToSubmit = activePoolIdForUser;
+
+    if (!poolIdToSubmit || BigInt(poolIdToSubmit.toString()) === BigInt(0)) {
+      console.error('❌ No active pool for user:', {
+        activePoolIdForUser: activePoolIdForUser?.toString(),
+        currentPoolId: currentPoolId?.toString(),
+        address
+      });
+      throw new Error('No active pool for user - you may have already submitted your score');
+    }
 
     // CRITICAL: Ensure we're on the correct chain before transacting
     if (chain?.id !== TARGET_CHAIN.id) {
@@ -405,11 +421,14 @@ export function useColorDropPool() {
     const scoreValue = Math.round(accuracy * 100);
 
     console.log('📊 Submitting score:', {
-      poolId: currentPoolId.toString(),
+      poolId: poolIdToSubmit.toString(),
+      currentPoolId: currentPoolId?.toString(),
+      activePoolIdForUser: activePoolIdForUser?.toString(),
       accuracy: accuracy,
       scoreValue: scoreValue,
       contractAddress: POOL_ADDRESS,
       chainId: TARGET_CHAIN.id,
+      note: 'Using activePoolIdForUser (the pool user joined) instead of currentPoolId'
     });
 
     try {
@@ -417,7 +436,7 @@ export function useColorDropPool() {
         address: POOL_ADDRESS,
         abi: ColorDropPoolABI.abi,
         functionName: 'submitScore',
-        args: [currentPoolId, scoreValue], // Contract expects: submitScore(uint256 poolId, uint16 accuracy)
+        args: [poolIdToSubmit, scoreValue], // Contract expects: submitScore(uint256 poolId, uint16 accuracy)
         chainId: TARGET_CHAIN.id,
       });
       console.log('📝 Score write contract called successfully');
@@ -425,7 +444,7 @@ export function useColorDropPool() {
       console.error('❌ Error calling scoreWriteContract:', err);
       throw err;
     }
-  }, [address, chain, currentPoolId, scoreWriteContract, switchChainAsync]);
+  }, [address, chain, currentPoolId, activePoolIdForUser, scoreWriteContract, switchChainAsync]);
 
   // Check if slot limit reached
   const hasReachedSlotLimit = useCallback(() => {
@@ -471,6 +490,7 @@ export function useColorDropPool() {
     // User status
     userStatus,
     hasReachedSlotLimit: hasReachedSlotLimit(),
+    activePoolIdForUser, // The pool the user is currently in (for score submission)
 
     // Chain status
     isWrongChain,
@@ -514,6 +534,7 @@ export function useColorDropPool() {
       refetchPoolData();
       refetchUserStatus();
       refetchPlayers();
+      refetchActivePoolId();
     },
   };
 }

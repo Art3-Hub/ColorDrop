@@ -8,14 +8,18 @@ interface SelfVerificationModalProps {
   isOpen: boolean;
   onVerify: () => void;
   onSkip: () => void;
-  slotsRemaining?: number; // Deprecated - verification required for each slot
-  isUnlimited?: boolean; // Deprecated - verification required for each slot
+  onCancel: () => void;
+  slotsRemaining: number;
+  canSkip: boolean;
 }
 
 export function SelfVerificationModal({
   isOpen,
   onVerify,
   onSkip,
+  onCancel,
+  slotsRemaining,
+  canSkip,
 }: SelfVerificationModalProps) {
   const { isVerifying, error, selfApp, startPolling } = useSelf();
   const { shouldShowQRCode, shouldUseDeeplink, isLoading: platformLoading } = usePlatformDetection();
@@ -28,6 +32,9 @@ export function SelfVerificationModal({
     startPolling();
   };
 
+  // Determine if verification is mandatory (at slot limit)
+  const isMandatory = !canSkip;
+
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
@@ -37,31 +44,50 @@ export function SelfVerificationModal({
 
           {/* Title */}
           <h2 className="text-2xl font-bold text-gray-900">
-            Age Verification Required
+            {isMandatory ? 'Verification Required' : 'Unlock Unlimited Slots?'}
           </h2>
 
           {/* Description */}
           <div className="space-y-3 text-sm text-gray-600">
             <p>
-              Verify your age (18+) with SELF Protocol to proceed with this slot purchase.
+              Verify your age (18+) with SELF Protocol to {isMandatory ? 'continue playing' : 'unlock unlimited slots'}.
             </p>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-blue-800 font-medium">
-                🔐 Verification required for each slot
-              </p>
-              <p className="text-xs text-blue-700 mt-1">
-                This ensures compliance with age-restricted gaming regulations
-              </p>
-            </div>
+            {isMandatory ? (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-red-800 font-medium">
+                  🚫 You&apos;ve reached the 2-slot limit
+                </p>
+                <p className="text-xs text-red-700 mt-1">
+                  Verification is required to purchase more slots
+                </p>
+              </div>
+            ) : (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <p className="text-yellow-800 font-medium">
+                  ⚠️ You have {slotsRemaining} {slotsRemaining === 1 ? 'slot' : 'slots'} remaining
+                </p>
+                <p className="text-xs text-yellow-700 mt-1">
+                  Without verification, you&apos;re limited to 2 slots per game
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Benefits */}
           <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-4 text-left">
             <h3 className="font-bold text-gray-900 mb-2 text-sm">
-              ✨ Why SELF Protocol?
+              ✨ Verification Benefits
             </h3>
             <ul className="space-y-1.5 text-xs text-gray-700">
+              <li className="flex items-start gap-2">
+                <span className="text-green-600 font-bold">✓</span>
+                <span>Unlimited slots in every game</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-green-600 font-bold">✓</span>
+                <span>One-time verification (persists in session)</span>
+              </li>
               <li className="flex items-start gap-2">
                 <span className="text-green-600 font-bold">✓</span>
                 <span>Privacy-preserving (zero-knowledge proof)</span>
@@ -69,14 +95,6 @@ export function SelfVerificationModal({
               <li className="flex items-start gap-2">
                 <span className="text-green-600 font-bold">✓</span>
                 <span>No personal data stored or exposed</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-green-600 font-bold">✓</span>
-                <span>Quick verification via SELF app</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-green-600 font-bold">✓</span>
-                <span>Compliant with global regulations</span>
               </li>
             </ul>
           </div>
@@ -139,9 +157,20 @@ export function SelfVerificationModal({
               </button>
             )}
 
-            {/* Cancel button */}
+            {/* Skip button - only show if user can skip */}
+            {canSkip && (
+              <button
+                onClick={onSkip}
+                disabled={isVerifying}
+                className="w-full bg-gray-100 text-gray-700 px-6 py-3 rounded-xl font-semibold hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Skip for Now ({slotsRemaining} {slotsRemaining === 1 ? 'slot' : 'slots'} left)
+              </button>
+            )}
+
+            {/* Cancel button - always shown */}
             <button
-              onClick={onSkip}
+              onClick={onCancel}
               disabled={isVerifying}
               className="w-full bg-gray-100 text-gray-700 px-6 py-3 rounded-xl font-semibold hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
