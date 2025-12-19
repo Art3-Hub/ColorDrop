@@ -122,11 +122,24 @@ export function PlayGrid({ onStartGame, onViewLeaderboard }: PlayGridProps) {
     // IMPORTANT: Smart contract only allows ONE active slot at a time
     // User must submit their score before buying another slot
     // Check if user has an unfinished game (canJoin: false means they have an active slot)
+    console.log('🔎 CRITICAL CHECK - userStatus before allowing purple slot:', {
+      userStatus: userStatus,
+      canJoin: userStatus?.canJoin,
+      slotsUsed: userStatus?.slotsUsed,
+      slotsAvailable: userStatus?.slotsAvailable,
+      isVerified: userStatus?.isVerified,
+      willBlock: userStatus && !userStatus.canJoin && userStatus.slotsUsed > 0
+    });
+
     if (userStatus && !userStatus.canJoin && userStatus.slotsUsed > 0) {
-      console.log('⚠️ User has unfinished game - must complete it first');
+      console.log('🚫 BLOCKED! User has unfinished game - canJoin is FALSE');
+      console.log('📊 Contract returned canJoin=false, meaning activePoolId[user] != 0');
+      console.log('💡 This should have been reset to 0 after submitScore() in v3.5.0');
       alert('You have an unfinished game! Please click your orange "PLAY NOW" slot to play and submit your score before buying another slot.');
       return;
     }
+
+    console.log('✅ ALLOWED - userStatus.canJoin is true, proceeding to payment');
 
     // For any available slot (purple), require payment
     // Each new slot costs 0.1 CELO regardless of how many slots user already has

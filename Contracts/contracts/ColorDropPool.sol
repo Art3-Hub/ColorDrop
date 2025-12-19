@@ -89,6 +89,7 @@ contract ColorDropPool is
     event TreasuryUpdated(address indexed treasury1, address indexed treasury2);
     event UserVerified(address indexed user, bool verified);
     event VerifierUpdated(address indexed oldVerifier, address indexed newVerifier);
+    event ActivePoolIdReset(address indexed user);
 
     // Custom errors (gas efficient)
     error InvalidTreasuryAddress();
@@ -217,12 +218,11 @@ contract ColorDropPool is
         // Only check if pool is already completed, allow submission before pool is full
         if (pool.isCompleted) revert PoolNotActive();
 
-        // Find player and update score
+        // Find player's FIRST unsubmitted slot and update score
+        // This handles multi-slot users correctly - finds the first slot that hasn't submitted yet
         bool found = false;
         for (uint8 i = 0; i < pool.playerCount; i++) {
-            if (pool.players[i].wallet == msg.sender) {
-                if (pool.players[i].hasSubmitted) revert AlreadySubmitted();
-
+            if (pool.players[i].wallet == msg.sender && !pool.players[i].hasSubmitted) {
                 pool.players[i].accuracy = accuracy;
                 pool.players[i].timestamp = uint32(block.timestamp);
                 pool.players[i].hasSubmitted = true;
@@ -231,7 +231,7 @@ contract ColorDropPool is
             }
         }
 
-        if (!found) revert NotInPool();
+        if (!found) revert AlreadySubmitted();
 
         // Clear activePoolId so user can join another slot
         // This allows buying multiple slots in the same pool
@@ -489,6 +489,28 @@ contract ColorDropPool is
     }
 
     /**
+     * @dev Reset activePoolId for a user (admin only)
+     * @param user Address to reset
+     * @notice Use this to fix users who submitted scores before v3.5.0 upgrade
+     *         and have a stuck activePoolId value
+     */
+    function resetActivePoolId(address user) external onlyRole(ADMIN_ROLE) {
+        activePoolId[user] = 0;
+        emit ActivePoolIdReset(user);
+    }
+
+    /**
+     * @dev Batch reset activePoolId for multiple users (admin only)
+     * @param users Array of addresses to reset
+     */
+    function batchResetActivePoolId(address[] calldata users) external onlyRole(ADMIN_ROLE) {
+        for (uint256 i = 0; i < users.length; i++) {
+            activePoolId[users[i]] = 0;
+            emit ActivePoolIdReset(users[i]);
+        }
+    }
+
+    /**
      * @dev Get user verification status and slot availability
      * @param user Address to check
      * @return isVerified Whether user is SELF-verified (18+)
@@ -536,7 +558,7 @@ contract ColorDropPool is
      * @dev Get contract version for upgrade tracking
      */
     function version() external pure returns (string memory) {
-        return "3.5.0";
+        return "3.5.2";
     }
 
     /**
