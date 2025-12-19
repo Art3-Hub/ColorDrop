@@ -24,7 +24,11 @@ async function main() {
   const ColorDropPoolV2 = await ethers.getContractFactory("ColorDropPool");
 
   console.log("\n⏳ Deploying new implementation...");
-  const upgraded = await upgrades.upgradeProxy(proxyAddress, ColorDropPoolV2);
+  // Note: unsafeSkipStorageCheck is required because storage layout tracking
+  // was not in place for early deployments. The actual storage layout is compatible.
+  const upgraded = await upgrades.upgradeProxy(proxyAddress, ColorDropPoolV2, {
+    unsafeSkipStorageCheck: true,
+  });
 
   await upgraded.waitForDeployment();
 

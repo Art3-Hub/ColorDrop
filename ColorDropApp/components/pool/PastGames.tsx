@@ -97,20 +97,132 @@ function ClaimSuccessModal({ poolId, rank, prize, onClose }: ClaimSuccessModalPr
   );
 }
 
+interface ClaimAllProgressModalProps {
+  progress: {
+    current: number;
+    total: number;
+    currentPoolId: bigint | null;
+    claimedPrizes: Array<{ poolId: bigint; rank: number; amount: number }>;
+    failedPrizes: Array<{ poolId: bigint; error: string }>;
+  };
+  isClaimingAll: boolean;
+  onClose: () => void;
+}
+
+function ClaimAllProgressModal({ progress, isClaimingAll, onClose }: ClaimAllProgressModalProps) {
+  const totalClaimed = progress.claimedPrizes.reduce((sum, p) => sum + p.amount, 0);
+  const isComplete = !isClaimingAll && progress.current === progress.total;
+  const hasErrors = progress.failedPrizes.length > 0;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+        <div className="text-center">
+          {isClaimingAll ? (
+            <>
+              <div className="text-5xl mb-4 animate-bounce">💰</div>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">
+                Claiming Prizes...
+              </h2>
+              <p className="text-gray-600 mb-4">
+                Processing {progress.current} of {progress.total} prizes
+              </p>
+              {progress.currentPoolId && (
+                <p className="text-sm text-purple-600 mb-4">
+                  Claiming Pool #{progress.currentPoolId.toString()}
+                </p>
+              )}
+              {/* Progress bar */}
+              <div className="w-full bg-gray-200 rounded-full h-3 mb-4">
+                <div
+                  className="bg-gradient-to-r from-green-500 to-emerald-500 h-3 rounded-full transition-all duration-500"
+                  style={{ width: `${(progress.current / progress.total) * 100}%` }}
+                />
+              </div>
+            </>
+          ) : isComplete ? (
+            <>
+              <div className="text-5xl mb-4">🎉</div>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">
+                {hasErrors ? 'Partially Complete' : 'All Prizes Claimed!'}
+              </h2>
+              <p className="text-gray-600 mb-4">
+                You received <span className="font-bold text-green-600">{totalClaimed.toFixed(3)} CELO</span>
+              </p>
+            </>
+          ) : null}
+        </div>
+
+        {/* Results */}
+        {(isComplete || progress.claimedPrizes.length > 0) && (
+          <div className="mt-4 space-y-2 max-h-48 overflow-y-auto">
+            {progress.claimedPrizes.map((prize, i) => (
+              <div key={i} className="flex items-center justify-between bg-green-50 rounded-lg px-3 py-2 text-sm">
+                <span className="text-green-700">
+                  {getRankEmoji(prize.rank as 1 | 2 | 3)} Pool #{prize.poolId.toString()}
+                </span>
+                <span className="font-semibold text-green-600">+{prize.amount} CELO</span>
+              </div>
+            ))}
+            {progress.failedPrizes.map((prize, i) => (
+              <div key={`failed-${i}`} className="flex items-center justify-between bg-red-50 rounded-lg px-3 py-2 text-sm">
+                <span className="text-red-700">
+                  ❌ Pool #{prize.poolId.toString()}
+                </span>
+                <span className="text-red-500 text-xs">Failed</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Actions */}
+        {isComplete && (
+          <div className="mt-6 space-y-3">
+            {progress.claimedPrizes.length > 0 && (
+              <button
+                onClick={() => {
+                  const text = `🏆 Just claimed ${totalClaimed.toFixed(3)} CELO from ${progress.claimedPrizes.length} Color Drop wins!\n\nPlay now and test your color matching skills!`;
+                  const embedUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://colordrop.app';
+                  window.open(`https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(embedUrl)}`, '_blank');
+                }}
+                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition-all flex items-center justify-center gap-2"
+              >
+                <span>📣</span> Share on Farcaster
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="w-full bg-gray-100 text-gray-700 px-6 py-3 rounded-xl font-semibold hover:bg-gray-200 transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function WinnerCard({
   winner,
   isCurrentUser,
   poolId,
   onClaim,
   isClaiming,
+  hasClaimablePrizes,
 }: {
   winner: Winner;
   isCurrentUser: boolean;
   poolId: bigint;
   onClaim: () => void;
   isClaiming: boolean;
+  hasClaimablePrizes: boolean;
 }) {
-  const canClaim = isCurrentUser && !winner.claimed;
+  // Can only claim if:
+  // 1. Current user is this winner
+  // 2. Prize not yet claimed
+  // 3. Winner is recorded in contract (isClaimable)
+  const canClaim = isCurrentUser && !winner.claimed && winner.isClaimable;
 
   return (
     <div className={`flex items-center justify-between p-3 rounded-lg ${
@@ -156,6 +268,11 @@ function WinnerCard({
         ) : winner.claimed ? (
           <div className="text-sm text-gray-500">
             ✓ Claimed
+          </div>
+        ) : !hasClaimablePrizes ? (
+          // Legacy pool - prizes were auto-distributed before v3.6.0
+          <div className="text-sm text-gray-400 italic">
+            Auto-distributed
           </div>
         ) : (
           <div className={`font-bold ${
@@ -258,10 +375,12 @@ function PoolCard({
   onClaimPrize: (poolId: bigint) => void;
   claimingPoolId: bigint | null;
 }) {
+  // Only show "Claim Prize" if winner is actually claimable (recorded in contract)
   const userHasUnclaimedPrize = pool.winners.some(
     w => userAddress &&
     w.address.toLowerCase() === userAddress.toLowerCase() &&
-    !w.claimed
+    !w.claimed &&
+    w.isClaimable
   );
 
   return (
@@ -311,6 +430,14 @@ function PoolCard({
       {/* Expanded Winners List */}
       {isExpanded && (
         <div className="px-4 pb-4 space-y-2 border-t border-gray-100 pt-3">
+          {/* Legacy pool notice */}
+          {!pool.hasClaimablePrizes && (
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-2">
+              <p className="text-xs text-gray-500 text-center">
+                💰 Prizes for this pool were auto-distributed to winners
+              </p>
+            </div>
+          )}
           {pool.winners.length > 0 ? (
             pool.winners.map((winner) => (
               <WinnerCard
@@ -320,6 +447,7 @@ function PoolCard({
                 poolId={pool.poolId}
                 onClaim={() => onClaimPrize(pool.poolId)}
                 isClaiming={claimingPoolId === pool.poolId}
+                hasClaimablePrizes={pool.hasClaimablePrizes}
               />
             ))
           ) : (
@@ -352,6 +480,10 @@ export function PastGames({ onBack }: PastGamesProps) {
     isClaimPending,
     isClaimConfirming,
     isClaimSuccess,
+    claimAllPrizes,
+    isClaimingAll,
+    claimAllProgress,
+    resetClaimAllProgress,
     finalizePool,
     isFinalizePending,
     isFinalizeConfirming,
@@ -444,6 +576,15 @@ export function PastGames({ onBack }: PastGamesProps) {
         />
       )}
 
+      {/* Claim All Progress Modal */}
+      {claimAllProgress && (
+        <ClaimAllProgressModal
+          progress={claimAllProgress}
+          isClaimingAll={isClaimingAll}
+          onClose={resetClaimAllProgress}
+        />
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <button
@@ -484,20 +625,42 @@ export function PastGames({ onBack }: PastGamesProps) {
 
       {/* Unclaimed Prizes Banner */}
       {userPrizes.length > 0 && (
-        <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 mb-6 animate-pulse-slow">
-          <div className="flex items-start gap-3">
-            <span className="text-2xl">💰</span>
-            <div>
-              <div className="font-semibold text-green-800">
-                You have {userPrizes.length} unclaimed {userPrizes.length === 1 ? 'prize' : 'prizes'}!
-              </div>
-              <div className="text-sm text-green-700">
-                Total: <span className="font-bold">{totalUnclaimedValue.toFixed(3)} CELO</span>
-              </div>
-              <div className="text-xs text-green-600 mt-1">
-                Scroll down to claim and share your wins on Farcaster
+        <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 mb-6">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">💰</span>
+              <div>
+                <div className="font-semibold text-green-800">
+                  You have {userPrizes.length} unclaimed {userPrizes.length === 1 ? 'prize' : 'prizes'}!
+                </div>
+                <div className="text-sm text-green-700">
+                  Total: <span className="font-bold">{totalUnclaimedValue.toFixed(3)} CELO</span>
+                </div>
               </div>
             </div>
+            {userPrizes.length > 1 ? (
+              <button
+                onClick={() => claimAllPrizes()}
+                disabled={isClaimingAll}
+                className={`px-4 py-2 rounded-lg font-semibold text-sm whitespace-nowrap transition-all ${
+                  isClaimingAll
+                    ? 'bg-gray-200 text-gray-500 cursor-wait'
+                    : 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600 shadow-md hover:shadow-lg'
+                }`}
+              >
+                {isClaimingAll ? (
+                  <span className="flex items-center gap-1">
+                    <span className="animate-spin">⏳</span> Claiming...
+                  </span>
+                ) : (
+                  <span>🎁 Claim All</span>
+                )}
+              </button>
+            ) : (
+              <div className="text-xs text-green-600 mt-1">
+                👇 Scroll to claim
+              </div>
+            )}
           </div>
         </div>
       )}
