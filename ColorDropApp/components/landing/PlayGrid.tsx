@@ -259,83 +259,112 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
   return (
     <>
       <div className="max-w-lg mx-auto px-3 sm:px-4">
-        {/* Compact Header */}
-        <div className="text-center mb-4 sm:mb-6">
-          <div className="inline-flex items-center gap-2 bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-semibold mb-2">
-            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-            Pool #{poolData?.poolId?.toString() || '...'}
-          </div>
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">
-            Choose Your Slot
-          </h2>
-          <p className="text-xs sm:text-sm text-gray-500">
-            {ENTRY_FEE} per slot • Top 3 win!
-          </p>
-
-          {/* User Status Badge - More compact */}
-          {userStatus && (
-            <div className={`mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${
-              isVerified
-                ? 'bg-green-50 text-green-700 border border-green-200'
-                : 'bg-amber-50 text-amber-700 border border-amber-200'
-            }`}>
-              {isVerified ? (
-                <>
-                  <span>✓</span>
-                  <span>Unlimited Slots</span>
-                </>
-              ) : (
-                <>
-                  <span className="font-bold">{Math.max(0, MAX_UNVERIFIED_SLOTS - currentSlots)}</span>
-                  <span>/ {MAX_UNVERIFIED_SLOTS} slots left</span>
-                </>
+        {/* Header - Compact on mobile, detailed on desktop */}
+        <div className="text-center mb-3 sm:mb-4">
+          {/* Mobile: Ultra-compact motivating header */}
+          <div className="sm:hidden">
+            <div className="flex items-center justify-center gap-2 mb-1">
+              <div className="inline-flex items-center gap-1.5 bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full text-xs font-semibold">
+                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                Pool #{poolData?.poolId?.toString() || '...'}
+              </div>
+              {userStatus && (
+                <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                  isVerified
+                    ? 'bg-green-50 text-green-700 border border-green-200'
+                    : 'bg-amber-50 text-amber-700 border border-amber-200'
+                }`}>
+                  {isVerified ? '✓ Unlimited' : `${Math.max(0, MAX_UNVERIFIED_SLOTS - currentSlots)}/${MAX_UNVERIFIED_SLOTS} left`}
+                </div>
               )}
             </div>
-          )}
+            {/* Motivating headline */}
+            <div className="text-sm font-bold text-gray-800 mb-1">
+              Win up to <span className="text-purple-600">{(ENTRY_FEE_VALUE * 7).toFixed(2)} CELO</span> now!
+            </div>
+            <div className="flex items-center justify-center gap-2 text-[11px] text-gray-500">
+              <span>{ENTRY_FEE}/slot</span>
+              <span>•</span>
+              <span>🥇{(ENTRY_FEE_VALUE * 7).toFixed(2)} 🥈{(ENTRY_FEE_VALUE * 5).toFixed(2)} 🥉{(ENTRY_FEE_VALUE * 2.5).toFixed(2)}</span>
+            </div>
+          </div>
 
+          {/* Desktop/Tablet: Full detailed header */}
+          <div className="hidden sm:block">
+            <div className="inline-flex items-center gap-2 bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-semibold mb-2">
+              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+              Pool #{poolData?.poolId?.toString() || '...'}
+            </div>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">
+              Play & Win up to <span className="text-purple-600">{(ENTRY_FEE_VALUE * 7).toFixed(2)} CELO</span>!
+            </h2>
+            <p className="text-sm text-gray-500 mb-3">
+              {ENTRY_FEE} per slot • Top 3 win prizes!
+            </p>
 
-          {/* Info about user's active slots - compact banner */}
+            {/* User Status Badge */}
+            {userStatus && (
+              <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium mb-3 ${
+                isVerified
+                  ? 'bg-green-50 text-green-700 border border-green-200'
+                  : 'bg-amber-50 text-amber-700 border border-amber-200'
+              }`}>
+                {isVerified ? (
+                  <>
+                    <span>✓</span>
+                    <span>Unlimited Slots</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="font-bold">{Math.max(0, MAX_UNVERIFIED_SLOTS - currentSlots)}</span>
+                    <span>/ {MAX_UNVERIFIED_SLOTS} slots left</span>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Prize Pool - Desktop only */}
+            <div className="bg-gradient-to-r from-purple-50 via-blue-50 to-purple-50 rounded-xl p-4 border border-purple-100">
+              <div className="text-xs text-gray-500 text-center mb-2 font-medium">🏆 Prize Pool</div>
+              <div className="flex items-center justify-center gap-6">
+                <div className="text-center">
+                  <div className="text-xl mb-0.5">🥇</div>
+                  <div className="text-lg font-bold text-yellow-600">{(ENTRY_FEE_VALUE * 7).toFixed(2)}</div>
+                  <div className="text-xs text-gray-500">CELO</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-xl mb-0.5">🥈</div>
+                  <div className="text-lg font-bold text-gray-500">{(ENTRY_FEE_VALUE * 5).toFixed(2)}</div>
+                  <div className="text-xs text-gray-500">CELO</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-xl mb-0.5">🥉</div>
+                  <div className="text-lg font-bold text-orange-500">{(ENTRY_FEE_VALUE * 2.5).toFixed(2)}</div>
+                  <div className="text-xs text-gray-500">CELO</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Warnings - Show on all sizes when needed */}
           {hasActiveSlots && userStatus && !userStatus.canJoin && (
-            <div className="mt-2 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2 text-xs text-orange-700">
-              <span className="font-semibold">⚠️ Active game!</span> Tap your orange slot to play.
+            <div className="bg-orange-50 border border-orange-200 rounded-lg px-2 py-1.5 text-xs text-orange-700 mt-2">
+              <span className="font-semibold">⚠️</span> Tap your orange slot to play
             </div>
           )}
 
-          {/* Wrong Chain Warning - Compact */}
           {isWrongChain && (
-            <div className="mt-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-xs text-red-700 flex items-center justify-between gap-2">
-              <span><span className="font-semibold">Wrong Network:</span> {connectedChain?.name || 'Unknown'}</span>
+            <div className="bg-red-50 border border-red-200 rounded-lg px-2 py-1.5 text-xs text-red-700 flex items-center justify-between gap-2 mt-2">
+              <span>Wrong Network: {connectedChain?.name || 'Unknown'}</span>
               <button
                 onClick={() => switchToCorrectChain()}
                 disabled={isSwitchingChain}
-                className="px-3 py-1 bg-red-600 text-white rounded-md text-xs font-medium hover:bg-red-700 disabled:opacity-50 whitespace-nowrap"
+                className="px-2 py-0.5 bg-red-600 text-white rounded text-xs font-medium hover:bg-red-700 disabled:opacity-50"
               >
-                {isSwitchingChain ? '...' : `Switch`}
+                {isSwitchingChain ? '...' : 'Switch'}
               </button>
             </div>
           )}
-
-          {/* Prize Pool - Better visibility */}
-          <div className="bg-gradient-to-r from-purple-50 via-blue-50 to-purple-50 rounded-xl p-4 mt-4 border border-purple-100">
-            <div className="text-xs text-gray-500 text-center mb-3 font-medium">🏆 Prize Pool</div>
-            <div className="flex items-center justify-center gap-4">
-              <div className="text-center">
-                <div className="text-2xl mb-1">🥇</div>
-                <div className="text-xl font-bold text-yellow-600">{(ENTRY_FEE_VALUE * 7).toFixed(2)}</div>
-                <div className="text-xs text-gray-500">CELO</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl mb-1">🥈</div>
-                <div className="text-xl font-bold text-gray-500">{(ENTRY_FEE_VALUE * 5).toFixed(2)}</div>
-                <div className="text-xs text-gray-500">CELO</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl mb-1">🥉</div>
-                <div className="text-xl font-bold text-orange-500">{(ENTRY_FEE_VALUE * 2.5).toFixed(2)}</div>
-                <div className="text-xs text-gray-500">CELO</div>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Play Grid - 16 slots in 4x4 grid */}
