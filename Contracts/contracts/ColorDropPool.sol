@@ -280,12 +280,19 @@ contract ColorDropPool is
 
     /**
      * @dev Check if pool is ready for completion
+     * @notice Only distributes prizes when pool is FULL (9 players) AND all have submitted
      */
     function _checkPoolCompletion(uint256 poolId) private {
         Pool storage pool = pools[poolId];
 
+        // Pool must be full (9 players) before we can distribute
+        if (pool.playerCount < POOL_SIZE) {
+            return;
+        }
+
+        // Check if all 9 players have submitted
         bool allSubmitted = true;
-        for (uint8 i = 0; i < pool.playerCount; i++) {
+        for (uint8 i = 0; i < POOL_SIZE; i++) {
             if (!pool.players[i].hasSubmitted) {
                 allSubmitted = false;
                 break;
@@ -525,7 +532,7 @@ contract ColorDropPool is
      * @dev Get contract version for upgrade tracking
      */
     function version() external pure returns (string memory) {
-        return "3.3.0";
+        return "3.4.0";
     }
 
     /**
