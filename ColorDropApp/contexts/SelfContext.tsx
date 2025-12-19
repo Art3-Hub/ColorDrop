@@ -108,21 +108,28 @@ export function SelfProvider({ children }: SelfProviderProps) {
     try {
       const endpoint = `${process.env.NEXT_PUBLIC_APP_URL}/api/verify-self`
 
+      // Get deeplinkCallback - this is where SELF app will redirect back after verification
+      // For Farcaster Mini Apps, use https://farcaster.xyz to return to Farcaster
+      // Farcaster will handle reopening the Mini App context
+      const deeplinkCallback = process.env.NEXT_PUBLIC_SELF_DEEPLINK_CALLBACK ||
+        (typeof window !== 'undefined' ? window.location.href : '')
+
       console.log('🔧 Self Protocol Configuration:', {
         endpoint,
         scope,
         userId: address,
+        deeplinkCallback,
       })
 
-      // Note: deeplinkCallback is intentionally NOT set here
-      // For QR code verification, the SelfQRcodeWrapper's onSuccess callback handles completion
-      // Setting deeplinkCallback causes redirect loops in browser mode
-      // For deep link mode (Farcaster mobile), we use the universal link directly
+      // Build the SELF app configuration
+      // deeplinkCallback is set for mobile deep link flow - SELF app opens this URL after verification
+      // For QR code flow, the SelfQRcodeWrapper's onSuccess callback handles completion
       const app = new SelfAppBuilder({
         version: 2,
         appName,
         scope,
         endpoint,
+        deeplinkCallback, // Required for mobile deep link redirect back to app
         logoBase64: logoUrl,
         userId: address,
         endpointType: 'https',
@@ -143,9 +150,22 @@ export function SelfProvider({ children }: SelfProviderProps) {
     }
   }, [address, isConnected, appName, scope, logoUrl, minimumAge, ofac])
 
-  // Note: We intentionally DO NOT check verification status on mount
-  // Each session starts fresh - user must verify for each slot click
-  // This ensures SELF verification is always required
+  // Check verification status when user returns from SELF app (callback redirect)
+  // This handles the mobile deep link flow where user is redirected back after verification
+  useEffect(() => {
+    if (!address || !isConnected) return
+
+    // Check if this is a return from SELF app verification
+    // When user returns from SELF app, we should check their verification status
+    const checkOnReturn = async () => {
+      // Small delay to ensure backend has processed the verification
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      await checkVerificationStatus()
+    }
+
+    // Check immediately on mount (handles callback return scenario)
+    checkOnReturn()
+  }, [address, isConnected]) // Note: intentionally not including checkVerificationStatus to avoid loops
 
   // Cleanup polling on unmount
   useEffect(() => {
