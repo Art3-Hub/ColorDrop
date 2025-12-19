@@ -20,6 +20,7 @@ console.log('🔧 ColorDropPool Hook Configuration - MAINNET ONLY:', {
   CHAIN_ID: TARGET_CHAIN.id,
   ENTRY_FEE: ENTRY_FEE.toString(),
   ENTRY_FEE_CELO: (Number(ENTRY_FEE) / 1e18).toFixed(2) + ' CELO',
+  EXPECTED_VERSION: '3.5.0 - should reset activePoolId after submitScore',
 });
 
 export interface PlayerSlot {
@@ -107,6 +108,44 @@ export function useColorDropPool() {
     },
   });
 
+  // DEBUG: Also read activePoolId directly to verify contract state
+  const { data: activePoolIdForUser, refetch: refetchActivePoolId } = useReadContract({
+    address: POOL_ADDRESS,
+    abi: ColorDropPoolABI.abi,
+    functionName: 'activePoolId',
+    args: address ? [address] : undefined,
+    chainId: TARGET_CHAIN.id,
+    query: {
+      enabled: !!address,
+    },
+  });
+
+  // DEBUG: Read contract version to verify v3.5.0 is deployed
+  const { data: contractVersion } = useReadContract({
+    address: POOL_ADDRESS,
+    abi: ColorDropPoolABI.abi,
+    functionName: 'version',
+    chainId: TARGET_CHAIN.id,
+  });
+
+  // Debug: Log activePoolId directly from contract
+  useEffect(() => {
+    if (address) {
+      console.log('📋 CONTRACT VERSION:', contractVersion);
+      console.log('   → Expected: "3.5.0" (with activePoolId reset fix)');
+      console.log('🔐 Direct activePoolId read for', address, ':', activePoolIdForUser?.toString());
+      console.log('   → If activePoolId is NOT 0, then submitScore did NOT reset it');
+      if (activePoolIdForUser && BigInt(activePoolIdForUser.toString()) !== BigInt(0)) {
+        console.log('🚨 PROBLEM: activePoolId is still set! User cannot join new slot.');
+        console.log('   → v3.5.0 should have reset this to 0 after submitScore()');
+        console.log('   → Possible causes:');
+        console.log('     1. Contract upgrade to v3.5.0 not completed');
+        console.log('     2. Score was submitted BEFORE v3.5.0 upgrade');
+        console.log('     3. Implementation address mismatch');
+      }
+    }
+  }, [activePoolIdForUser, address, contractVersion]);
+
   // Read individual players using getPlayer - need to fetch each slot separately
   const playerContracts = currentPoolId && poolPlayerCount > 0
     ? Array.from({ length: poolPlayerCount }, (_, i) => ({
@@ -193,7 +232,20 @@ export function useColorDropPool() {
   const { isLoading: isScoreConfirming, isSuccess: isScoreSuccess } =
     useWaitForTransactionReceipt({
       hash: scoreHash,
+      chainId: TARGET_CHAIN.id,
     });
+
+  // Debug: Log score submission success and trigger refetch
+  useEffect(() => {
+    if (isScoreSuccess && scoreHash) {
+      console.log('🎉 Score submission confirmed! Hash:', scoreHash);
+      console.log('🔄 Triggering immediate refetch of userStatus...');
+      // Force refetch user status immediately after score submission
+      refetchUserStatus().then(() => {
+        console.log('✅ userStatus refetch complete');
+      });
+    }
+  }, [isScoreSuccess, scoreHash, refetchUserStatus]);
 
   // Update pool data when contract data changes
   useEffect(() => {
@@ -255,14 +307,23 @@ export function useColorDropPool() {
 
   // Update user status
   useEffect(() => {
+    console.log('📥 Raw userStatusData from contract:', userStatusData);
     if (userStatusData && Array.isArray(userStatusData) && userStatusData.length >= 4) {
       const [isVerified, slotsUsed, slotsAvailable, canJoin] = userStatusData;
-      setUserStatus({
+      const newStatus = {
         isVerified: isVerified as boolean,
         slotsUsed: Number(slotsUsed),
         slotsAvailable: Number(slotsAvailable),
         canJoin: canJoin as boolean,
+      };
+      console.log('✨ Parsed userStatus update:', {
+        isVerified: newStatus.isVerified,
+        slotsUsed: newStatus.slotsUsed,
+        slotsAvailable: newStatus.slotsAvailable,
+        canJoin: newStatus.canJoin,
+        timestamp: new Date().toISOString()
       });
+      setUserStatus(newStatus);
     }
   }, [userStatusData]);
 
@@ -347,15 +408,23 @@ export function useColorDropPool() {
       poolId: currentPoolId.toString(),
       accuracy: accuracy,
       scoreValue: scoreValue,
-    });
-
-    scoreWriteContract({
-      address: POOL_ADDRESS,
-      abi: ColorDropPoolABI.abi,
-      functionName: 'submitScore',
-      args: [currentPoolId, scoreValue], // Contract expects: submitScore(uint256 poolId, uint16 accuracy)
+      contractAddress: POOL_ADDRESS,
       chainId: TARGET_CHAIN.id,
     });
+
+    try {
+      scoreWriteContract({
+        address: POOL_ADDRESS,
+        abi: ColorDropPoolABI.abi,
+        functionName: 'submitScore',
+        args: [currentPoolId, scoreValue], // Contract expects: submitScore(uint256 poolId, uint16 accuracy)
+        chainId: TARGET_CHAIN.id,
+      });
+      console.log('📝 Score write contract called successfully');
+    } catch (err) {
+      console.error('❌ Error calling scoreWriteContract:', err);
+      throw err;
+    }
   }, [address, chain, currentPoolId, scoreWriteContract, switchChainAsync]);
 
   // Check if slot limit reached
