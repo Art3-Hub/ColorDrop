@@ -87,17 +87,18 @@ export function Providers({ children, cookies }: { children: React.ReactNode; co
       const platform = detectPlatform();
       console.log('[Providers] 🔍 Detected platform:', platform);
 
-      // Always initialize Reown AppKit first (needed for useAppKit hook to work)
-      // This must be called before any component uses useAppKit()
-      console.log('[Providers] 🔧 Initializing Reown AppKit...');
-      initAppKit();
-
       if (platform === 'farcaster' || platform === 'base') {
+        // In Farcaster environment: Initialize Farcaster SDK, do NOT initialize Reown AppKit
+        // This ensures farcasterMiniApp connector from @farcaster/miniapp-wagmi-connector is used
+        console.log('[Providers] 📱 Farcaster environment detected - using farcasterMiniApp connector');
         const initialized = await initializeFarcaster();
         setIsFarcasterEnv(initialized);
         console.log('[Providers] 📱 Farcaster SDK initialized:', initialized);
       } else {
-        console.log('[Providers] 🌐 Browser mode - AppKit modal will be used for wallet connection');
+        // In browser environment: Initialize Reown AppKit for wallet modal
+        // This provides a polished UI for MetaMask, WalletConnect, etc.
+        console.log('[Providers] 🌐 Browser mode - initializing Reown AppKit for wallet modal');
+        initAppKit();
       }
 
       setIsLoading(false);

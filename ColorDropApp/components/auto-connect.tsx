@@ -10,14 +10,37 @@ import { useFarcaster } from '@/contexts/FarcasterContext'
  * Uses Celo Mainnet as the only network
  *
  * Key behavior:
- * - In Farcaster Mini App: Auto-connects using farcasterMiniApp connector
- * - In browser with MetaMask: Disconnects any existing connection, user must manually connect
- * - Ensures the correct wallet is used based on environment
- * - Handles disconnect→reconnect flow properly to switch from MetaMask to Farcaster wallet
+ * - In Farcaster (web browser or mobile): Auto-connects using farcasterMiniApp connector
+ * - In standalone browser: User connects via Reown AppKit modal (no auto-connect)
+ *
+ * IMPORTANT: Two MUTUALLY EXCLUSIVE wallet connection paths:
+ * 1. Farcaster environment → farcasterMiniApp connector (@farcaster/miniapp-wagmi-connector)
+ * 2. Browser environment → Reown AppKit (initialized only in browser mode)
+ * These do NOT work together - only one is active based on environment.
  *
  * IMPORTANT FIX: Continuously checks and switches to Farcaster wallet when in Farcaster environment
  * This prevents race conditions where persisted MetaMask connection loads AFTER initial check
  */
+
+// Valid Farcaster connector IDs:
+// - 'farcasterMiniApp' from @farcaster/miniapp-wagmi-connector (native Farcaster mobile app)
+// - 'farcaster' provided by Farcaster web browser environment
+const VALID_FARCASTER_CONNECTOR_IDS = ['farcasterMiniApp', 'farcaster'] as const
+
+// Check if a connector ID is a valid Farcaster connector
+const isValidFarcasterConnector = (connectorId: string): boolean => {
+  return (VALID_FARCASTER_CONNECTOR_IDS as readonly string[]).includes(connectorId)
+}
+
+// Find the best available Farcaster connector (prefer farcasterMiniApp, fallback to farcaster)
+const findFarcasterConnector = <T extends { id: string }>(connectors: readonly T[]): T | null => {
+  for (const id of VALID_FARCASTER_CONNECTOR_IDS) {
+    const connector = connectors.find(c => c.id === id)
+    if (connector) return connector
+  }
+  return null
+}
+
 export function AutoConnect({ children, enabled = true }: PropsWithChildren<{ enabled?: boolean }>) {
   const { isConnected, isConnecting, connector, status: accountStatus } = useAccount()
   const { connect, status: connectStatus } = useConnect()
@@ -70,11 +93,11 @@ export function AutoConnect({ children, enabled = true }: PropsWithChildren<{ en
     // If connected with wrong connector, fix it
     if (isConnected && connector && !isConnecting) {
       const connectorId = connector.id
-      const isFarcasterConnector = connectorId === 'farcasterMiniApp'
+      const isFarcasterConnector = isValidFarcasterConnector(connectorId)
 
       if (!isFarcasterConnector) {
         console.log('[AutoConnect] ⚠️ In Farcaster Mini App but connected via:', connectorId)
-        console.log('[AutoConnect] 🔄 Will disconnect and reconnect with Farcaster wallet...')
+        console.log('[AutoConnect] 🔄 Will disconnect and reconnect with Farcaster connector...')
         console.log('[AutoConnect] Debug state:', {
           isConnected,
           connectorId,
@@ -88,7 +111,7 @@ export function AutoConnect({ children, enabled = true }: PropsWithChildren<{ en
         disconnect()
       } else if (!hasConnectedWithFarcaster) {
         // Mark that we're correctly connected with Farcaster wallet
-        console.log('[AutoConnect] ✅ Correctly connected with Farcaster wallet')
+        console.log('[AutoConnect] ✅ Correctly connected with Farcaster connector:', connectorId)
         setHasConnectedWithFarcaster(true)
       }
     }
@@ -101,22 +124,23 @@ export function AutoConnect({ children, enabled = true }: PropsWithChildren<{ en
     }
 
     // We've disconnected and need to reconnect with Farcaster connector
-    console.log('[AutoConnect] 🔄 Disconnect complete, now reconnecting with Farcaster wallet...')
+    console.log('[AutoConnect] 🔄 Disconnect complete, now reconnecting with Farcaster connector...')
 
     async function reconnectWithFarcaster() {
       try {
-        const farcasterConnector = connectors.find(c => c.id === 'farcasterMiniApp')
+        const farcasterConnector = findFarcasterConnector(connectors)
 
         if (!farcasterConnector) {
-          console.error('[AutoConnect] ❌ Farcaster connector not found for reconnection')
+          console.error('[AutoConnect] ❌ No Farcaster connector found')
           console.log('[AutoConnect] Available connectors:', connectors.map(c => c.id))
+          console.log('[AutoConnect] Looking for:', VALID_FARCASTER_CONNECTOR_IDS)
           setPendingReconnect(false)
           return
         }
 
-        console.log('[AutoConnect] 🔗 Connecting with Farcaster Mini App connector...')
+        console.log('[AutoConnect] 🔗 Connecting with Farcaster connector:', farcasterConnector.id)
         await connect({ connector: farcasterConnector })
-        console.log('[AutoConnect] ✅ Reconnected successfully with Farcaster wallet')
+        console.log('[AutoConnect] ✅ Reconnected successfully with:', farcasterConnector.id)
         setHasConnectedWithFarcaster(true)
         setPendingReconnect(false)
       } catch (error) {
@@ -125,7 +149,7 @@ export function AutoConnect({ children, enabled = true }: PropsWithChildren<{ en
         // Retry after a short delay
         setTimeout(() => {
           if (!isConnected) {
-            console.log('[AutoConnect] 🔄 Retrying Farcaster connection...')
+            console.log('[AutoConnect] 🔄 Retrying Farcaster connector connection...')
             setPendingReconnect(true)
           }
         }, 1000)
@@ -145,7 +169,7 @@ export function AutoConnect({ children, enabled = true }: PropsWithChildren<{ en
 
     // Only auto-connect if we're in Farcaster Mini App and NOT connected
     if (!isInMiniApp) {
-      console.log('[AutoConnect] Not in mini app - skipping auto-connect')
+      console.log('[AutoConnect] Not in mini app - skipping auto-connect (use Reown AppKit)')
       return
     }
 
@@ -157,7 +181,7 @@ export function AutoConnect({ children, enabled = true }: PropsWithChildren<{ en
 
     async function handleAutoConnect() {
       try {
-        console.log('[AutoConnect] 🚀 Environment:', {
+        console.log('[AutoConnect] 🚀 Farcaster environment detected:', {
           isInMiniApp,
           isAuthenticated,
           isConnected,
@@ -168,20 +192,19 @@ export function AutoConnect({ children, enabled = true }: PropsWithChildren<{ en
           accountStatus
         })
 
-        // Find Farcaster connector
-        const farcasterConnector = connectors.find(
-          c => c.id === 'farcasterMiniApp'
-        )
+        // Find a valid Farcaster connector (prefer farcasterMiniApp, fallback to farcaster)
+        const farcasterConnector = findFarcasterConnector(connectors)
 
         if (!farcasterConnector) {
-          console.error('[AutoConnect] ❌ Farcaster connector not found')
+          console.error('[AutoConnect] ❌ No Farcaster connector found')
           console.log('[AutoConnect] Available connectors:', connectors.map(c => c.id))
+          console.log('[AutoConnect] Looking for:', VALID_FARCASTER_CONNECTOR_IDS)
           return
         }
 
-        console.log('[AutoConnect] 🔗 Connecting with Farcaster Mini App connector...')
+        console.log('[AutoConnect] 🔗 Connecting with Farcaster connector:', farcasterConnector.id)
         await connect({ connector: farcasterConnector })
-        console.log('[AutoConnect] ✅ Connected successfully with Farcaster wallet')
+        console.log('[AutoConnect] ✅ Connected successfully with:', farcasterConnector.id)
         setHasConnectedWithFarcaster(true)
 
       } catch (error) {

@@ -1,10 +1,10 @@
 'use client';
 
 import { useAccount, useDisconnect, useChainId, useSwitchChain } from 'wagmi';
-import { useAppKit } from '@reown/appkit/react';
 import { celo } from 'wagmi/chains';
 import { useFarcaster } from '@/contexts/FarcasterContext';
 import { useEffect, useCallback } from 'react';
+import { getAppKit } from '@/lib/appkit';
 
 export function ConnectButton() {
   const { address, isConnected, connector } = useAccount();
@@ -13,9 +13,9 @@ export function ConnectButton() {
   const { switchChain, isPending: isSwitchingChain } = useSwitchChain();
   const { user: farcasterUser, isInMiniApp } = useFarcaster();
 
-  // Reown AppKit hook for browser mode wallet connection
-  // AppKit is always initialized in providers.tsx so this hook is safe to call
-  const appKit = useAppKit();
+  // Get AppKit instance directly (only available in browser mode)
+  // In Farcaster environment, this will be null since AppKit is not initialized
+  const appKit = getAppKit();
 
   const isWrongNetwork = isConnected && chainId !== celo.id;
 
