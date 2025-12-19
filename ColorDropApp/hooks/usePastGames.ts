@@ -324,6 +324,9 @@ export function usePastGames(limit: number = 10) {
               : false;
 
             // Get top 3 winners with claim status from contract
+            // Track which contract winner positions have been used (for multi-slot same user)
+            const usedContractPositions = new Set<number>();
+
             const winners: Winner[] = players.slice(0, 3).map((player, index) => {
               const rank = (index + 1) as 1 | 2 | 3;
 
@@ -332,12 +335,41 @@ export function usePastGames(limit: number = 10) {
               let isClaimable = false;
 
               if (contractWinners) {
-                const contractWinnerAddress = contractWinners.winners[index]?.toLowerCase();
                 const playerAddressLower = player.address.toLowerCase();
 
-                // Winner is claimable if they're recorded in the contract
-                isClaimable = contractWinnerAddress === playerAddressLower;
-                isClaimed = isClaimable ? contractWinners.claimed[index] : false;
+                // Find a matching contract winner position that:
+                // 1. Matches the player's address
+                // 2. Hasn't been used yet (for multi-slot same user scenarios)
+                for (let i = 0; i < 3; i++) {
+                  if (usedContractPositions.has(i)) continue;
+
+                  const contractWinnerAddress = contractWinners.winners[i]?.toLowerCase();
+                  if (contractWinnerAddress === playerAddressLower) {
+                    usedContractPositions.add(i);
+                    isClaimable = true;
+                    isClaimed = contractWinners.claimed[i];
+
+                    // Debug logging for multi-winner cases
+                    if (process.env.NODE_ENV === 'development') {
+                      console.log(`[usePastGames] Pool ${poolId} Rank ${rank} matched contract position ${i + 1}:`, {
+                        contractWinnerAddress,
+                        playerAddressLower,
+                        isClaimable,
+                        isClaimed,
+                      });
+                    }
+                    break;
+                  }
+                }
+
+                // If no match found, log for debugging
+                if (!isClaimable && process.env.NODE_ENV === 'development') {
+                  console.log(`[usePastGames] Pool ${poolId} Rank ${rank} - NO MATCH:`, {
+                    playerAddressLower,
+                    contractWinners: contractWinners.winners.map(w => w?.toLowerCase()),
+                    usedPositions: Array.from(usedContractPositions),
+                  });
+                }
               }
 
               return {

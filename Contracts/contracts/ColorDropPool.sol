@@ -445,30 +445,43 @@ contract ColorDropPool is
 
     /**
      * @dev Get top 3 players by accuracy (with timestamp tiebreaker)
+     * @notice Fixed in v3.6.2 to properly handle multi-slot users by tracking
+     *         player indices instead of addresses. This ensures each slot is
+     *         evaluated independently for prize eligibility.
      */
     function _getTopThree(uint256 poolId) private view returns (address[3] memory) {
         Pool storage pool = pools[poolId];
         address[3] memory topPlayers;
+        // Track indices instead of addresses to handle multi-slot users correctly
+        uint8[3] memory topIndices = [type(uint8).max, type(uint8).max, type(uint8).max];
 
-        // Simple bubble sort for top 3 (sufficient for 9 players)
+        // Simple insertion sort for top 3 (sufficient for 9 players)
         for (uint8 i = 0; i < pool.playerCount; i++) {
+            Player storage current = pool.players[i];
+
+            // Skip players who haven't submitted
+            if (!current.hasSubmitted) continue;
+
             for (uint8 j = 0; j < 3; j++) {
-                if (topPlayers[j] == address(0)) {
-                    topPlayers[j] = pool.players[i].wallet;
+                if (topIndices[j] == type(uint8).max) {
+                    // Empty slot, insert here
+                    topIndices[j] = i;
+                    topPlayers[j] = current.wallet;
                     break;
                 }
 
-                // Compare with current top player
-                Player storage current = pool.players[i];
-                Player storage top = _getPlayer(poolId, topPlayers[j]);
+                // Compare with current top player at index topIndices[j]
+                Player storage top = pool.players[topIndices[j]];
 
                 // Better accuracy or same accuracy but earlier submission
                 if (current.accuracy > top.accuracy ||
                     (current.accuracy == top.accuracy && current.timestamp < top.timestamp)) {
                     // Shift down and insert
                     for (uint8 k = 2; k > j; k--) {
+                        topIndices[k] = topIndices[k-1];
                         topPlayers[k] = topPlayers[k-1];
                     }
+                    topIndices[j] = i;
                     topPlayers[j] = current.wallet;
                     break;
                 }
@@ -476,19 +489,6 @@ contract ColorDropPool is
         }
 
         return topPlayers;
-    }
-
-    /**
-     * @dev Get player by wallet address
-     */
-    function _getPlayer(uint256 poolId, address wallet) private view returns (Player storage) {
-        Pool storage pool = pools[poolId];
-        for (uint8 i = 0; i < pool.playerCount; i++) {
-            if (pool.players[i].wallet == wallet) {
-                return pool.players[i];
-            }
-        }
-        revert NotInPool();
     }
 
     /**
@@ -663,7 +663,7 @@ contract ColorDropPool is
      * @dev Get contract version for upgrade tracking
      */
     function version() external pure returns (string memory) {
-        return "3.6.1";
+        return "3.6.2";
     }
 
     /**
