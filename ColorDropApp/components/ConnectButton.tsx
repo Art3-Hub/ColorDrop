@@ -1,18 +1,21 @@
 'use client';
 
-import { useAccount, useDisconnect, useConnect, useChainId, useSwitchChain } from 'wagmi';
+import { useAccount, useDisconnect, useChainId, useSwitchChain } from 'wagmi';
+import { useAppKit } from '@reown/appkit/react';
 import { celo } from 'wagmi/chains';
 import { useFarcaster } from '@/contexts/FarcasterContext';
-import { useState, useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 
 export function ConnectButton() {
   const { address, isConnected, connector } = useAccount();
   const { disconnect } = useDisconnect();
-  const { connect, connectors, isPending } = useConnect();
   const chainId = useChainId();
   const { switchChain, isPending: isSwitchingChain } = useSwitchChain();
-  const { user: farcasterUser, isAuthenticated, isInMiniApp } = useFarcaster();
-  const [showConnectorMenu, setShowConnectorMenu] = useState(false);
+  const { user: farcasterUser, isInMiniApp } = useFarcaster();
+
+  // Reown AppKit hook for browser mode wallet connection
+  // AppKit is always initialized in providers.tsx so this hook is safe to call
+  const appKit = useAppKit();
 
   const isWrongNetwork = isConnected && chainId !== celo.id;
 
@@ -31,27 +34,11 @@ export function ConnectButton() {
     }
   }, [connector]);
 
-  // Close menu when clicking outside
-  useEffect(() => {
-    if (showConnectorMenu) {
-      const handleClickOutside = () => setShowConnectorMenu(false);
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
-    }
-  }, [showConnectorMenu]);
-
-  const handleBrowserConnect = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setShowConnectorMenu(!showConnectorMenu);
-  };
-
-  const handleConnectorSelect = (connectorId: string) => {
-    const selectedConnector = connectors.find(c => c.id === connectorId);
-    if (selectedConnector) {
-      connect({ connector: selectedConnector });
-      setShowConnectorMenu(false);
-    }
-  };
+  // Browser mode: Open Reown AppKit modal
+  const handleBrowserConnect = useCallback(() => {
+    console.log('[ConnectButton] Opening Reown AppKit modal...');
+    appKit?.open();
+  }, [appKit]);
 
   // Farcaster Mode - wallet is automatically connected, just display user info
   if (isInMiniApp) {
@@ -154,44 +141,13 @@ export function ConnectButton() {
     );
   }
 
-  // Get display name for connector
-  const getConnectorDisplayName = (connectorName: string) => {
-    const names: Record<string, string> = {
-      'Farcaster Mini App': 'Farcaster',
-      'Injected': 'Browser Wallet',
-      'WalletConnect': 'WalletConnect',
-      'MetaMask': 'MetaMask',
-      'Coinbase Wallet': 'Coinbase',
-    };
-    return names[connectorName] || connectorName;
-  };
-
+  // Browser Mode: Not connected - show connect button
   return (
-    <div className="relative">
-      <button
-        onClick={handleBrowserConnect}
-        disabled={isPending}
-        className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
-      >
-        {isPending ? 'Connecting...' : 'Connect Wallet'}
-      </button>
-
-      {showConnectorMenu && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-          {connectors.map((c) => (
-            <button
-              key={c.id}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleConnectorSelect(c.id);
-              }}
-              className="w-full px-4 py-3 text-left text-gray-900 hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg border-b border-gray-100 last:border-b-0 transition-colors"
-            >
-              {getConnectorDisplayName(c.name)}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+    <button
+      onClick={handleBrowserConnect}
+      className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+    >
+      Connect Wallet
+    </button>
   );
 }
