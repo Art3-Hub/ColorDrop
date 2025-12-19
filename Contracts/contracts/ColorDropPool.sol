@@ -99,6 +99,7 @@ contract ColorDropPool is
     event UserVerified(address indexed user, bool verified);
     event VerifierUpdated(address indexed oldVerifier, address indexed newVerifier);
     event ActivePoolIdReset(address indexed user);
+    event PlayerSlotCountReset(address indexed user);
 
     // Custom errors (gas efficient)
     error InvalidTreasuryAddress();
@@ -593,6 +594,28 @@ contract ColorDropPool is
     }
 
     /**
+     * @dev Reset playerSlotCount for a user (admin only)
+     * @param user Address to reset
+     * @notice Use this to reset slot count for unverified users who have reached the 4-slot limit
+     *         so they can continue playing without needing SELF verification
+     */
+    function resetPlayerSlotCount(address user) external onlyRole(ADMIN_ROLE) {
+        playerSlotCount[user] = 0;
+        emit PlayerSlotCountReset(user);
+    }
+
+    /**
+     * @dev Batch reset playerSlotCount for multiple users (admin only)
+     * @param users Array of addresses to reset
+     */
+    function batchResetPlayerSlotCount(address[] calldata users) external onlyRole(ADMIN_ROLE) {
+        for (uint256 i = 0; i < users.length; i++) {
+            playerSlotCount[users[i]] = 0;
+            emit PlayerSlotCountReset(users[i]);
+        }
+    }
+
+    /**
      * @dev Get user verification status and slot availability
      * @param user Address to check
      * @return isVerified Whether user is SELF-verified (18+)
@@ -640,7 +663,7 @@ contract ColorDropPool is
      * @dev Get contract version for upgrade tracking
      */
     function version() external pure returns (string memory) {
-        return "3.6.0";
+        return "3.6.1";
     }
 
     /**

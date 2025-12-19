@@ -16,6 +16,7 @@ export interface Winner {
   prize: number; // in CELO
   rank: 1 | 2 | 3;
   claimed?: boolean;
+  isClaimable?: boolean; // true if winner is recorded in contract (v3.6.0+)
 }
 
 export interface CompletedPool {
@@ -24,6 +25,7 @@ export interface CompletedPool {
   isCompleted: boolean;
   startTime: number;
   winners: Winner[];
+  hasClaimablePrizes: boolean; // true if pool has winners recorded in contract (v3.6.0+)
 }
 
 // Pool that's full but not yet finalized (needs someone to call finalizePool)
@@ -54,9 +56,20 @@ export function usePastGames(limit: number = 10) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Claim all prizes state
+  const [isClaimingAll, setIsClaimingAll] = useState(false);
+  const [claimAllProgress, setClaimAllProgress] = useState<{
+    current: number;
+    total: number;
+    currentPoolId: bigint | null;
+    claimedPrizes: Array<{ poolId: bigint; rank: number; amount: number }>;
+    failedPrizes: Array<{ poolId: bigint; error: string }>;
+  } | null>(null);
+
   // Claim prize write contract
   const {
     writeContract: claimWriteContract,
+    writeContractAsync: claimWriteContractAsync,
     data: claimHash,
     isPending: isClaimPending,
     error: claimError,
@@ -176,9 +189,58 @@ export function usePastGames(limit: number = 10) {
     },
   });
 
+  // Create contracts for fetching pool winners (to check if prizes are claimable)
+  // This verifies if winners are recorded in the contract (v3.6.0+)
+  const poolWinnersContracts = useMemo(() => {
+    if (!poolsData) return [];
+
+    const contracts: Array<{
+      address: `0x${string}`;
+      abi: typeof ColorDropPoolABI.abi;
+      functionName: 'getPoolWinners';
+      args: readonly [bigint];
+      chainId: number;
+      poolId: bigint;
+    }> = [];
+
+    poolsData.forEach((poolResult, poolIndex) => {
+      if (poolResult.status === 'success' && poolResult.result) {
+        const [, , , isCompleted] = poolResult.result as [bigint, number, boolean, boolean, number, string];
+        const poolId = poolIdsToFetch[poolIndex];
+
+        if (isCompleted) {
+          contracts.push({
+            address: POOL_ADDRESS,
+            abi: ColorDropPoolABI.abi,
+            functionName: 'getPoolWinners',
+            args: [poolId] as const,
+            chainId: TARGET_CHAIN.id,
+            poolId,
+          });
+        }
+      }
+    });
+
+    return contracts;
+  }, [poolsData, poolIdsToFetch]);
+
+  // Batch read pool winners data (v3.6.0+ claimable prizes)
+  const { data: poolWinnersData, isLoading: isLoadingWinners } = useReadContracts({
+    contracts: poolWinnersContracts.map(({ address, abi, functionName, args, chainId }) => ({
+      address,
+      abi,
+      functionName,
+      args,
+      chainId,
+    })) as any,
+    query: {
+      enabled: poolWinnersContracts.length > 0,
+    },
+  });
+
   // Process pools and players data
   useEffect(() => {
-    if (!poolsData || isLoadingPools || isLoadingPlayers) {
+    if (!poolsData || isLoadingPools || isLoadingPlayers || isLoadingWinners) {
       return;
     }
 
@@ -186,7 +248,26 @@ export function usePastGames(limit: number = 10) {
       const pools: CompletedPool[] = [];
       const pendingPools: PendingFinalizationPool[] = [];
       let playerDataIndex = 0;
+      let winnersDataIndex = 0;
       const currentTime = Math.floor(Date.now() / 1000);
+
+      // Build a map of pool winners from contract data (v3.6.0+)
+      const contractWinnersMap = new Map<string, {
+        winners: [`0x${string}`, `0x${string}`, `0x${string}`];
+        claimed: [boolean, boolean, boolean];
+      }>();
+
+      if (poolWinnersData && poolWinnersContracts) {
+        poolWinnersContracts.forEach((contract, index) => {
+          if (poolWinnersData[index]?.status === 'success' && poolWinnersData[index]?.result) {
+            const [winners, claimed] = poolWinnersData[index].result as [
+              [`0x${string}`, `0x${string}`, `0x${string}`],
+              [boolean, boolean, boolean]
+            ];
+            contractWinnersMap.set(contract.poolId.toString(), { winners, claimed });
+          }
+        });
+      }
 
       poolsData.forEach((poolResult, poolIndex) => {
         if (poolResult.status === 'success' && poolResult.result) {
@@ -236,14 +317,41 @@ export function usePastGames(limit: number = 10) {
               return a.timestamp - b.timestamp;
             });
 
-            // Get top 3 winners
-            const winners: Winner[] = players.slice(0, 3).map((player, index) => ({
-              address: player.address,
-              fid: player.fid,
-              accuracy: player.accuracy,
-              prize: PRIZE_AMOUNTS[(index + 1) as 1 | 2 | 3],
-              rank: (index + 1) as 1 | 2 | 3,
-            }));
+            // Check if this pool has winners recorded in contract (v3.6.0+)
+            const contractWinners = contractWinnersMap.get(poolId.toString());
+            const hasClaimablePrizes = contractWinners
+              ? contractWinners.winners.some(w => w !== '0x0000000000000000000000000000000000000000')
+              : false;
+
+            // Get top 3 winners with claim status from contract
+            const winners: Winner[] = players.slice(0, 3).map((player, index) => {
+              const rank = (index + 1) as 1 | 2 | 3;
+
+              // Check if this winner is recorded in contract and if claimed
+              let isClaimed = false;
+              let isClaimable = false;
+
+              if (contractWinners) {
+                const contractWinnerAddress = contractWinners.winners[index]?.toLowerCase();
+                const playerAddressLower = player.address.toLowerCase();
+
+                // Winner is claimable if they're recorded in the contract
+                isClaimable = contractWinnerAddress === playerAddressLower;
+                isClaimed = isClaimable ? contractWinners.claimed[index] : false;
+              }
+
+              return {
+                address: player.address,
+                fid: player.fid,
+                accuracy: player.accuracy,
+                prize: PRIZE_AMOUNTS[rank],
+                rank,
+                claimed: isClaimed,
+                isClaimable, // true only if recorded in contract
+              };
+            });
+
+            winnersDataIndex++;
 
             pools.push({
               poolId: id || poolId,
@@ -251,6 +359,7 @@ export function usePastGames(limit: number = 10) {
               isCompleted,
               startTime: startTimeNum,
               winners,
+              hasClaimablePrizes,
             });
           } else if (isPoolFull && !isCompleted) {
             // Pool is full but not completed - needs finalization
@@ -286,12 +395,12 @@ export function usePastGames(limit: number = 10) {
       setError('Failed to load past games');
       setIsLoading(false);
     }
-  }, [poolsData, playersData, isLoadingPools, isLoadingPlayers, poolIdsToFetch]);
+  }, [poolsData, playersData, poolWinnersData, poolWinnersContracts, isLoadingPools, isLoadingPlayers, isLoadingWinners, poolIdsToFetch]);
 
   // Set loading state
   useEffect(() => {
-    setIsLoading(isLoadingPools || isLoadingPlayers);
-  }, [isLoadingPools, isLoadingPlayers]);
+    setIsLoading(isLoadingPools || isLoadingPlayers || isLoadingWinners);
+  }, [isLoadingPools, isLoadingPlayers, isLoadingWinners]);
 
   // Refetch after successful claim
   useEffect(() => {
@@ -357,14 +466,120 @@ export function usePastGames(limit: number = 10) {
     }
   }, [finalizeWriteContract]);
 
+  // Claim all prizes function - claims multiple prizes sequentially
+  const claimAllPrizes = useCallback(async () => {
+    if (isClaimingAll) return;
+    if (!address) return;
+
+    // Get all unclaimed prizes
+    const unclaimedPrizes: Array<{ poolId: bigint; rank: number; amount: number }> = [];
+    completedPools.forEach(pool => {
+      pool.winners.forEach(winner => {
+        if (
+          winner.address.toLowerCase() === address.toLowerCase() &&
+          !winner.claimed &&
+          winner.isClaimable
+        ) {
+          unclaimedPrizes.push({
+            poolId: pool.poolId,
+            rank: winner.rank,
+            amount: winner.prize,
+          });
+        }
+      });
+    });
+
+    if (unclaimedPrizes.length === 0) return;
+
+    setIsClaimingAll(true);
+    setClaimAllProgress({
+      current: 0,
+      total: unclaimedPrizes.length,
+      currentPoolId: null,
+      claimedPrizes: [],
+      failedPrizes: [],
+    });
+
+    const claimedPrizes: Array<{ poolId: bigint; rank: number; amount: number }> = [];
+    const failedPrizes: Array<{ poolId: bigint; error: string }> = [];
+
+    for (let i = 0; i < unclaimedPrizes.length; i++) {
+      const prize = unclaimedPrizes[i];
+
+      setClaimAllProgress(prev => prev ? {
+        ...prev,
+        current: i + 1,
+        currentPoolId: prize.poolId,
+      } : null);
+
+      try {
+        // Call contract to claim prize
+        await claimWriteContractAsync({
+          address: POOL_ADDRESS,
+          abi: ColorDropPoolABI.abi,
+          functionName: 'claimPrize',
+          args: [prize.poolId],
+          chainId: TARGET_CHAIN.id,
+        });
+
+        // Wait a moment for transaction to be confirmed
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        claimedPrizes.push(prize);
+        setClaimAllProgress(prev => prev ? {
+          ...prev,
+          claimedPrizes: [...claimedPrizes],
+        } : null);
+      } catch (err) {
+        console.error(`Failed to claim prize for pool ${prize.poolId}:`, err);
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        failedPrizes.push({ poolId: prize.poolId, error: errorMessage });
+        setClaimAllProgress(prev => prev ? {
+          ...prev,
+          failedPrizes: [...failedPrizes],
+        } : null);
+      }
+    }
+
+    // Update final state
+    setClaimAllProgress(prev => prev ? {
+      ...prev,
+      current: unclaimedPrizes.length,
+      currentPoolId: null,
+      claimedPrizes,
+      failedPrizes,
+    } : null);
+
+    setIsClaimingAll(false);
+
+    // Refetch to update UI
+    refetchPools();
+
+    return { claimedPrizes, failedPrizes };
+  }, [isClaimingAll, address, completedPools, claimWriteContractAsync, refetchPools]);
+
+  // Reset claim all progress
+  const resetClaimAllProgress = useCallback(() => {
+    setClaimAllProgress(null);
+  }, []);
+
   // Find user's unclaimed prizes - memoized to prevent infinite re-renders
+  // Only includes prizes that are actually claimable (recorded in contract v3.6.0+)
   const userPrizes = useMemo((): UserPrize[] => {
     if (!address) return [];
 
     const prizes: UserPrize[] = [];
     completedPools.forEach(pool => {
       pool.winners.forEach(winner => {
-        if (winner.address.toLowerCase() === address.toLowerCase() && !winner.claimed) {
+        // Only show as claimable if:
+        // 1. Winner matches current user
+        // 2. Prize is not yet claimed
+        // 3. Winner is recorded in contract (isClaimable = true)
+        if (
+          winner.address.toLowerCase() === address.toLowerCase() &&
+          !winner.claimed &&
+          winner.isClaimable
+        ) {
           prizes.push({
             poolId: pool.poolId,
             rank: winner.rank,
@@ -392,6 +607,11 @@ export function usePastGames(limit: number = 10) {
     isClaimSuccess,
     claimError,
     claimHash,
+    // Claim all functions
+    claimAllPrizes,
+    isClaimingAll,
+    claimAllProgress,
+    resetClaimAllProgress,
     // Finalize functions
     finalizePool,
     isFinalizePending,
