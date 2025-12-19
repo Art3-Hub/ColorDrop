@@ -233,6 +233,10 @@ contract ColorDropPool is
 
         if (!found) revert NotInPool();
 
+        // Clear activePoolId so user can join another slot
+        // This allows buying multiple slots in the same pool
+        activePoolId[msg.sender] = 0;
+
         emit ScoreSubmitted(poolId, msg.sender, accuracy);
 
         // Check if all players submitted
@@ -532,7 +536,7 @@ contract ColorDropPool is
      * @dev Get contract version for upgrade tracking
      */
     function version() external pure returns (string memory) {
-        return "3.4.0";
+        return "3.5.0";
     }
 
     /**
