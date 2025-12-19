@@ -6,7 +6,6 @@ import { SelfAppBuilder, type SelfApp, getUniversalLink } from '@selfxyz/qrcode'
 
 interface VerificationData {
   verified: boolean
-  date_of_birth?: string
   userIdentifier?: string
   timestamp?: number
 }
@@ -22,8 +21,11 @@ interface SelfContextType {
 
   // Actions
   initiateSelfVerification: () => Promise<void>
+  initiateDeeplinkVerification: () => Promise<void>
   checkVerificationStatus: () => Promise<void>
   clearVerification: () => void
+  startPolling: () => void
+  stopPolling: () => void
 
   // Widget visibility
   showWidget: boolean
@@ -47,6 +49,8 @@ interface SelfProviderProps {
 export function SelfProvider({ children }: SelfProviderProps) {
   const { address, isConnected } = useAccount()
 
+  // Note: isVerified is session-only, resets on page reload
+  // Each slot click requires fresh SELF verification
   const [isVerified, setIsVerified] = useState(false)
   const [verificationData, setVerificationData] = useState<VerificationData | null>(null)
   const [isVerifying, setIsVerifying] = useState(false)
@@ -102,7 +106,7 @@ export function SelfProvider({ children }: SelfProviderProps) {
     }
 
     try {
-      const endpoint = `${process.env.NEXT_PUBLIC_SITE_URL}/api/verify-self`
+      const endpoint = `${process.env.NEXT_PUBLIC_APP_URL}/api/verify-self`
 
       console.log('🔧 Self Protocol Configuration:', {
         endpoint,
@@ -110,13 +114,15 @@ export function SelfProvider({ children }: SelfProviderProps) {
         userId: address,
       })
 
+      // Note: deeplinkCallback is intentionally NOT set here
+      // For QR code verification, the SelfQRcodeWrapper's onSuccess callback handles completion
+      // Setting deeplinkCallback causes redirect loops in browser mode
+      // For deep link mode (Farcaster mobile), we use the universal link directly
       const app = new SelfAppBuilder({
         version: 2,
         appName,
         scope,
         endpoint,
-        deeplinkCallback: process.env.NEXT_PUBLIC_SELF_DEEPLINK_CALLBACK ||
-          (typeof window !== 'undefined' ? window.location.href : ''),
         logoBase64: logoUrl,
         userId: address,
         endpointType: 'https',
@@ -125,7 +131,7 @@ export function SelfProvider({ children }: SelfProviderProps) {
           minimumAge,
           excludedCountries,
           ofac,
-          date_of_birth: true,
+          date_of_birth: false, // Only verify age 18+, don't collect DOB
         }
       }).build()
 
@@ -137,12 +143,9 @@ export function SelfProvider({ children }: SelfProviderProps) {
     }
   }, [address, isConnected, appName, scope, logoUrl, minimumAge, ofac])
 
-  // Check verification status on mount
-  useEffect(() => {
-    if (address && isConnected) {
-      checkVerificationStatus()
-    }
-  }, [address, isConnected, checkVerificationStatus])
+  // Note: We intentionally DO NOT check verification status on mount
+  // Each session starts fresh - user must verify for each slot click
+  // This ensures SELF verification is always required
 
   // Cleanup polling on unmount
   useEffect(() => {
@@ -164,7 +167,7 @@ export function SelfProvider({ children }: SelfProviderProps) {
 
     try {
       console.log('🔗 Generated Self deeplink:', universalLink)
-      console.log('📍 Verification endpoint:', `${process.env.NEXT_PUBLIC_SITE_URL}/api/verify-self`)
+      console.log('📍 Verification endpoint:', `${process.env.NEXT_PUBLIC_APP_URL}/api/verify-self`)
       console.log('👤 User address:', address)
 
       // Check if we're in Farcaster environment
@@ -236,6 +239,87 @@ export function SelfProvider({ children }: SelfProviderProps) {
     }
   }, [pollingInterval])
 
+  // Start polling for verification status (used after QR code scan)
+  const startPolling = useCallback(() => {
+    if (pollingInterval) {
+      clearInterval(pollingInterval)
+    }
+
+    setIsVerifying(true)
+    setError(null)
+
+    let pollAttempts = 0
+    const maxPollAttempts = 60 // 60 attempts * 5 seconds = 5 minutes max
+
+    const interval = setInterval(async () => {
+      pollAttempts++
+
+      if (pollAttempts > maxPollAttempts) {
+        clearInterval(interval)
+        setPollingInterval(null)
+        setIsVerifying(false)
+        if (!isVerified) {
+          setError('Verification timeout. Please try again or refresh the page.')
+        }
+        console.log(`⏱️ Polling stopped after ${pollAttempts} attempts`)
+        return
+      }
+
+      await checkVerificationStatus()
+    }, 5000)
+
+    setPollingInterval(interval)
+  }, [pollingInterval, isVerified, checkVerificationStatus])
+
+  // Stop polling
+  const stopPolling = useCallback(() => {
+    if (pollingInterval) {
+      clearInterval(pollingInterval)
+      setPollingInterval(null)
+    }
+    setIsVerifying(false)
+  }, [pollingInterval])
+
+  // Initiate deeplink verification (for Farcaster mobile)
+  const initiateDeeplinkVerification = useCallback(async () => {
+    if (!universalLink || !address) {
+      setError('Self Protocol not initialized')
+      return
+    }
+
+    setIsVerifying(true)
+    setError(null)
+
+    try {
+      console.log('🔗 Opening Self deeplink for mobile:', universalLink)
+
+      // Check if we're in Farcaster environment
+      const { sdk } = await import('@farcaster/miniapp-sdk')
+      const isInMiniAppResult = await sdk.isInMiniApp()
+
+      if (isInMiniAppResult) {
+        try {
+          await sdk.actions.openUrl(universalLink)
+          console.log('✅ Opened Self app with Farcaster SDK')
+        } catch (sdkError) {
+          console.error('Error opening Self app with SDK:', sdkError)
+          window.open(universalLink, '_blank')
+          console.log('⚠️ Fell back to window.open')
+        }
+      } else {
+        window.open(universalLink, '_blank')
+        console.log('🌐 Opened Self app in new browser tab')
+      }
+
+      // Start polling for results
+      startPolling()
+    } catch (err) {
+      console.error('Failed to initiate Self verification:', err)
+      setError('Failed to open Self app')
+      setIsVerifying(false)
+    }
+  }, [universalLink, address, startPolling])
+
   const value: SelfContextType = {
     isVerified,
     verificationData,
@@ -244,8 +328,11 @@ export function SelfProvider({ children }: SelfProviderProps) {
     selfApp,
     universalLink,
     initiateSelfVerification,
+    initiateDeeplinkVerification,
     checkVerificationStatus,
     clearVerification,
+    startPolling,
+    stopPolling,
     showWidget,
     setShowWidget,
   }

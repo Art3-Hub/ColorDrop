@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { SelfBackendVerifier, DefaultConfigStore, AllIds } from '@selfxyz/core'
 
 // Initialize the Self Backend Verifier
+// Note: Using NEXT_PUBLIC_APP_URL for consistency with SelfContext
 const selfBackendVerifier = new SelfBackendVerifier(
   process.env.NEXT_PUBLIC_SELF_SCOPE || 'colordrop',
-  `${process.env.NEXT_PUBLIC_SITE_URL}/api/verify-self`,
+  `${process.env.NEXT_PUBLIC_APP_URL}/api/verify-self`,
   process.env.NEXT_PUBLIC_SELF_USE_MOCK === 'true', // mockPassport (false for mainnet)
   AllIds, // allowed attestation IDs
   new DefaultConfigStore({
@@ -51,35 +52,16 @@ export async function POST(request: NextRequest) {
     // Log the full discloseOutput to debug
     console.log('🔍 Full discloseOutput:', JSON.stringify(result.discloseOutput, null, 2))
 
-    // Check verification details
+    // Check verification details - we only care about age (18+)
     const { isValid, isMinimumAgeValid } = result.isValidDetails
 
     if (!isValid || !isMinimumAgeValid) {
+      console.log('❌ Verification failed:', { isValid, isMinimumAgeValid })
       return NextResponse.json({
         status: 'error',
         result: false,
-        reason: 'Verification failed - User does not meet minimum age requirement or verification is invalid'
+        reason: 'Verification failed - User does not meet minimum age requirement (18+)'
       }, { status: 200 })
-    }
-
-    // Extract date of birth from disclosure output (camelCase format)
-    const dateOfBirthRaw = result.discloseOutput?.dateOfBirth // Format: YYMMDD like "750429"
-
-    console.log('📅 Raw dateOfBirth from Self:', dateOfBirthRaw)
-    console.log('🔍 Full discloseOutput keys:', result.discloseOutput ? Object.keys(result.discloseOutput) : 'null')
-
-    // Convert YYMMDD to YYYY-MM-DD format
-    let dateOfBirth: string | undefined
-    if (dateOfBirthRaw && dateOfBirthRaw.length === 6) {
-      const yy = dateOfBirthRaw.substring(0, 2)
-      const mm = dateOfBirthRaw.substring(2, 4)
-      const dd = dateOfBirthRaw.substring(4, 6)
-
-      // Assume 19xx for years 50-99, 20xx for years 00-49
-      const yyyy = parseInt(yy) >= 50 ? `19${yy}` : `20${yy}`
-      dateOfBirth = `${yyyy}-${mm}-${dd}`
-
-      console.log('📅 Converted to ISO format:', dateOfBirth)
     }
 
     // Extract wallet address from userContextData (hex encoded)
@@ -108,36 +90,26 @@ export async function POST(request: NextRequest) {
     }
 
     // Store verification result for polling endpoint using wallet address
-    if (dateOfBirth && walletAddress) {
+    // We only store that they are verified (18+), no personal data
+    if (walletAddress) {
       global.verificationCache = global.verificationCache || new Map()
 
       global.verificationCache.set(walletAddress, {
         verified: true,
-        date_of_birth: dateOfBirth,
-        name: result.discloseOutput?.name || '',
-        nationality: result.discloseOutput?.nationality || '',
         timestamp: Date.now()
       })
 
-      console.log('✅ Stored verification for wallet:', walletAddress)
-      console.log('📅 Date of birth:', dateOfBirth)
+      console.log('✅ Stored age verification (18+) for wallet:', walletAddress)
       console.log('🗂️ Cache size:', global.verificationCache.size)
-      console.log('🗂️ Cache keys:', Array.from(global.verificationCache.keys()))
     } else {
-      console.log('❌ Could not store - missing dateOfBirth or walletAddress')
-      console.log('   dateOfBirth:', dateOfBirth)
-      console.log('   walletAddress:', walletAddress)
+      console.log('❌ Could not store - missing walletAddress')
     }
 
-    // Return successful verification with disclosed data
+    // Return successful verification - no personal data returned
     return NextResponse.json({
       status: 'success',
       result: true,
-      data: {
-        date_of_birth: dateOfBirth,
-        name: result.discloseOutput?.name || '',
-        nationality: result.discloseOutput?.nationality || ''
-      }
+      message: 'Age verified (18+)'
     }, { status: 200 })
 
   } catch (error) {
