@@ -2,21 +2,17 @@
 
 **Ultra-fast color matching game on Farcaster x Celo**
 
-Match the target color in 10 seconds. Win up to 0.6 CELO. Play, compete, share.
+Match the target color in 10 seconds. Win up to 0.45 CELO. Play, compete, share.
 
 ---
 
 ## 🎯 Overview
 
-Color Drop Tournament is a **skill-based mini app** where players compete in 12-player pools to match colors with precision. Built as a **Farcaster Mini App** with **Celo blockchain** integration for instant, low-cost payments.
+Color Drop Tournament is a **skill-based mini app** where players compete in 9-player pools to match colors with precision. Built as a **Farcaster Mini App** with **Celo blockchain** integration for instant, low-cost payments.
 
-**🔗 Smart Contract (Celo Mainnet):** [`0x05342b1bA42A5B35807592912d7f073DfB95873a`](https://celo.blockscout.com/address/0x05342b1bA42A5B35807592912d7f073DfB95873a) ✅ **v3.0.1**
+**🔗 Smart Contract (Celo Mainnet):** [`0x05342b1bA42A5B35807592912d7f073DfB95873a`](https://celo.blockscout.com/address/0x05342b1bA42A5B35807592912d7f073DfB95873a) ✅ **v3.6.2**
 
-**🧪 Testnet Contract (Celo Sepolia):** [`0xABA644cA3692295def60E09926844830b84348Bb`](https://celo-sepolia.blockscout.com/address/0xABA644cA3692295def60E09926844830b84348Bb) ✅ **v3.0.1**
-
-**📊 Contract Implementation Addresses:**
-- **Mainnet Implementation:** [`0xdD0CD03E304535a0c8ae1Cd3C4C1b8BD1C9910E7`](https://celo.blockscout.com/address/0xdD0CD03E304535a0c8ae1Cd3C4C1b8BD1C9910E7) (v3.0.1)
-- **Sepolia Implementation:** [`0xA68f7C09EdBF3aD3705ECc652E132BAeD2a29F85`](https://celo-sepolia.blockscout.com/address/0xA68f7C09EdBF3aD3705ECc652E132BAeD2a29F85) (v3.0.1)
+**🧪 Testnet Contract (Celo Sepolia):** [`0xABA644cA3692295def60E09926844830b84348Bb`](https://celo-sepolia.blockscout.com/address/0xABA644cA3692295def60E09926844830b84348Bb) ✅ **v3.6.2**
 
 **🔐 Role-Based Access Control:**
 - **Admin:** `0xc2564e41b7f5cb66d2d99466450cfebce9e8228f` (Primary owner, manages settings)
@@ -24,16 +20,17 @@ Color Drop Tournament is a **skill-based mini app** where players compete in 12-
 
 ### Core Mechanics
 
-- **Entry:** 0.1 CELO per player
-- **Pool Size:** 12 players per round
+- **Entry:** 0.1 CELO per slot (~$0.05 USD)
+- **Pool Size:** 9 players per round (3×3 grid for fast-paced games)
 - **Age Verification:** SELF Protocol for 18+ compliance
 - **Slot Limits:** 4 slots max (unverified) or ∞ unlimited (SELF verified)
 - **Gameplay:** 10 seconds to match target color using HSL sliders
+- **Scoring:** Delta E 2000 color difference algorithm (scientifically accurate)
 - **Winners:**
-  - 🥇 **1st Place:** 0.6 CELO (best accuracy)
-  - 🥈 **2nd Place:** 0.3 CELO
-  - 🥉 **3rd Place:** 0.1 CELO
-- **System Fee:** 0.2 CELO (16.67%) — Split between dual treasuries
+  - 🥇 **1st Place:** 0.45 CELO (50% of prize pool)
+  - 🥈 **2nd Place:** 0.225 CELO (25% of prize pool)
+  - 🥉 **3rd Place:** 0.075 CELO (8.33% of prize pool)
+- **System Fee:** 0.15 CELO (16.67%) — Split between dual treasuries
 
 ---
 
@@ -63,58 +60,216 @@ Color Drop Tournament is a **skill-based mini app** where players compete in 12-
 
 ---
 
-## 💚 Why Celo?
+## 📜 Complete Game Rules
 
-**Celo** is the perfect blockchain for Color Drop Tournament because:
+### How a Pool Works
 
-### ⚡ Ultra-Fast & Cheap
-- **5-second finality** — Instant game payouts, no waiting
-- **$0.001 gas fees** — Play hundreds of games for pennies
-- **Mobile-first** — Built for phone users (Farcaster's native platform)
-- **Carbon negative** — Eco-friendly blockchain with offset initiatives
+1. **Pool Creation**: A new pool opens automatically when the previous one fills
+2. **Joining**: Players pay 0.1 CELO to claim a slot (up to 9 slots per pool)
+3. **Multi-Slot Play**: Same player can join multiple slots in one pool
+   - Unverified users: Maximum 4 slots per pool
+   - SELF-verified (18+): Unlimited slots
+4. **Pool Fills**: Game begins when all 9 slots are taken
+5. **Color Matching**: Each slot gets 10 seconds to match a randomly generated target color
+6. **Score Submission**: Accuracy is calculated using Delta E 2000 algorithm and submitted on-chain
+7. **Winner Determination**: Smart contract ranks all 9 submissions by accuracy
+8. **Prize Distribution**: Top 3 winners can claim their prizes directly from the contract
 
-### 💰 Real Money, Real Fast
-- **Instant settlements** — Winners get CELO in seconds, not minutes
-- **Stablecoin ready** — cUSD/cEUR support for stable prizes (future)
-- **Low barriers** — 0.1 CELO entry ($0.05) makes it accessible globally
-- **No bridging delays** — Native CELO, no cross-chain complexity
+### Scoring System
 
-### 🌍 Built for Everyone
-- **ReFi ecosystem** — Regenerative finance for good
-- **Global accessibility** — Works in 100+ countries
-- **Mobile money integration** — Cash in/out via Valora, Opera MiniPay
-- **Social impact** — Every transaction supports climate initiatives
+Color accuracy is calculated using the **CIEDE2000 (Delta E 2000)** algorithm:
 
-### 🔒 Secure & Proven
-- **EVM compatible** — Battle-tested Ethereum security model
-- **Upgradeable contracts** — UUPS pattern for safe improvements
-- **Audited infrastructure** — Celo validators stake reputation and capital
+| Accuracy | Rating | Description |
+|----------|--------|-------------|
+| 95-100% | ⭐ Perfect | Nearly indistinguishable from target |
+| 85-94% | 🎯 Excellent | Very close match, minor differences |
+| 70-84% | ✅ Good | Noticeable but acceptable difference |
+| 50-69% | 🔶 Fair | Visible color difference |
+| 0-49% | ❌ Poor | Significant mismatch |
 
-**Bottom Line:** Celo makes Color Drop feel like a native mobile game, not a crypto app.
+### Prize Distribution
+
+| Place | Prize | % of Pool |
+|-------|-------|-----------|
+| 🥇 1st | 0.45 CELO | 50% |
+| 🥈 2nd | 0.225 CELO | 25% |
+| 🥉 3rd | 0.075 CELO | 8.33% |
+| 💼 System Fee | 0.15 CELO | 16.67% |
+
+**Total Pool**: 0.9 CELO (9 players × 0.1 CELO entry)
+
+### Claiming Prizes
+
+- Winners must **manually claim** their prizes from the Past Games section
+- Claims are processed directly on the Celo blockchain
+- Prize claims never expire - you can claim anytime
+- Gas fees for claiming are minimal (~$0.001)
+
+### Multi-Slot Strategy
+
+Playing multiple slots gives you more chances but also more risk:
+
+```
+Example: Playing 3 slots in one pool
+Investment: 3 × 0.1 = 0.3 CELO
+Best case: Win 1st, 2nd, 3rd = 0.75 CELO profit
+Worst case: No wins = -0.3 CELO loss
+```
+
+**Pro tip**: SELF-verified players can dominate pools by taking multiple slots, but higher accuracy always wins regardless of slot count.
 
 ---
 
-## 🛡️ Why SELF Protocol Verification?
+## 💚 Why Celo? The Perfect Blockchain for Gaming
 
-**SELF.xyz** provides **privacy-preserving age verification** that's critical for Color Drop:
+**Celo** is the ideal blockchain for Color Drop Tournament. Here's why we chose Celo over other chains:
 
-### 🔐 Privacy-First Identity
-- **Zero-knowledge proofs** — Prove you're 18+ without revealing your identity
-- **No personal data stored** — SELF never sees your ID, we never see your ID
-- **Cryptographic verification** — Mathematical proof, not trust-based
-- **One-time verification** — Verify once, play forever (stored on-chain)
+### ⚡ Speed That Matters for Gaming
 
-### ⚖️ Legal Compliance
-- **Age-gated gaming** — Complies with international regulations for skill-based gaming
-- **Regulatory protection** — Shields Color Drop from underage participation risks
-- **Audit trail** — On-chain proof of compliance for regulators
-- **No liability exposure** — Verified users take responsibility for their participation
+Gaming requires **instant feedback**. Every millisecond of delay breaks immersion.
 
-### 🎮 Better Player Experience
-- **Try before verify** — 4 free slots to test the game (unverified users)
-- **Unlimited slots** — SELF-verified players (18+) get unlimited game participation
-- **Fair play enforcement** — On-chain slot limits prevent system abuse
-- **No repeated verification** — Verify once, stored permanently on Celo blockchain
+| Feature | Celo | Ethereum | Other L2s |
+|---------|------|----------|-----------|
+| Block Time | ~5 seconds | ~12 seconds | 2-12 seconds |
+| Finality | Single block | 6+ blocks (~72s) | Variable |
+| Transaction Cost | ~$0.001 | $1-50+ | $0.01-0.50 |
+| Mobile Optimized | ✅ Native | ❌ No | ⚠️ Partial |
+
+**For Color Drop**: When you submit your color match, it's confirmed on Celo in 5 seconds. Winners see their prizes almost instantly. No waiting, no uncertainty.
+
+### 💰 Micro-Transaction Friendly
+
+Color Drop relies on small, frequent transactions. Traditional blockchains make this impossible:
+
+- **Ethereum**: $5 gas fee on $0.05 game = 100× the cost!
+- **Celo**: $0.001 gas fee on $0.05 game = 2% overhead
+
+**Economics that work:**
+```
+Play 100 games on Celo:
+  Entry fees: 10 CELO ($5)
+  Gas costs: ~$0.10
+  Total: ~$5.10
+
+Play 100 games on Ethereum:
+  Entry fees: 10 CELO equivalent ($5)
+  Gas costs: ~$500+ (impossible!)
+```
+
+### 🌍 Global Accessibility
+
+Color Drop is for **everyone**, not just crypto-native users:
+
+- **Mobile-first design** — Celo was built for smartphones, not desktops
+- **Opera MiniPay integration** — 300M+ potential users in Africa
+- **Valora wallet** — Easy onboarding with phone number or email
+- **Low entry barrier** — $0.05 per game, accessible in any country
+- **No bridging required** — Native CELO, no complex cross-chain transfers
+
+### 🌱 Carbon Negative Gaming
+
+Every Color Drop game is **climate-positive**:
+
+- Celo offsets 2× its carbon footprint
+- Proof-of-Stake consensus (99.9% less energy than PoW)
+- Tree planting initiatives funded by network fees
+- Play games, help the planet
+
+### 🔒 Enterprise-Grade Security
+
+Celo doesn't compromise security for speed:
+
+- **EVM compatible** — Same security model as Ethereum
+- **Battle-tested** — $2B+ in total value locked
+- **Validator diversity** — 100+ independent validators worldwide
+- **UUPS upgradeable** — Safe contract improvements without migration
+- **ReentrancyGuard** — Protection against common attack vectors
+
+### 🎮 Why Celo is Essential for Color Drop
+
+| Requirement | Why Celo Excels |
+|-------------|-----------------|
+| Instant payouts | 5-second finality = winners see prizes immediately |
+| Micro-transactions | $0.001 gas = $0.05 games are economically viable |
+| Mobile gaming | Native mobile optimization for Farcaster Mini App |
+| Global reach | Works in 100+ countries without banking access |
+| Fair competition | Low costs mean anyone can compete, not just whales |
+| Sustainable | Carbon-negative means guilt-free gaming |
+
+**Bottom Line:** Celo makes Color Drop feel like a native mobile game with real money prizes — not a clunky crypto app. No other blockchain delivers this combination of speed, cost, and accessibility.
+
+---
+
+## 🛡️ Why SELF Protocol? Privacy-First Age Verification
+
+**SELF.xyz** provides **privacy-preserving age verification** using zero-knowledge cryptography. Here's why it's essential for Color Drop:
+
+### 🔐 True Privacy Protection
+
+Unlike traditional KYC that exposes your personal data, SELF keeps your identity **completely private**:
+
+| Traditional KYC | SELF Protocol |
+|-----------------|---------------|
+| Upload ID documents | No documents uploaded |
+| Name stored on servers | Name never shared |
+| DOB exposed to platforms | Only "18+ yes/no" revealed |
+| Data breach risk | Zero personal data to breach |
+| Central database | Decentralized verification |
+
+**How it works:**
+1. You verify your age with SELF **once** (using your government ID locally)
+2. SELF generates a **zero-knowledge proof** (mathematical proof you're 18+)
+3. This proof is stored **on-chain** — no personal data, just "verified: true"
+4. Color Drop only sees: "This wallet is verified 18+" — nothing else
+
+### ⚖️ Legal Compliance Without Compromise
+
+Color Drop involves real money prizes. Age verification isn't optional — it's **required by law** in most jurisdictions:
+
+- **Gaming regulations** — Skill-based games with prizes often require 18+ verification
+- **Financial compliance** — Cryptocurrency transactions may have age requirements
+- **Platform protection** — Shields Color Drop from regulatory penalties
+- **User protection** — Ensures minors aren't exposed to gambling-adjacent activities
+
+**SELF provides:**
+- ✅ Cryptographic proof of age compliance
+- ✅ On-chain audit trail for regulators
+- ✅ No liability for user misrepresentation
+- ✅ International compliance (works globally)
+
+### 🎮 Unlock Full Game Potential
+
+SELF verification directly impacts your gameplay:
+
+| Feature | Unverified | SELF Verified (18+) |
+|---------|------------|---------------------|
+| Slots per pool | Maximum 4 | **Unlimited** |
+| Strategy options | Limited | Full multi-slot tactics |
+| Pool domination | Restricted | Can claim all 9 slots |
+| Competitive edge | Basic | Maximum |
+
+**Why this matters:**
+```
+Unverified player: 4 slots max = 44% pool coverage
+SELF verified: 9 slots possible = 100% pool coverage
+```
+
+SELF-verified players can:
+- Take more positions in competitive pools
+- Hedge bets across multiple color matches
+- Maximize winning potential per pool
+- Dominate pools with superior accuracy
+
+### 💡 The SELF Advantage
+
+Why SELF over other identity solutions?
+
+1. **Mobile-native** — Works seamlessly in Farcaster Mini App
+2. **One-time process** — Verify once, play forever
+3. **Platform detection** — QR code for desktop, deep link for mobile
+4. **Instant verification** — Takes seconds, not days
+5. **No ongoing fees** — Free for users
+6. **Permanent record** — Stored on Celo blockchain, survives app updates
 
 ### 📱 Platform-Aware Verification Flow
 
@@ -185,51 +340,62 @@ Without on-chain verification, players could:
 
 ## 🎮 How to Play
 
-### 1. Discover in Farcaster Feed
+### 1. Open the Mini App
 ```
-Pool #247 — 10/12 players 🔥
-Prize: 0.6 | 0.3 | 0.1 CELO
-[Join Now (0.1 CELO)]
+Open Color Drop in Farcaster
+→ See current pool status
+→ Pool #247 — 7/9 filled 🔥
+→ Prizes: 0.45 | 0.225 | 0.075 CELO
 ```
 
-### 2. Join Pool
-- Click "Join Now" → Opens Mini App
-- Auto-authenticate with Farcaster
-- Pay 0.1 CELO to enter
+### 2. Select a Slot
+- View the 3×3 grid of available slots
+- Click any empty slot to join
+- Multiple slots? Click more (up to 4 unverified, unlimited if SELF verified)
 
-### 3. Wait in Lobby
-- See other players joining
-- Pool starts when 12/12 full
-- Usually fills in <2 minutes
+### 3. Pay Entry Fee
+- Confirm 0.1 CELO payment per slot
+- Transaction confirms in ~5 seconds on Celo
+- Your slot is reserved immediately
 
-### 4. Match the Color (10 seconds)
-- Target color appears
-- Adjust Hue, Saturation, Lightness sliders
-- Lock in your best match before timer expires
+### 4. Play the Color Game (10 seconds)
+When the pool fills (9/9), each slot plays:
+- **Target color** appears on screen
+- Use **3 sliders** to match it:
+  - 🌈 **Hue** (0-360°) — The base color
+  - 💧 **Saturation** (0-100%) — Color intensity
+  - ☀️ **Lightness** (0-100%) — Brightness level
+- Submit before the 10-second timer runs out!
 
-### 5. See Results
-- Instant ranking by accuracy
-- Top 3 win CELO automatically
-- Share results or play again
+### 5. Score Submission
+- Your accuracy is calculated automatically (Delta E 2000)
+- Score is submitted to the smart contract
+- See your accuracy percentage and ranking
+
+### 6. Claim Your Prize
+- Check "Past Games" tab for completed pools
+- If you're in top 3, click "Claim" button
+- Prize transfers directly to your wallet
+- 🥇 0.45 CELO | 🥈 0.225 CELO | 🥉 0.075 CELO
 
 ---
 
 ## 🏗️ Technical Stack
 
 ### Frontend
-- **Framework:** React + TypeScript
+- **Framework:** Next.js 16 + React 19 + TypeScript
 - **SDK:** `@farcaster/miniapp-sdk`
-- **Wallet:** Wagmi + Viem (Celo)
+- **Wallet:** Wagmi v3 + Viem (Celo)
 - **Styling:** TailwindCSS
-- **State:** Zustand
+- **State:** React Context + Custom Hooks
 
 ### Blockchain
 - **Network:** Celo Mainnet (Chain ID: 42220)
-- **Mainnet Contract (Proxy):** [`0x05342b1bA42A5B35807592912d7f073DfB95873a`](https://celo.blockscout.com/address/0x05342b1bA42A5B35807592912d7f073DfB95873a) (v3.0.1)
-- **Testnet Contract (Proxy):** [`0xABA644cA3692295def60E09926844830b84348Bb`](https://celo-sepolia.blockscout.com/address/0xABA644cA3692295def60E09926844830b84348Bb) (v3.0.1)
-- **Smart Contracts:** Solidity 0.8.22 (Upgradeable via OpenZeppelin UUPS)
+- **Mainnet Contract (Proxy):** [`0x05342b1bA42A5B35807592912d7f073DfB95873a`](https://celo.blockscout.com/address/0x05342b1bA42A5B35807592912d7f073DfB95873a) (v3.6.2)
+- **Testnet Contract (Proxy):** [`0xABA644cA3692295def60E09926844830b84348Bb`](https://celo-sepolia.blockscout.com/address/0xABA644cA3692295def60E09926844830b84348Bb) (v3.6.2)
+- **Smart Contracts:** Solidity 0.8.20 (Upgradeable via OpenZeppelin UUPS)
 - **Development:** Hardhat 2.22 + TypeScript
-- **Security:** ReentrancyGuard, Pausable, Custom Errors, SELF Age Verification
+- **Security:** ReentrancyGuard, Pausable, Custom Errors, SELF Age Verification, Role-Based Access Control
 
 ### Backend
 - **Hosting:** Vercel Edge Functions
@@ -316,16 +482,15 @@ npm test
 # Deploy to Celo Sepolia
 npm run deploy:sepolia
 
-# Deployed Contracts (v3.0.1 - Deployed by Admin):
+# Deployed Contracts (v3.6.2):
 # Proxy: 0xABA644cA3692295def60E09926844830b84348Bb
-# Implementation: 0xA68f7C09EdBF3aD3705ECc652E132BAeD2a29F85
 # Admin: 0xc2564e41b7f5cb66d2d99466450cfebce9e8228f
 # Upgrader: 0x499d377ef114cc1bf7798cecbb38412701400daf
 ```
 
 ### Configure Farcaster Manifest
 
-Edit `public/.well-known/farcaster.json`:
+Edit `app/.well-known/farcaster.json/route.ts`:
 
 ```json
 {
@@ -339,7 +504,7 @@ Edit `public/.well-known/farcaster.json`:
     "iconUrl": "https://your-domain.com/icon.png",
     "homeUrl": "https://your-domain.com",
     "imageUrl": "https://your-domain.com/preview.png",
-    "buttonTitle": "Play Now (1 CELO)"
+    "buttonTitle": "Play Now (0.1 CELO)"
   }
 }
 ```
@@ -350,14 +515,13 @@ Edit `public/.well-known/farcaster.json`:
 
 - [GAME-RULES.md](./GAME-RULES.md) - Complete game mechanics and rules
 - [GAME-GUIDE.md](./GAME-GUIDE.md) - Player guide and strategies
+- [CLAUDE.md](./CLAUDE.md) - AI-assisted development documentation
 - [Smart Contract Docs](./Contracts/README.md) - Contract architecture and deployment
 - [DEPLOYMENT-CHECKLIST.md](./DEPLOYMENT-CHECKLIST.md) - Production deployment guide
 
 **📊 Contract Explorers:**
-- [Mainnet Proxy (Blockscout)](https://celo.blockscout.com/address/0x05342b1bA42A5B35807592912d7f073DfB95873a) - Live mainnet contract (v3.0.1)
-- [Mainnet Implementation (Blockscout)](https://celo.blockscout.com/address/0xdD0CD03E304535a0c8ae1Cd3C4C1b8BD1C9910E7) - Implementation contract (v3.0.1)
-- [Testnet Proxy (Blockscout)](https://celo-sepolia.blockscout.com/address/0xABA644cA3692295def60E09926844830b84348Bb) - Sepolia testnet contract (v3.0.1)
-- [Testnet Implementation (Blockscout)](https://celo-sepolia.blockscout.com/address/0xA68f7C09EdBF3aD3705ECc652E132BAeD2a29F85) - Implementation contract (v3.0.1)
+- [Mainnet Proxy (Blockscout)](https://celo.blockscout.com/address/0x05342b1bA42A5B35807592912d7f073DfB95873a) - Live mainnet contract (v3.6.2)
+- [Testnet Proxy (Blockscout)](https://celo-sepolia.blockscout.com/address/0xABA644cA3692295def60E09926844830b84348Bb) - Sepolia testnet contract (v3.6.2)
 
 ---
 
