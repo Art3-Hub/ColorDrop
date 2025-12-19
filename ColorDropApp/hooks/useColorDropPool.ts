@@ -20,7 +20,7 @@ console.log('🔧 ColorDropPool Hook Configuration - MAINNET ONLY:', {
   CHAIN_ID: TARGET_CHAIN.id,
   ENTRY_FEE: ENTRY_FEE.toString(),
   ENTRY_FEE_CELO: (Number(ENTRY_FEE) / 1e18).toFixed(2) + ' CELO',
-  EXPECTED_VERSION: '3.5.0 - should reset activePoolId after submitScore',
+  EXPECTED_VERSION: '3.9.0 - per-pool slot tracking + lifetime stats',
 });
 
 export interface PlayerSlot {
@@ -132,7 +132,7 @@ export function useColorDropPool() {
   useEffect(() => {
     if (address) {
       console.log('📋 CONTRACT VERSION:', contractVersion);
-      console.log('   → Expected: "3.5.0" (with activePoolId reset fix)');
+      console.log('   → Expected: "3.9.0" (per-pool slot tracking + lifetime stats)');
       console.log('🔐 Direct activePoolId read for', address, ':', activePoolIdForUser?.toString());
       console.log('   → If activePoolId is NOT 0, then submitScore did NOT reset it');
       if (activePoolIdForUser && BigInt(activePoolIdForUser.toString()) !== BigInt(0)) {
