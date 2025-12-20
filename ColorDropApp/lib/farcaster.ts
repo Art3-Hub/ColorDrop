@@ -25,6 +25,7 @@ export type FarcasterContext = {
 
 /**
  * Initialize Farcaster SDK and check if in Mini App environment
+ * Also calls sdk.actions.ready() to signal the app is ready
  */
 export async function initializeFarcaster(): Promise<boolean> {
   try {
@@ -33,6 +34,15 @@ export async function initializeFarcaster(): Promise<boolean> {
     if (!isInMiniApp) {
       console.log('Not in Farcaster Mini App environment');
       return false;
+    }
+
+    // IMPORTANT: Call ready() early to signal to Farcaster that the app is ready
+    // This also triggers the wallet connector to become available
+    try {
+      sdk.actions.ready();
+      console.log('✅ Farcaster SDK ready() called - splash screen hidden');
+    } catch (readyError) {
+      console.warn('⚠️ Failed to call sdk.actions.ready():', readyError);
     }
 
     console.log('✅ Farcaster SDK initialized');
