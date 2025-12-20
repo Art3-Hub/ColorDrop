@@ -1,641 +1,596 @@
 # 🎨 Color Drop Tournament
 
-**Ultra-fast color matching game on Farcaster x Celo**
+<div align="center">
 
-Match the target color in 10 seconds. Win up to 0.45 CELO. Play, compete, share.
+![Color Drop Banner](https://colordrop.art3hub.xyz/og-image.png)
 
----
+### **The Ultimate Color Matching Challenge on Web3**
 
-## 🎯 Overview
+*Match colors. Win CELO. Prove your perception.*
 
-Color Drop Tournament is a **skill-based mini app** where players compete in 9-player pools to match colors with precision. Built as a **Farcaster Mini App** with **Celo blockchain** integration for instant, low-cost payments.
+[![Celo](https://img.shields.io/badge/Built%20on-Celo-35D07F?style=for-the-badge&logo=celo)](https://celo.org)
+[![Farcaster](https://img.shields.io/badge/Farcaster-Mini%20App-8B5CF6?style=for-the-badge)](https://farcaster.xyz)
+[![SELF Protocol](https://img.shields.io/badge/Verified%20by-SELF%20Protocol-00D4AA?style=for-the-badge)](https://self.xyz)
 
-**🔗 Smart Contract (Celo Mainnet):** [`0x05342b1bA42A5B35807592912d7f073DfB95873a`](https://celo.blockscout.com/address/0x05342b1bA42A5B35807592912d7f073DfB95873a) ✅ **v3.6.2**
+[**🎮 Play Now**](https://colordrop.art3hub.xyz) · [**📖 Game Rules**](./GAME-RULES.md) · [**🔗 View Contract**](https://celo.blockscout.com/address/0x05342b1bA42A5B35807592912d7f073DfB95873a)
 
-**🧪 Testnet Contract (Celo Sepolia):** [`0xABA644cA3692295def60E09926844830b84348Bb`](https://celo-sepolia.blockscout.com/address/0xABA644cA3692295def60E09926844830b84348Bb) ✅ **v3.6.2**
-
-**🔐 Role-Based Access Control:**
-- **Admin:** `0xc2564e41b7f5cb66d2d99466450cfebce9e8228f` (Primary owner, manages settings)
-- **Upgrader:** `0x499d377ef114cc1bf7798cecbb38412701400daf` (Deploys and upgrades contracts)
-
-### Core Mechanics
-
-- **Entry:** 0.1 CELO per slot (~$0.05 USD)
-- **Pool Size:** 9 players per round (3×3 grid for fast-paced games)
-- **Age Verification:** SELF Protocol for 18+ compliance
-- **Slot Limits:** 4 slots max (unverified) or ∞ unlimited (SELF verified)
-- **Gameplay:** 10 seconds to match target color using HSL sliders
-- **Scoring:** Delta E 2000 color difference algorithm (scientifically accurate)
-- **Winners:**
-  - 🥇 **1st Place:** 0.45 CELO (50% of prize pool)
-  - 🥈 **2nd Place:** 0.225 CELO (25% of prize pool)
-  - 🥉 **3rd Place:** 0.075 CELO (8.33% of prize pool)
-- **System Fee:** 0.15 CELO (16.67%) — Split between dual treasuries
+</div>
 
 ---
 
-## 🚀 Why Color Drop?
+## ⚡ What is Color Drop?
 
-### Fast & Addictive
-- 10-second rounds = "one more game" psychology
-- No complex tutorials or learning curve
-- Instant results and payouts
+Color Drop Tournament is a **skill-based micro-gaming experience** where 9 players compete in real-time to match a target color with surgical precision. Built as a **Farcaster Mini App** on **Celo blockchain**, it combines the addictive simplicity of casual gaming with the transparency and instant payouts of Web3.
 
-### Skill-Based, Not Gambling
-- No random luck mechanics
-- Improves with practice (streak bonuses)
-- Fair competition based on color perception
+```
+🎯 Match the color → 🏆 Beat 8 opponents → 💰 Win up to 0.45 CELO
+```
 
-### Built for Virality
-- Auto-generated meme sharing
-- Farcaster frame integration
-- Direct challenges to friends
-- Leaderboard highlights
-
-### Farcaster Native
-- One-tap sign-in (no external wallet)
-- In-feed pool discovery
-- Native notifications
-- Channel integration (/color-drop)
+**No luck. No randomness. Pure skill.**
 
 ---
 
-## 📜 Complete Game Rules
+## 🏆 Why Players Love It
 
-### How a Pool Works
+| Feature | What It Means For You |
+|---------|----------------------|
+| **10-Second Rounds** | Quick dopamine hits, perfect for mobile |
+| **Skill-Based Wins** | Your color perception = Your advantage |
+| **Instant Payouts** | Win? CELO hits your wallet in 5 seconds |
+| **Micro Stakes** | Just $0.05 per game — anyone can play |
+| **Privacy First** | SELF Protocol: Verify age without exposing identity |
+| **Carbon Negative** | Every game plants trees (Celo's commitment) |
 
-1. **Pool Creation**: A new pool opens automatically when the previous one fills
-2. **Joining**: Players pay 0.1 CELO to claim a slot (up to 9 slots per pool)
-3. **Multi-Slot Play**: Same player can join multiple slots in one pool
-   - Unverified users: Maximum 4 slots per pool
-   - SELF-verified (18+): Unlimited slots
-4. **Pool Fills**: Game begins when all 9 slots are taken
-5. **Color Matching**: Each slot gets 10 seconds to match a randomly generated target color
-6. **Score Submission**: Accuracy is calculated using Delta E 2000 algorithm and submitted on-chain
-7. **Winner Determination**: Smart contract ranks all 9 submissions by accuracy
-8. **Prize Distribution**: Top 3 winners can claim their prizes directly from the contract
+---
 
-### Scoring System
+## 🎮 How It Works
 
-Color accuracy is calculated using the **CIEDE2000 (Delta E 2000)** algorithm:
+```mermaid
+flowchart LR
+    subgraph JOIN["🎯 JOIN POOL"]
+        A[Select Slot] --> B[Pay 0.1 CELO]
+        B --> C[Wait for 9 Players]
+    end
 
-| Accuracy | Rating | Description |
-|----------|--------|-------------|
-| 95-100% | ⭐ Perfect | Nearly indistinguishable from target |
-| 85-94% | 🎯 Excellent | Very close match, minor differences |
-| 70-84% | ✅ Good | Noticeable but acceptable difference |
-| 50-69% | 🔶 Fair | Visible color difference |
-| 0-49% | ❌ Poor | Significant mismatch |
+    subgraph PLAY["🎨 PLAY GAME"]
+        C --> D[See Target Color]
+        D --> E[Adjust HSL Sliders]
+        E --> F[10 Second Timer]
+        F --> G[Submit Match]
+    end
+
+    subgraph WIN["🏆 WIN PRIZES"]
+        G --> H[Delta E Scoring]
+        H --> I{Rank in Top 3?}
+        I -->|🥇 1st| J[0.45 CELO]
+        I -->|🥈 2nd| K[0.225 CELO]
+        I -->|🥉 3rd| L[0.075 CELO]
+        I -->|4th-9th| M[Try Again!]
+    end
+
+    style JOIN fill:#35D07F,color:#fff
+    style PLAY fill:#8B5CF6,color:#fff
+    style WIN fill:#FBCC5C,color:#000
+```
+
+### The Game Loop
+
+1. **Join a Pool** — Pick any empty slot in the 3×3 grid, pay 0.1 CELO
+2. **Wait for Players** — Pool starts when all 9 slots are filled
+3. **Match the Color** — You have exactly 10 seconds to match the target using Hue, Saturation, and Lightness sliders
+4. **Score Calculated** — Delta E 2000 algorithm measures your accuracy (used by professional colorists!)
+5. **Winners Announced** — Top 3 players claim prizes directly from the smart contract
+
+---
+
+## 🏗️ System Architecture
+
+```mermaid
+graph TB
+    subgraph CLIENT["📱 Frontend Layer"]
+        FC[Farcaster Mini App]
+        WG[Wagmi + Viem]
+        UI[React + TailwindCSS]
+    end
+
+    subgraph BLOCKCHAIN["⛓️ Celo Blockchain"]
+        PROXY[UUPS Proxy Contract]
+        IMPL[ColorDropPool v4.0.0]
+        SELF_STORE[(Verification Storage)]
+    end
+
+    subgraph VERIFICATION["🔐 SELF Protocol"]
+        SELF_APP[SELF Mobile App]
+        ZKP[Zero-Knowledge Proof]
+        BACKEND[Verification Backend]
+    end
+
+    subgraph SERVICES["☁️ Backend Services"]
+        API[Vercel Edge Functions]
+        CACHE[(Redis Cache)]
+    end
+
+    FC --> WG
+    WG --> PROXY
+    PROXY --> IMPL
+
+    UI --> SELF_APP
+    SELF_APP --> ZKP
+    ZKP --> BACKEND
+    BACKEND --> IMPL
+    IMPL --> SELF_STORE
+
+    API --> CACHE
+    API --> BACKEND
+
+    style CLIENT fill:#8B5CF6,color:#fff
+    style BLOCKCHAIN fill:#35D07F,color:#fff
+    style VERIFICATION fill:#00D4AA,color:#fff
+    style SERVICES fill:#FBCC5C,color:#000
+```
+
+---
+
+## 🎯 Complete Player Journey
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant P as 👤 Player
+    participant F as 📱 Farcaster App
+    participant C as ⛓️ Celo Contract
+    participant S as 🔐 SELF Protocol
+
+    Note over P,S: 🎮 JOINING A POOL
+    P->>F: Open Color Drop Mini App
+    F->>C: Read current pool status
+    C-->>F: Pool #248: 5/9 players
+    P->>F: Select empty slot #6
+
+    Note over P,S: 💳 PAYMENT FLOW
+    F->>C: joinPool(fid) + 0.1 CELO
+    C->>C: Check slot limits
+    C-->>F: Transaction confirmed (5s)
+    F-->>P: ✅ You're in slot #6!
+
+    Note over P,S: ⏳ WAITING FOR POOL
+    loop Every 2 seconds
+        F->>C: Poll player count
+        C-->>F: 6/9... 7/9... 8/9... 9/9!
+    end
+
+    Note over P,S: 🎨 GAMEPLAY (10 SECONDS)
+    F->>P: Show target color + timer
+    P->>F: Adjust H/S/L sliders
+    P->>F: Submit (or auto-submit at 0s)
+    F->>F: Calculate Delta E accuracy
+    F->>C: submitScore(accuracy * 100)
+    C-->>F: Score recorded: 94.67%
+
+    Note over P,S: 🏆 RESULTS & PRIZES
+    C->>C: All 9 scores submitted
+    C->>C: Rank players by accuracy
+    C-->>F: You ranked #2! 🥈
+    P->>C: claimPrize(poolId)
+    C-->>P: 💰 0.225 CELO sent!
+```
+
+---
+
+## 🔐 Age Verification Flow (SELF Protocol)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant CD as 🎮 Color Drop
+    participant S as 📱 SELF App
+    participant B as ☁️ Backend
+    participant C as ⛓️ Smart Contract
+
+    Note over U,C: 🔍 VERIFICATION TRIGGER
+    U->>CD: Try to use 5th slot
+    CD->>C: Check verification status
+    C-->>CD: Not verified (4 slot limit)
+    CD->>U: "Verify age for unlimited slots"
+
+    Note over U,C: 📱 SELF VERIFICATION
+    alt Desktop/Browser
+        CD->>U: Show QR Code
+        U->>S: Scan with SELF app
+    else Mobile/Farcaster
+        CD->>S: Deep link to SELF app
+    end
+
+    S->>S: User confirms identity locally
+    S->>S: Generate ZK proof (18+ only)
+    S->>B: Send proof + wallet address
+
+    Note over U,C: ✅ ON-CHAIN VERIFICATION
+    B->>B: Validate ZK proof
+    B->>C: setUserVerification(address, true)
+    C->>C: Store: verifiedUsers[addr] = true
+
+    Note over U,C: 🎮 UNLIMITED ACCESS
+    CD->>C: Poll verification status
+    C-->>CD: ✅ User verified!
+    CD->>U: "Unlimited slots unlocked! 🎉"
+```
+
+---
+
+## 💚 Why We Built on Celo
+
+### The Perfect Blockchain for Gaming
+
+```mermaid
+mindmap
+  root((Celo))
+    Speed
+      5s block time
+      Single-block finality
+      Instant payouts
+    Cost
+      $0.001 gas fees
+      Micro-transactions viable
+      No fee anxiety
+    Mobile
+      Phone-native design
+      Valora wallet
+      Opera MiniPay
+    Sustainability
+      Carbon negative
+      2x offset
+      Tree planting
+    Security
+      EVM compatible
+      Battle-tested
+      100+ validators
+```
+
+### Celo vs Other Chains
+
+| Requirement | Celo | Ethereum | Polygon | Arbitrum |
+|-------------|------|----------|---------|----------|
+| **Block Time** | 5 seconds | 12 seconds | 2 seconds | 0.25 seconds |
+| **Finality** | ✅ 1 block | ❌ 6+ blocks | ⚠️ Variable | ⚠️ L1 dependent |
+| **Gas Cost** | **$0.001** | $5-50+ | $0.01-0.10 | $0.01-0.50 |
+| **Mobile SDK** | ✅ Native | ❌ None | ❌ None | ❌ None |
+| **Carbon Status** | ✅ **Negative** | ⚠️ Neutral | ⚠️ Neutral | ⚠️ Neutral |
+
+### Why This Matters for Color Drop
+
+```
+💰 Economics That Work:
+
+On Ethereum:
+  Entry fee: $0.05
+  Gas cost:  $5.00
+  Total:     $5.05 (100x overhead!)
+
+On Celo:
+  Entry fee: $0.05
+  Gas cost:  $0.001
+  Total:     $0.051 (2% overhead)
+
+→ Celo makes micro-gaming possible.
+```
+
+---
+
+## 🛡️ Why SELF Protocol for Age Verification
+
+### Privacy-Preserving Compliance
+
+```mermaid
+graph LR
+    subgraph TRADITIONAL["❌ Traditional KYC"]
+        T1[Upload ID] --> T2[Name Stored]
+        T2 --> T3[DOB Exposed]
+        T3 --> T4[Data Breach Risk]
+    end
+
+    subgraph SELF["✅ SELF Protocol"]
+        S1[Verify Locally] --> S2[ZK Proof Generated]
+        S2 --> S3[Only '18+ Yes/No']
+        S3 --> S4[Zero Personal Data]
+    end
+
+    style TRADITIONAL fill:#ff6b6b,color:#fff
+    style SELF fill:#00D4AA,color:#fff
+```
+
+### What Gets Stored
+
+| Data Point | Traditional KYC | SELF Protocol |
+|------------|-----------------|---------------|
+| Full Name | ✅ Stored | ❌ Never shared |
+| Date of Birth | ✅ Stored | ❌ Never shared |
+| ID Document | ✅ Uploaded | ❌ Stays on device |
+| Home Address | ✅ Stored | ❌ Never shared |
+| **Age Verified (18+)** | ✅ Yes | ✅ **Yes (only this!)** |
+
+### Unlock Full Game Potential
+
+| Feature | Unverified | SELF Verified |
+|---------|------------|---------------|
+| Slots per pool | Max 4 | **Unlimited** |
+| Pool coverage | 44% max | 100% possible |
+| Strategic depth | Limited | Full multi-slot tactics |
+| Competitive edge | Basic | Maximum |
+
+---
+
+## 📊 Smart Contract Architecture
+
+```mermaid
+classDiagram
+    class ColorDropPool {
+        +uint256 currentPoolId
+        +mapping pools
+        +mapping verifiedUsers
+        +address treasury1
+        +address treasury2
+        +joinPool(fid) payable
+        +submitScore(accuracy)
+        +claimPrize(poolId, rank)
+        +setUserVerification(user, status)
+        +finalizePool(poolId)
+    }
+
+    class Pool {
+        +uint256 id
+        +uint8 playerCount
+        +bool isActive
+        +bool isCompleted
+        +uint32 startTime
+        +bytes32 targetColor
+        +Player[9] players
+    }
+
+    class Player {
+        +address wallet
+        +uint256 fid
+        +uint16 accuracy
+        +bool hasSubmitted
+    }
+
+    class UUPSUpgradeable {
+        +_authorizeUpgrade()
+    }
+
+    class ReentrancyGuard {
+        +nonReentrant modifier
+    }
+
+    class Pausable {
+        +pause()
+        +unpause()
+    }
+
+    ColorDropPool --|> UUPSUpgradeable
+    ColorDropPool --|> ReentrancyGuard
+    ColorDropPool --|> Pausable
+    ColorDropPool "1" *-- "many" Pool
+    Pool "1" *-- "9" Player
+```
+
+### Contract Details
+
+| Property | Value |
+|----------|-------|
+| **Mainnet Proxy** | [`0x05342b1bA42A5B35807592912d7f073DfB95873a`](https://celo.blockscout.com/address/0x05342b1bA42A5B35807592912d7f073DfB95873a) |
+| **Version** | v4.0.0 |
+| **Network** | Celo Mainnet (Chain ID: 42220) |
+| **Entry Fee** | 0.1 CELO |
+| **Pool Size** | 9 players |
+| **Upgradeable** | UUPS Pattern |
 
 ### Prize Distribution
 
-| Place | Prize | % of Pool |
-|-------|-------|-----------|
-| 🥇 1st | 0.45 CELO | 50% |
-| 🥈 2nd | 0.225 CELO | 25% |
-| 🥉 3rd | 0.075 CELO | 8.33% |
-| 💼 System Fee | 0.15 CELO | 16.67% |
-
-**Total Pool**: 0.9 CELO (9 players × 0.1 CELO entry)
-
-### Claiming Prizes
-
-- Winners must **manually claim** their prizes from the Past Games section
-- Claims are processed directly on the Celo blockchain
-- Prize claims never expire - you can claim anytime
-- Gas fees for claiming are minimal (~$0.001)
-
-### Multi-Slot Strategy
-
-Playing multiple slots gives you more chances but also more risk:
-
 ```
-Example: Playing 3 slots in one pool
-Investment: 3 × 0.1 = 0.3 CELO
-Best case: Win 1st, 2nd, 3rd = 0.75 CELO profit
-Worst case: No wins = -0.3 CELO loss
-```
-
-**Pro tip**: SELF-verified players can dominate pools by taking multiple slots, but higher accuracy always wins regardless of slot count.
-
----
-
-## 💚 Why Celo? The Perfect Blockchain for Gaming
-
-**Celo** is the ideal blockchain for Color Drop Tournament. Here's why we chose Celo over other chains:
-
-### ⚡ Speed That Matters for Gaming
-
-Gaming requires **instant feedback**. Every millisecond of delay breaks immersion.
-
-| Feature | Celo | Ethereum | Other L2s |
-|---------|------|----------|-----------|
-| Block Time | ~5 seconds | ~12 seconds | 2-12 seconds |
-| Finality | Single block | 6+ blocks (~72s) | Variable |
-| Transaction Cost | ~$0.001 | $1-50+ | $0.01-0.50 |
-| Mobile Optimized | ✅ Native | ❌ No | ⚠️ Partial |
-
-**For Color Drop**: When you submit your color match, it's confirmed on Celo in 5 seconds. Winners see their prizes almost instantly. No waiting, no uncertainty.
-
-### 💰 Micro-Transaction Friendly
-
-Color Drop relies on small, frequent transactions. Traditional blockchains make this impossible:
-
-- **Ethereum**: $5 gas fee on $0.05 game = 100× the cost!
-- **Celo**: $0.001 gas fee on $0.05 game = 2% overhead
-
-**Economics that work:**
-```
-Play 100 games on Celo:
-  Entry fees: 10 CELO ($5)
-  Gas costs: ~$0.10
-  Total: ~$5.10
-
-Play 100 games on Ethereum:
-  Entry fees: 10 CELO equivalent ($5)
-  Gas costs: ~$500+ (impossible!)
-```
-
-### 🌍 Global Accessibility
-
-Color Drop is for **everyone**, not just crypto-native users:
-
-- **Mobile-first design** — Celo was built for smartphones, not desktops
-- **Opera MiniPay integration** — 300M+ potential users in Africa
-- **Valora wallet** — Easy onboarding with phone number or email
-- **Low entry barrier** — $0.05 per game, accessible in any country
-- **No bridging required** — Native CELO, no complex cross-chain transfers
-
-### 🌱 Carbon Negative Gaming
-
-Every Color Drop game is **climate-positive**:
-
-- Celo offsets 2× its carbon footprint
-- Proof-of-Stake consensus (99.9% less energy than PoW)
-- Tree planting initiatives funded by network fees
-- Play games, help the planet
-
-### 🔒 Enterprise-Grade Security
-
-Celo doesn't compromise security for speed:
-
-- **EVM compatible** — Same security model as Ethereum
-- **Battle-tested** — $2B+ in total value locked
-- **Validator diversity** — 100+ independent validators worldwide
-- **UUPS upgradeable** — Safe contract improvements without migration
-- **ReentrancyGuard** — Protection against common attack vectors
-
-### 🎮 Why Celo is Essential for Color Drop
-
-| Requirement | Why Celo Excels |
-|-------------|-----------------|
-| Instant payouts | 5-second finality = winners see prizes immediately |
-| Micro-transactions | $0.001 gas = $0.05 games are economically viable |
-| Mobile gaming | Native mobile optimization for Farcaster Mini App |
-| Global reach | Works in 100+ countries without banking access |
-| Fair competition | Low costs mean anyone can compete, not just whales |
-| Sustainable | Carbon-negative means guilt-free gaming |
-
-**Bottom Line:** Celo makes Color Drop feel like a native mobile game with real money prizes — not a clunky crypto app. No other blockchain delivers this combination of speed, cost, and accessibility.
-
----
-
-## 🛡️ Why SELF Protocol? Privacy-First Age Verification
-
-**SELF.xyz** provides **privacy-preserving age verification** using zero-knowledge cryptography. Here's why it's essential for Color Drop:
-
-### 🔐 True Privacy Protection
-
-Unlike traditional KYC that exposes your personal data, SELF keeps your identity **completely private**:
-
-| Traditional KYC | SELF Protocol |
-|-----------------|---------------|
-| Upload ID documents | No documents uploaded |
-| Name stored on servers | Name never shared |
-| DOB exposed to platforms | Only "18+ yes/no" revealed |
-| Data breach risk | Zero personal data to breach |
-| Central database | Decentralized verification |
-
-**How it works:**
-1. You verify your age with SELF **once** (using your government ID locally)
-2. SELF generates a **zero-knowledge proof** (mathematical proof you're 18+)
-3. This proof is stored **on-chain** — no personal data, just "verified: true"
-4. Color Drop only sees: "This wallet is verified 18+" — nothing else
-
-### ⚖️ Legal Compliance Without Compromise
-
-Color Drop involves real money prizes. Age verification isn't optional — it's **required by law** in most jurisdictions:
-
-- **Gaming regulations** — Skill-based games with prizes often require 18+ verification
-- **Financial compliance** — Cryptocurrency transactions may have age requirements
-- **Platform protection** — Shields Color Drop from regulatory penalties
-- **User protection** — Ensures minors aren't exposed to gambling-adjacent activities
-
-**SELF provides:**
-- ✅ Cryptographic proof of age compliance
-- ✅ On-chain audit trail for regulators
-- ✅ No liability for user misrepresentation
-- ✅ International compliance (works globally)
-
-### 🎮 Unlock Full Game Potential
-
-SELF verification directly impacts your gameplay:
-
-| Feature | Unverified | SELF Verified (18+) |
-|---------|------------|---------------------|
-| Slots per pool | Maximum 4 | **Unlimited** |
-| Strategy options | Limited | Full multi-slot tactics |
-| Pool domination | Restricted | Can claim all 9 slots |
-| Competitive edge | Basic | Maximum |
-
-**Why this matters:**
-```
-Unverified player: 4 slots max = 44% pool coverage
-SELF verified: 9 slots possible = 100% pool coverage
-```
-
-SELF-verified players can:
-- Take more positions in competitive pools
-- Hedge bets across multiple color matches
-- Maximize winning potential per pool
-- Dominate pools with superior accuracy
-
-### 💡 The SELF Advantage
-
-Why SELF over other identity solutions?
-
-1. **Mobile-native** — Works seamlessly in Farcaster Mini App
-2. **One-time process** — Verify once, play forever
-3. **Platform detection** — QR code for desktop, deep link for mobile
-4. **Instant verification** — Takes seconds, not days
-5. **No ongoing fees** — Free for users
-6. **Permanent record** — Stored on Celo blockchain, survives app updates
-
-### 📱 Platform-Aware Verification Flow
-
-Color Drop automatically detects the user's platform and provides the optimal verification experience:
-
-| Platform | Method | User Experience |
-|----------|--------|-----------------|
-| **Browser** (Desktop/Mobile) | QR Code | Scan with SELF mobile app |
-| **Farcaster Web** (Browser) | QR Code | Scan with SELF mobile app |
-| **Farcaster Mobile** (App) | Deep Link | Opens SELF app directly |
-
-#### How It Works
-
-1. **Platform Detection** (`usePlatformDetection` hook)
-   - Detects if running in browser, Farcaster web, or Farcaster mobile
-   - Uses `@farcaster/miniapp-sdk` to check Mini App environment
-   - Returns `shouldShowQRCode` or `shouldUseDeeplink` flag
-
-2. **QR Code Flow** (Browser/Farcaster Web)
-   ```
-   User clicks "Verify Age" → QR Code displayed (SelfQRcodeWrapper)
-   → User scans with SELF app → SELF app sends proof to backend
-   → Backend verifies proof → Backend calls setUserVerification()
-   → Frontend polls /api/verify-self/check → User verified ✅
-   ```
-
-3. **Deep Link Flow** (Farcaster Mobile)
-   ```
-   User clicks "Open SELF App" → Universal link opens SELF app
-   → User completes verification → SELF app sends proof to backend
-   → Backend verifies proof → Backend calls setUserVerification()
-   → Frontend polls /api/verify-self/check → User verified ✅
-   ```
-
-#### Technical Implementation
-
-**Platform Detection Hook** (`hooks/usePlatformDetection.ts`):
-```typescript
-export function usePlatformDetection() {
-  // Returns: platform, shouldShowQRCode, shouldUseDeeplink
-  // Platform types: 'browser' | 'farcaster-browser' | 'farcaster-mobile'
-}
-```
-
-**SELF Context** (`contexts/SelfContext.tsx`):
-- `initiateSelfVerification()` — Opens SELF app (browser/desktop)
-- `initiateDeeplinkVerification()` — Opens SELF app via deep link (mobile)
-- `startPolling()` — Polls backend for verification status after QR scan
-- `checkVerificationStatus()` — Checks `/api/verify-self/check` endpoint
-
-**Verification Modal** (`components/SelfVerificationModal.tsx`):
-- Shows QR code when `shouldShowQRCode` is true
-- Shows "Open SELF App" button when `shouldUseDeeplink` is true
-- Displays verification progress indicator during polling
-
-### 🚫 Why Not Just Frontend Checks?
-Without on-chain verification, players could:
-- Call the smart contract directly from Etherscan/MetaMask
-- Bypass backend API age checks completely
-- Play unlimited games while claiming to be unverified
-- Create regulatory and legal risks for the platform
-
-**Solution:** Backend validates SELF proofs → Calls `setUserVerification()` → Smart contract enforces limits on-chain.
-
-**Bottom Line:** SELF makes Color Drop legally compliant while preserving player privacy and preventing system abuse.
-
----
-
-## 🎮 How to Play
-
-### 1. Open the Mini App
-```
-Open Color Drop in Farcaster
-→ See current pool status
-→ Pool #247 — 7/9 filled 🔥
-→ Prizes: 0.45 | 0.225 | 0.075 CELO
-```
-
-### 2. Select a Slot
-- View the 3×3 grid of available slots
-- Click any empty slot to join
-- Multiple slots? Click more (up to 4 unverified, unlimited if SELF verified)
-
-### 3. Pay Entry Fee
-- Confirm 0.1 CELO payment per slot
-- Transaction confirms in ~5 seconds on Celo
-- Your slot is reserved immediately
-
-### 4. Play the Color Game (10 seconds)
-When the pool fills (9/9), each slot plays:
-- **Target color** appears on screen
-- Use **3 sliders** to match it:
-  - 🌈 **Hue** (0-360°) — The base color
-  - 💧 **Saturation** (0-100%) — Color intensity
-  - ☀️ **Lightness** (0-100%) — Brightness level
-- Submit before the 10-second timer runs out!
-
-### 5. Score Submission
-- Your accuracy is calculated automatically (Delta E 2000)
-- Score is submitted to the smart contract
-- See your accuracy percentage and ranking
-
-### 6. Claim Your Prize
-- Check "Past Games" tab for completed pools
-- If you're in top 3, click "Claim" button
-- Prize transfers directly to your wallet
-- 🥇 0.45 CELO | 🥈 0.225 CELO | 🥉 0.075 CELO
-
----
-
-## 🏗️ Technical Stack
-
-### Frontend
-- **Framework:** Next.js 16 + React 19 + TypeScript
-- **SDK:** `@farcaster/miniapp-sdk`
-- **Wallet:** Wagmi v3 + Viem (Celo)
-- **Styling:** TailwindCSS
-- **State:** React Context + Custom Hooks
-
-### Blockchain
-- **Network:** Celo Mainnet (Chain ID: 42220)
-- **Mainnet Contract (Proxy):** [`0x05342b1bA42A5B35807592912d7f073DfB95873a`](https://celo.blockscout.com/address/0x05342b1bA42A5B35807592912d7f073DfB95873a) (v3.6.2)
-- **Testnet Contract (Proxy):** [`0xABA644cA3692295def60E09926844830b84348Bb`](https://celo-sepolia.blockscout.com/address/0xABA644cA3692295def60E09926844830b84348Bb) (v3.6.2)
-- **Smart Contracts:** Solidity 0.8.20 (Upgradeable via OpenZeppelin UUPS)
-- **Development:** Hardhat 2.22 + TypeScript
-- **Security:** ReentrancyGuard, Pausable, Custom Errors, SELF Age Verification, Role-Based Access Control
-
-### Backend
-- **Hosting:** Vercel Edge Functions
-- **Database:** Supabase (leaderboards, stats)
-- **Real-time:** WebSockets (lobby updates)
-- **Media:** Cloudinary (meme generation)
-- **Age Verification:** SELF Protocol integration
-  - Backend validates zero-knowledge proofs (18+)
-  - Backend wallet calls `setUserVerification()` on smart contract
-  - Contract enforces 4-slot limit for unverified, unlimited for verified
-
-### Farcaster Integration
-- Mini App SDK for auth & social features
-- Frame integration for in-feed pools
-- Channel posting (/color-drop)
-- Notification system
-
----
-
-## 📦 Project Structure
-
-```
-ColorDrop/
-├── contracts/          # Solidity smart contracts
-│   ├── ColorDropPool.sol
-│   └── test/
-├── src/                # React Mini App
-│   ├── components/
-│   ├── hooks/
-│   ├── lib/
-│   └── pages/
-├── public/
-│   └── .well-known/
-│       └── farcaster.json  # Mini App manifest
-├── Docs/
-│   ├── IDEA.md
-│   └── GAME-RULES.md
-└── README.md
+Total Pool: 0.9 CELO (9 × 0.1 CELO)
+
+🥇 1st Place:  0.45 CELO  (50%)
+🥈 2nd Place:  0.225 CELO (25%)
+🥉 3rd Place:  0.075 CELO (8.33%)
+💼 Platform:   0.15 CELO  (16.67%)
 ```
 
 ---
 
-## 🚀 Getting Started
+## 🎨 Color Scoring Algorithm
 
-### Prerequisites
-- Node.js 22.11.0+
-- pnpm or npm
-- Foundry (for contracts)
-- Farcaster account
+We use **Delta E 2000 (CIEDE2000)** — the same algorithm used by professional colorists and industrial color matching systems.
 
-### Installation
+```mermaid
+flowchart LR
+    subgraph INPUT["🎨 Input Colors"]
+        TC[Target HSL]
+        UC[User HSL]
+    end
+
+    subgraph CONVERT["🔄 Convert"]
+        TC --> RGB1[RGB]
+        UC --> RGB2[RGB]
+        RGB1 --> LAB1[LAB*]
+        RGB2 --> LAB2[LAB*]
+    end
+
+    subgraph CALCULATE["📐 Calculate"]
+        LAB1 --> DE[Delta E 2000]
+        LAB2 --> DE
+        DE --> DIFF[Color Difference]
+    end
+
+    subgraph SCORE["📊 Score"]
+        DIFF --> ACC[Accuracy %]
+        ACC --> |0-50| POOR[❌ Poor]
+        ACC --> |50-70| FAIR[🔶 Fair]
+        ACC --> |70-85| GOOD[✅ Good]
+        ACC --> |85-95| EXCELLENT[🎯 Excellent]
+        ACC --> |95-100| PERFECT[⭐ Perfect]
+    end
+
+    style INPUT fill:#8B5CF6,color:#fff
+    style CONVERT fill:#35D07F,color:#fff
+    style CALCULATE fill:#FBCC5C,color:#000
+    style SCORE fill:#00D4AA,color:#fff
+```
+
+### Accuracy Ratings
+
+| Score | Rating | Description |
+|-------|--------|-------------|
+| 95-100% | ⭐ **Perfect** | Nearly indistinguishable |
+| 85-94% | 🎯 **Excellent** | Very close match |
+| 70-84% | ✅ **Good** | Noticeable but acceptable |
+| 50-69% | 🔶 **Fair** | Visible difference |
+| 0-49% | ❌ **Poor** | Significant mismatch |
+
+---
+
+## 🚀 Quick Start
+
+### For Players
+
+1. **Open Farcaster** and search for Color Drop
+2. **Connect wallet** (auto-connects in Mini App)
+3. **Join a pool** (0.1 CELO entry)
+4. **Match colors** when pool is full
+5. **Claim prizes** if you're in top 3!
+
+### For Developers
 
 ```bash
-# Clone repository
+# Clone the repository
 git clone https://github.com/art3hub/colordrop.git
 cd colordrop
 
-# Install dependencies
-pnpm install
+# Install frontend
+cd ColorDropApp
+npm install
+npm run dev
 
-# Setup environment
-cp .env.example .env
-# Edit .env with your keys
-
-# Run development server
-pnpm dev
-```
-
-### Deploy Contracts (Celo Sepolia Testnet)
-
-```bash
-cd Contracts
-
-# Install dependencies
-npm install --legacy-peer-deps
-
-# Configure .env file
-cp .env.example .env
-# Add your PRIVATE_KEY, TREASURY_ADDRESS_1, TREASURY_ADDRESS_2, VERIFIER_ADDRESS
-
-# Run tests
-npm test
-
-# Deploy to Celo Sepolia
+# Deploy contracts (optional)
+cd ../Contracts
+npm install
 npm run deploy:sepolia
-
-# Deployed Contracts (v3.6.2):
-# Proxy: 0xABA644cA3692295def60E09926844830b84348Bb
-# Admin: 0xc2564e41b7f5cb66d2d99466450cfebce9e8228f
-# Upgrader: 0x499d377ef114cc1bf7798cecbb38412701400daf
-```
-
-### Configure Farcaster Manifest
-
-Edit `app/.well-known/farcaster.json/route.ts`:
-
-```json
-{
-  "accountAssociation": {
-    "header": "...",
-    "payload": "...",
-    "signature": "..."
-  },
-  "frame": {
-    "name": "Color Drop Tournament",
-    "iconUrl": "https://your-domain.com/icon.png",
-    "homeUrl": "https://your-domain.com",
-    "imageUrl": "https://your-domain.com/preview.png",
-    "buttonTitle": "Play Now (0.1 CELO)"
-  }
-}
 ```
 
 ---
 
-## 📖 Documentation
+## 📁 Project Structure
 
-- [GAME-RULES.md](./GAME-RULES.md) - Complete game mechanics and rules
-- [GAME-GUIDE.md](./GAME-GUIDE.md) - Player guide and strategies
-- [CLAUDE.md](./CLAUDE.md) - AI-assisted development documentation
-- [Smart Contract Docs](./Contracts/README.md) - Contract architecture and deployment
-- [DEPLOYMENT-CHECKLIST.md](./DEPLOYMENT-CHECKLIST.md) - Production deployment guide
-
-**📊 Contract Explorers:**
-- [Mainnet Proxy (Blockscout)](https://celo.blockscout.com/address/0x05342b1bA42A5B35807592912d7f073DfB95873a) - Live mainnet contract (v3.6.2)
-- [Testnet Proxy (Blockscout)](https://celo-sepolia.blockscout.com/address/0xABA644cA3692295def60E09926844830b84348Bb) - Sepolia testnet contract (v3.6.2)
+```
+ColorDrop/
+├── ColorDropApp/           # Next.js 16 Frontend
+│   ├── app/               # App Router pages
+│   │   ├── api/          # Edge API routes
+│   │   └── .well-known/  # Farcaster manifest
+│   ├── components/        # React components
+│   ├── hooks/            # Custom React hooks
+│   ├── contexts/         # React contexts
+│   └── lib/              # Utilities
+│
+├── Contracts/             # Solidity Smart Contracts
+│   ├── contracts/        # ColorDropPool.sol
+│   ├── scripts/          # Deploy & upgrade scripts
+│   └── test/             # Contract tests
+│
+├── CLAUDE.md             # AI development guide
+├── GAME-RULES.md         # Complete game rules
+└── README.md             # This file
+```
 
 ---
 
 ## 🎯 Roadmap
 
-### Phase 1: MVP (Weeks 1-2) ✅
-- [x] Core color matching gameplay
-- [x] Pool smart contract
-- [x] Farcaster authentication
-- [x] Basic UI/UX
+```mermaid
+gantt
+    title Color Drop Roadmap 2025
+    dateFormat  YYYY-MM
+    section Phase 1
+    Core Game MVP           :done, 2024-11, 2024-12
+    Celo Integration        :done, 2024-12, 2024-12
+    section Phase 2
+    SELF Protocol           :done, 2024-12, 2024-12
+    Testnet Launch          :done, 2024-12, 2024-12
+    section Phase 3
+    Mainnet Launch          :active, 2024-12, 2025-01
+    Security Audit          :2025-01, 2025-02
+    section Phase 4
+    Tournaments             :2025-02, 2025-03
+    Leaderboards            :2025-02, 2025-03
+    section Phase 5
+    Private Rooms           :2025-03, 2025-04
+    NFT Rewards             :2025-04, 2025-05
+    Mobile App              :2025-05, 2025-06
+```
 
-### Phase 2: Beta Launch (Week 3) ✅
-- [x] Celo Sepolia testnet deployment
-- [x] SELF Protocol age verification integration
-- [x] Smart contract with UUPS upgradeability
-- [ ] Alpha testing with 100 users
-- [ ] Feedback integration
-- [ ] Bug fixes
+### Upcoming Features
 
-### Phase 3: Mainnet Launch (Week 4) ✅
-- [x] Celo mainnet deployment (0x05342b1bA42A5B35807592912d7f073DfB95873a)
-- [x] SELF verification production setup
-- [ ] Security audit for smart contracts
-- [ ] Frame integration
-- [ ] Meme generator
-- [ ] Channel setup (/color-drop)
-
-### Phase 4: Growth (Weeks 5-8)
-- [ ] Influencer partnerships
-- [ ] Community tournaments
-- [ ] Leaderboard season 1
-- [ ] Daily/weekly challenges
-
-### Phase 5: Features (Month 2+)
-- [ ] Private rooms
-- [ ] Streak bonuses
-- [ ] Power-ups system
-- [ ] Color library (collectibles)
-- [ ] Mobile app optimization
-
----
-
-## 🤝 Contributing
-
-We welcome contributions! Please see our contributing guidelines.
-
-### Development Workflow
-
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open Pull Request
-
-### Code Standards
-
-- TypeScript strict mode
-- ESLint + Prettier
-- Component tests (Jest + React Testing Library)
-- Contract tests (Forge)
-
----
-
-## 📊 Key Metrics
-
-### Target (30 Days Post-Launch)
-- 10,000+ unique players (FIDs)
-- 100,000+ rounds played
-- 300+ CELO daily volume
-- 25% weekly retention
-- 40% share rate
+- [ ] **Daily Challenges** — Special color palettes with boosted prizes
+- [ ] **Streak Bonuses** — Win consecutive games for multipliers
+- [ ] **Private Rooms** — Invite friends to compete
+- [ ] **NFT Trophies** — Collectible achievements for top players
+- [ ] **Leaderboards** — Season rankings with exclusive rewards
 
 ---
 
 ## 🔐 Security
 
-- Smart contracts audited by [TBD]
-- Regular security updates
-- Bug bounty program (coming soon)
+| Protection | Implementation |
+|------------|----------------|
+| Reentrancy | `ReentrancyGuard` on all payable functions |
+| Pausable | Emergency stop capability |
+| Access Control | Role-based (Admin, Upgrader, Verifier) |
+| Upgradeable | UUPS pattern for safe upgrades |
+| Age Verification | SELF Protocol zero-knowledge proofs |
 
-**Report vulnerabilities:** security@colordrop.app
-
----
-
-## 📜 License
-
-MIT License - see [LICENSE](./LICENSE)
+**Report vulnerabilities:** security@art3hub.xyz
 
 ---
 
 ## 🌐 Links
 
-- **Website:** https://colordrop.app
-- **Farcaster:** /color-drop channel
-- **Twitter:** [@ColorDropGame](https://twitter.com/ColorDropGame)
-- **Discord:** [Join Community](https://discord.gg/colordrop)
+| Resource | Link |
+|----------|------|
+| **Play Now** | [colordrop.art3hub.xyz](https://colordrop.art3hub.xyz) |
+| **Smart Contract** | [Celo Blockscout](https://celo.blockscout.com/address/0x05342b1bA42A5B35807592912d7f073DfB95873a) |
+| **Farcaster** | /color-drop channel |
+| **GitHub** | [Art3Hub/ColorDrop](https://github.com/art3hub/colordrop) |
 
 ---
 
-## 👥 Team
+## 👥 Built By
 
-Built by [Art3Hub](https://art3hub.io) with ❤️ for the Farcaster x Celo ecosystem.
+<div align="center">
+
+**[Art3Hub](https://art3hub.xyz)** — Building the future of Web3 gaming
+
+*With love for the Farcaster × Celo ecosystem*
+
+</div>
 
 ---
 
 ## 🙏 Acknowledgments
 
-- **Farcaster** team for Mini App SDK and protocol
-- **Celo Foundation** for mobile-first blockchain infrastructure
-- **SELF Protocol** for privacy-preserving age verification
-- Early testers and community feedback
-- Color science references and HSL theory
+- **Farcaster** — For the Mini App SDK and social layer
+- **Celo Foundation** — For mobile-first, carbon-negative blockchain
+- **SELF Protocol** — For privacy-preserving identity verification
+- **OpenZeppelin** — For battle-tested smart contract libraries
 
 ---
 
-**Ready to play? Join a pool and prove your color skills! 🎨**
+<div align="center">
 
+**Ready to prove your color perception? 🎨**
+
+[**🎮 Play Color Drop Now**](https://colordrop.art3hub.xyz)
+
+*Match colors. Win CELO. Be the best.*
+
+</div>
