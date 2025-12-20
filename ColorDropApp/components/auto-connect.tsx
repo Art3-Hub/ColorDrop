@@ -57,6 +57,9 @@ export function AutoConnect({ children, enabled = true }: PropsWithChildren<{ en
   const [hasConnectedWithFarcaster, setHasConnectedWithFarcaster] = useState(false)
   // Debounce timer to let wagmi state settle
   const [isSettled, setIsSettled] = useState(false)
+  // Track auto-connect attempts for retry logic
+  const autoConnectAttempts = useRef(0)
+  const maxAutoConnectAttempts = 3
 
   // Wait for wagmi to settle after initial load (cookies may restore connection async)
   useEffect(() => {
@@ -173,10 +176,20 @@ export function AutoConnect({ children, enabled = true }: PropsWithChildren<{ en
       return
     }
 
-    if (isConnected || isConnecting) {
+    // FIX: Only skip if we're truly connected (with a connector) or actively connecting with a valid connector
+    // On first load, wagmi may briefly report isConnecting=true without a connector, which is a false positive
+    const hasRealConnection = isConnected && connector
+    const hasRealConnectingState = isConnecting && connector
+
+    if (hasRealConnection || hasRealConnectingState) {
       // Let the continuous check handle wrong connector
       console.log('[AutoConnect] Already connected/connecting, current connector:', connector?.id)
       return
+    }
+
+    // If isConnecting but no connector, it's wagmi's internal state - proceed with our connect
+    if (isConnecting && !connector) {
+      console.log('[AutoConnect] isConnecting but no connector - proceeding with Farcaster auto-connect')
     }
 
     async function handleAutoConnect() {
@@ -196,9 +209,20 @@ export function AutoConnect({ children, enabled = true }: PropsWithChildren<{ en
         const farcasterConnector = findFarcasterConnector(connectors)
 
         if (!farcasterConnector) {
-          console.error('[AutoConnect] ❌ No Farcaster connector found')
+          autoConnectAttempts.current++
+          console.warn('[AutoConnect] ⚠️ No Farcaster connector found (attempt', autoConnectAttempts.current, '/', maxAutoConnectAttempts, ')')
           console.log('[AutoConnect] Available connectors:', connectors.map(c => c.id))
           console.log('[AutoConnect] Looking for:', VALID_FARCASTER_CONNECTOR_IDS)
+
+          // Retry after a short delay if we haven't exceeded max attempts
+          if (autoConnectAttempts.current < maxAutoConnectAttempts) {
+            console.log('[AutoConnect] 🔄 Will retry in 500ms...')
+            setTimeout(() => {
+              // Trigger re-run by updating a dependency (toggle isSettled briefly)
+              setIsSettled(false)
+              setTimeout(() => setIsSettled(true), 100)
+            }, 500)
+          }
           return
         }
 
@@ -206,9 +230,20 @@ export function AutoConnect({ children, enabled = true }: PropsWithChildren<{ en
         await connect({ connector: farcasterConnector })
         console.log('[AutoConnect] ✅ Connected successfully with:', farcasterConnector.id)
         setHasConnectedWithFarcaster(true)
+        autoConnectAttempts.current = 0 // Reset on success
 
       } catch (error) {
         console.error('[AutoConnect] ❌ Failed:', error)
+        autoConnectAttempts.current++
+
+        // Retry on error if we haven't exceeded max attempts
+        if (autoConnectAttempts.current < maxAutoConnectAttempts) {
+          console.log('[AutoConnect] 🔄 Will retry connection in 1000ms (attempt', autoConnectAttempts.current, '/', maxAutoConnectAttempts, ')...')
+          setTimeout(() => {
+            setIsSettled(false)
+            setTimeout(() => setIsSettled(true), 100)
+          }, 1000)
+        }
       }
     }
 

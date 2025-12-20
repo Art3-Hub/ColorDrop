@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
-import { sdk } from '@farcaster/miniapp-sdk';
+import { sdk } from '@farcaster/miniapp-sdk'; // Used for sharing functionality
 import { ConnectButton } from '@/components/ConnectButton';
 import { PlatformIndicator } from '@/components/PlatformIndicator';
 import { PlayGrid } from '@/components/landing/PlayGrid';
@@ -62,25 +62,15 @@ export default function Home() {
   const POOL_SIZE = 16;
   const ENTRY_FEE_VALUE = parseFloat(process.env.NEXT_PUBLIC_ENTRY_FEE || '0.1');
 
-  // Initialize Farcaster SDK and call ready() to hide splash screen
+  // Log Farcaster environment detection
+  // Note: sdk.actions.ready() is now called earlier in initializeFarcaster() (lib/farcaster.ts)
   useEffect(() => {
-    async function initFarcaster() {
-      try {
-        // Call ready() if in mini app to hide Farcaster splash screen
-        if (isInMiniApp) {
-          sdk.actions.ready();
-          console.log('[ColorDrop] 🎯 Farcaster MiniApp detected');
-          console.log('[ColorDrop] 📱 SDK ready() called - splash screen hidden');
-          console.log('[ColorDrop] 💡 Wallet should auto-connect via wagmi useAccount()');
-        } else {
-          console.log('[ColorDrop] 🌐 Running in browser mode');
-        }
-      } catch (error) {
-        console.error('[ColorDrop] ❌ Failed to initialize Farcaster SDK:', error);
-      }
+    if (isInMiniApp) {
+      console.log('[ColorDrop] 🎯 Farcaster MiniApp detected');
+      console.log('[ColorDrop] 💡 Wallet should auto-connect via wagmi useAccount()');
+    } else {
+      console.log('[ColorDrop] 🌐 Running in browser mode');
     }
-
-    initFarcaster();
   }, [isInMiniApp]);
 
   // Log wallet connection status for debugging
