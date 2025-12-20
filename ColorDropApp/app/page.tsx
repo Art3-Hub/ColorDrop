@@ -34,7 +34,8 @@ async function sharePoolOnFarcaster(poolId: bigint | undefined, prizePool: numbe
     callToAction = `Come and win fast! ${slotsRemaining} slots open 🚀`;
   }
 
-  const text = `${emoji} Join me in Color Drop Pool #${poolIdStr}!\n\n🎨 Match colors in 10 seconds\n💰 Prize Pool: ${prizePool.toFixed(2)} CELO\n🏆 Top 3 win prizes!\n\n${callToAction}`;
+  const entryFee = parseFloat(process.env.NEXT_PUBLIC_ENTRY_FEE || '0.1');
+  const text = `${emoji} Join me in Color Drop Pool #${poolIdStr}!\n\n🎨 Match colors in 10 seconds\n🎟️ Entry: ${entryFee} CELO\n💰 Prize Pool: ${prizePool.toFixed(2)} CELO\n🏆 Top 3 win prizes!\n\n${callToAction}`;
   const embedUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://colordrop.app';
 
   try {
@@ -157,11 +158,13 @@ export default function Home() {
                     ENTRY_FEE_VALUE * POOL_SIZE,
                     poolData ? POOL_SIZE - poolData.playerCount : POOL_SIZE
                   )}
-                  className="inline-flex items-center gap-1 px-3 py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg text-sm font-medium hover:from-purple-700 hover:to-blue-700 transition-all shadow-sm"
+                  className="inline-flex items-center gap-1.5 px-3 py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg text-sm font-medium hover:from-purple-700 hover:to-blue-700 transition-all shadow-sm"
                   title="Invite friends to play"
                 >
-                  <span>Share and Win</span>
-                  <span className="hidden xs:inline">Share</span>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                  </svg>
+                  <span>Share</span>
                 </button>
               )}
               {/* Connect Button - Hidden on mobile when connected (moved to hamburger menu) */}
