@@ -10,7 +10,7 @@ import ColorDropPoolABI from '@/contracts/ColorDropPool.json';
 const DEFAULT_NETWORK = process.env.NEXT_PUBLIC_DEFAULT_NETWORK || 'celo';
 const POOL_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS_MAINNET as `0x${string}`;
 const TARGET_CHAIN = celo;
-const ENTRY_FEE = parseEther(process.env.NEXT_PUBLIC_ENTRY_FEE || '0.1');
+const ENTRY_FEE = parseEther(process.env.NEXT_PUBLIC_ENTRY_FEE || '0.5');
 const POLL_INTERVAL = 2000; // 2 seconds
 
 console.log('🔧 ColorDropPool Hook Configuration - MAINNET ONLY:', {
@@ -20,7 +20,7 @@ console.log('🔧 ColorDropPool Hook Configuration - MAINNET ONLY:', {
   CHAIN_ID: TARGET_CHAIN.id,
   ENTRY_FEE: ENTRY_FEE.toString(),
   ENTRY_FEE_CELO: (Number(ENTRY_FEE) / 1e18).toFixed(2) + ' CELO',
-  EXPECTED_VERSION: '4.0.0 - updated pool mechanics',
+  EXPECTED_VERSION: '5.0.0 - 0.5 CELO entry, 3 treasuries',
 });
 
 export interface PlayerSlot {
@@ -132,7 +132,7 @@ export function useColorDropPool() {
   useEffect(() => {
     if (address) {
       console.log('📋 CONTRACT VERSION:', contractVersion);
-      console.log('   → Expected: "4.0.0" (updated pool mechanics)');
+      console.log('   → Expected: "5.0.0" (0.5 CELO entry, 3 treasuries)');
       console.log('🔐 Direct activePoolId read for', address, ':', activePoolIdForUser?.toString());
       console.log('   → If activePoolId is NOT 0, then submitScore did NOT reset it');
       if (activePoolIdForUser && BigInt(activePoolIdForUser.toString()) !== BigInt(0)) {

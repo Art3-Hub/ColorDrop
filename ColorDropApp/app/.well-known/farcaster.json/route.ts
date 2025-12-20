@@ -20,7 +20,7 @@ export async function GET() {
       splashBackgroundColor: "#7c3aed", // Purple brand color
       subtitle: "Match colors, win CELO prizes",
       description:
-        "Ultra-fast color matching tournament on Celo. 12 players compete in real-time, top 3 winners split the prize pool. Entry fee: 0.1 CELO. Built on Farcaster.",
+        "Ultra-fast color matching tournament on Celo. 16 players compete in real-time, top 3 winners split the prize pool (3.5, 2.5, 1.25 CELO). Entry fee: 0.5 CELO. Built on Farcaster.",
       screenshotUrls: [
         `${appUrl}/screenshot1.png`,
         `${appUrl}/screenshot2.png`,
@@ -31,7 +31,7 @@ export async function GET() {
       heroImageUrl: `${appUrl}/og-image.png`,
       tagline: "Match colors, win CELO",
       ogTitle: "Color Drop Tournament in CELO",
-      ogDescription: "Ultra-fast color matching game. 12 players compete, top 3 win prizes. Entry: 0.1 CELO",
+      ogDescription: "Ultra-fast color matching game. 16 players compete, top 3 win prizes (3.5, 2.5, 1.25 CELO). Entry: 0.5 CELO",
       ogImageUrl: `${appUrl}/og-image.png`,
       noindex: false,
     },

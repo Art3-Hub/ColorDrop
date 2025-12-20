@@ -78,13 +78,13 @@ export function PaymentModal({
           <div className="border-t border-celo-dark-tan pt-3 mt-3">
             <div className="text-xs sm:text-sm text-celo-body space-y-1">
               <div className="flex items-center gap-2">
-                <span>🥇 1st: 0.6 CELO</span>
+                <span>🥇 1st: 3.5 CELO</span>
               </div>
               <div className="flex items-center gap-2">
-                <span>🥈 2nd: 0.3 CELO</span>
+                <span>🥈 2nd: 2.5 CELO</span>
               </div>
               <div className="flex items-center gap-2">
-                <span>🥉 3rd: 0.1 CELO</span>
+                <span>🥉 3rd: 1.25 CELO</span>
               </div>
             </div>
           </div>

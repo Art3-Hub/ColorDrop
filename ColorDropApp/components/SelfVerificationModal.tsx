@@ -87,7 +87,7 @@ export function SelfVerificationModal({
           {isMandatory ? (
             <div className="bg-celo-error/10 border border-celo-error/30 rounded-lg px-3 py-2">
               <p className="text-celo-error font-medium text-sm">
-                🚫 You&apos;ve used your 2 free slots
+                🚫 You&apos;ve used your 4 free slots
               </p>
               <p className="text-xs text-celo-error/80">
                 SELF verification required for additional slots

@@ -41,7 +41,7 @@ export function GameScreen({ onBackToLobby, slotNumber }: GameScreenProps) {
   const [isPaying, setIsPaying] = useState(false);
 
   const GAME_DURATION = 10; // 10 seconds
-  const ENTRY_FEE_VALUE = parseFloat(process.env.NEXT_PUBLIC_ENTRY_FEE || '0.3');
+  const ENTRY_FEE_VALUE = parseFloat(process.env.NEXT_PUBLIC_ENTRY_FEE || '0.5');
   const ENTRY_FEE = `${ENTRY_FEE_VALUE} CELO`;
 
   // Handle score submission success - go back to lobby

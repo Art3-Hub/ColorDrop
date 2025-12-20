@@ -475,7 +475,7 @@ function PoolCard({
           )}
           <div className="text-center pt-2">
             <div className="text-xs text-celo-inactive">
-              Total Prize Pool: {(0.45 + 0.225 + 0.075).toFixed(2)} CELO
+              Total Prize Pool: {(3.5 + 2.5 + 1.25).toFixed(2)} CELO
             </div>
           </div>
         </div>
