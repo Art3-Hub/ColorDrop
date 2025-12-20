@@ -85,11 +85,12 @@ export function useColorDropPool() {
   });
 
   // Read pool data - always read from Celo
+  // Note: args must be a valid array when enabled, using 0 as placeholder when disabled to prevent ABI encoding errors
   const { data: poolData, refetch: refetchPoolData, isLoading: isLoadingPoolData, error: poolDataError } = useReadContract({
     address: POOL_ADDRESS,
     abi: ColorDropPoolABI.abi,
     functionName: 'pools',
-    args: currentPoolId ? [currentPoolId] : undefined,
+    args: [currentPoolId || BigInt(0)] as const,
     chainId: TARGET_CHAIN.id, // Explicitly read from Celo
     query: {
       enabled: !!currentPoolId,
@@ -97,11 +98,12 @@ export function useColorDropPool() {
   });
 
   // Read user status - always read from Celo
+  // Note: args must be a valid array when enabled, using placeholder address when disabled to prevent ABI encoding errors
   const { data: userStatusData, refetch: refetchUserStatus, isLoading: isLoadingUserStatus, error: userStatusError } = useReadContract({
     address: POOL_ADDRESS,
     abi: ColorDropPoolABI.abi,
     functionName: 'getUserStatus',
-    args: address ? [address] : undefined,
+    args: [address || '0x0000000000000000000000000000000000000000'] as const,
     chainId: TARGET_CHAIN.id, // Explicitly read from Celo
     query: {
       enabled: !!address,
@@ -109,11 +111,12 @@ export function useColorDropPool() {
   });
 
   // DEBUG: Also read activePoolId directly to verify contract state
+  // Note: args must be a valid array when enabled, using placeholder address when disabled to prevent ABI encoding errors
   const { data: activePoolIdForUser, refetch: refetchActivePoolId } = useReadContract({
     address: POOL_ADDRESS,
     abi: ColorDropPoolABI.abi,
     functionName: 'activePoolId',
-    args: address ? [address] : undefined,
+    args: [address || '0x0000000000000000000000000000000000000000'] as const,
     chainId: TARGET_CHAIN.id,
     query: {
       enabled: !!address,

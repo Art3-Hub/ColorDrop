@@ -140,6 +140,7 @@ export function usePastGames(limit: number = 10) {
     contracts: poolContracts as any,
     query: {
       enabled: poolContracts.length > 0,
+      refetchInterval: false, // Don't auto-refetch, we'll handle it manually
     },
   });
 
@@ -257,7 +258,7 @@ export function usePastGames(limit: number = 10) {
   }, [poolsData, poolIdsToFetch]);
 
   // Batch read pool winners data (v3.6.0+ claimable prizes)
-  const { data: poolWinnersData, isLoading: isLoadingWinners } = useReadContracts({
+  const { data: poolWinnersData, isLoading: isLoadingWinners, refetch: refetchPoolWinners } = useReadContracts({
     contracts: poolWinnersContracts.map(({ address, abi, functionName, args, chainId }) => ({
       address,
       abi,
@@ -267,6 +268,7 @@ export function usePastGames(limit: number = 10) {
     })) as any,
     query: {
       enabled: poolWinnersContracts.length > 0,
+      refetchInterval: false, // Don't auto-refetch, we'll handle it manually
     },
   });
 
@@ -466,20 +468,30 @@ export function usePastGames(limit: number = 10) {
     setIsLoading(isLoadingPools || isLoadingPlayers || isLoadingWinners);
   }, [isLoadingPools, isLoadingPlayers, isLoadingWinners]);
 
-  // Refetch after successful claim
+  // Refetch after successful claim - refetch all data to update claim status
   useEffect(() => {
     if (isClaimSuccess) {
+      console.log('✅ Claim successful! Refetching all data...');
+      // Refetch both pools and winners data to update claim status
       refetchPools();
+      // Small delay to ensure blockchain state is updated before refetching winners
+      setTimeout(() => {
+        refetchPoolWinners();
+      }, 1000);
     }
-  }, [isClaimSuccess, refetchPools]);
+  }, [isClaimSuccess, refetchPools, refetchPoolWinners]);
 
-  // Refetch after successful finalization
+  // Refetch after successful finalization - refetch all data to update pool state
   useEffect(() => {
     if (isFinalizeSuccess) {
-      console.log('✅ Finalization successful!');
+      console.log('✅ Finalization successful! Refetching all data...');
       refetchPools();
+      // Small delay to ensure blockchain state is updated before refetching winners
+      setTimeout(() => {
+        refetchPoolWinners();
+      }, 1000);
     }
-  }, [isFinalizeSuccess, refetchPools]);
+  }, [isFinalizeSuccess, refetchPools, refetchPoolWinners]);
 
   // Log finalize errors (only when error occurs)
   useEffect(() => {
@@ -495,9 +507,15 @@ export function usePastGames(limit: number = 10) {
     }
   }, [finalizeHash]);
 
+  // Comprehensive refetch function that refreshes all data including claim status
   const refetch = useCallback(() => {
+    console.log('🔄 Refetching all past games data...');
     refetchPools();
-  }, [refetchPools]);
+    // Delay winner refetch slightly to ensure pools data is processed first
+    setTimeout(() => {
+      refetchPoolWinners();
+    }, 500);
+  }, [refetchPools, refetchPoolWinners]);
 
   // Claim prize function
   const claimPrize = useCallback((poolId: bigint) => {
@@ -616,11 +634,15 @@ export function usePastGames(limit: number = 10) {
 
     setIsClaimingAll(false);
 
-    // Refetch to update UI
+    // Refetch all data to update UI (both pools and winners for claim status)
+    console.log('🔄 Refetching all data after claim all...');
     refetchPools();
+    setTimeout(() => {
+      refetchPoolWinners();
+    }, 500);
 
     return { claimedPrizes, failedPrizes };
-  }, [isClaimingAll, address, completedPools, claimWriteContractAsync, refetchPools]);
+  }, [isClaimingAll, address, completedPools, claimWriteContractAsync, refetchPools, refetchPoolWinners]);
 
   // Reset claim all progress
   const resetClaimAllProgress = useCallback(() => {
