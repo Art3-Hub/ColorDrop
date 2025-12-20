@@ -508,6 +508,27 @@ export function PastGames({ onBack }: PastGamesProps) {
     isFinalizeSuccess,
   } = usePastGames(20);
 
+  // DEBUG: Log the data from the hook
+  useEffect(() => {
+    console.log('🎮 [PastGames] Hook data:', {
+      currentPoolId: currentPoolId?.toString(),
+      completedPoolsCount: completedPools.length,
+      pendingPoolsCount: pendingFinalizationPools.length,
+      isLoading,
+      error,
+    });
+    if (completedPools.length > 0) {
+      console.log('🎮 [PastGames] Completed pools:', completedPools.map(p => ({
+        poolId: p.poolId.toString(),
+        playerCount: p.playerCount,
+        isCompleted: p.isCompleted,
+        winnersCount: p.winners.length,
+      })));
+    } else {
+      console.log('🎮 [PastGames] No completed pools found');
+    }
+  }, [completedPools, pendingFinalizationPools, currentPoolId, isLoading, error]);
+
   const [expandedPools, setExpandedPools] = useState<Set<string>>(new Set());
   const [claimingPoolId, setClaimingPoolId] = useState<bigint | null>(null);
   const [finalizingPoolId, setFinalizingPoolId] = useState<bigint | null>(null);

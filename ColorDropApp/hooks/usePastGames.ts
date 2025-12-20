@@ -96,12 +96,21 @@ export function usePastGames(limit: number = 10) {
   });
 
   // Get current pool ID to know the range
-  const { data: currentPoolId } = useReadContract({
+  const { data: currentPoolId, error: currentPoolIdError } = useReadContract({
     address: POOL_ADDRESS,
     abi: ColorDropPoolABI.abi,
     functionName: 'currentPoolId',
     chainId: TARGET_CHAIN.id,
   });
+
+  // DEBUG: Log currentPoolId
+  useEffect(() => {
+    console.log('📊 [usePastGames] Contract Address:', POOL_ADDRESS);
+    console.log('📊 [usePastGames] Current Pool ID:', currentPoolId?.toString());
+    if (currentPoolIdError) {
+      console.error('📊 [usePastGames] Error fetching currentPoolId:', currentPoolIdError);
+    }
+  }, [currentPoolId, currentPoolIdError]);
 
   // Calculate which pools to fetch (completed pools are poolId < currentPoolId)
   // IMPORTANT: Memoize this to prevent infinite re-renders in useEffect
@@ -127,12 +136,30 @@ export function usePastGames(limit: number = 10) {
   );
 
   // Batch read pool data
-  const { data: poolsData, isLoading: isLoadingPools, refetch: refetchPools } = useReadContracts({
+  const { data: poolsData, isLoading: isLoadingPools, refetch: refetchPools, error: poolsDataError } = useReadContracts({
     contracts: poolContracts as any,
     query: {
       enabled: poolContracts.length > 0,
     },
   });
+
+  // DEBUG: Log pools data
+  useEffect(() => {
+    console.log('📊 [usePastGames] Pool IDs to fetch:', poolIdsToFetch.map(id => id.toString()));
+    console.log('📊 [usePastGames] Pools Data:', poolsData);
+    if (poolsDataError) {
+      console.error('📊 [usePastGames] Error fetching pools:', poolsDataError);
+    }
+    if (poolsData) {
+      poolsData.forEach((result, idx) => {
+        console.log(`📊 [usePastGames] Pool ${poolIdsToFetch[idx]?.toString()}:`, {
+          status: result.status,
+          result: result.result,
+          error: result.error,
+        });
+      });
+    }
+  }, [poolsData, poolsDataError, poolIdsToFetch]);
 
   // Create contracts for fetching players of completed pools AND pools needing finalization
   // Memoize to prevent infinite re-renders
@@ -150,8 +177,12 @@ export function usePastGames(limit: number = 10) {
     if (poolsData) {
       poolsData.forEach((poolResult, poolIndex) => {
         if (poolResult.status === 'success' && poolResult.result) {
-          const [, playerCount, isPoolFull, isCompleted] = poolResult.result as [bigint, number, boolean, boolean, number, string];
+          // v4.0.0 getPool returns: (id, playerCount, isActive, isCompleted, startTime, targetColor)
+          const [, playerCount, _isActive, isCompleted] = poolResult.result as [bigint, number, boolean, boolean, number, string];
           const poolId = poolIdsToFetch[poolIndex];
+          // Pool is "full" if it has reached max players (9) - check by playerCount
+          const isPoolFull = playerCount >= 9;
+          void _isActive; // Mark as intentionally unused
 
           // Fetch players for completed pools OR full pools that need finalization
           if ((isCompleted || isPoolFull) && playerCount > 0) {
@@ -205,6 +236,7 @@ export function usePastGames(limit: number = 10) {
 
     poolsData.forEach((poolResult, poolIndex) => {
       if (poolResult.status === 'success' && poolResult.result) {
+        // v4.0.0 getPool returns: (id, playerCount, isActive, isCompleted, startTime, targetColor)
         const [, , , isCompleted] = poolResult.result as [bigint, number, boolean, boolean, number, string];
         const poolId = poolIdsToFetch[poolIndex];
 
@@ -271,9 +303,13 @@ export function usePastGames(limit: number = 10) {
 
       poolsData.forEach((poolResult, poolIndex) => {
         if (poolResult.status === 'success' && poolResult.result) {
-          const [id, playerCount, isPoolFull, isCompleted, startTime] = poolResult.result as [bigint, number, boolean, boolean, number, string];
+          // v4.0.0 getPool returns: (id, playerCount, isActive, isCompleted, startTime, targetColor)
+          const [id, playerCount, _isActive2, isCompleted, startTime] = poolResult.result as [bigint, number, boolean, boolean, number, string];
           const poolId = poolIdsToFetch[poolIndex];
           const startTimeNum = Number(startTime);
+          // Pool is "full" if it has reached max players (9) - check by playerCount
+          const isPoolFull = playerCount >= 9;
+          void _isActive2; // Mark as intentionally unused
 
           if (isCompleted) {
             // Collect all players for this completed pool
