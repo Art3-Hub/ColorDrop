@@ -54,10 +54,10 @@ export function PoolLobby({ poolId, onJoinPool, onStartGame }: PoolLobbyProps) {
   return (
     <div className="max-w-4xl mx-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl shadow-xl p-4 sm:p-8 text-white">
+      <div className="bg-celo-forest rounded-2xl shadow-xl p-4 sm:p-8 text-white">
         <div className="text-center">
           <h1 className="text-2xl sm:text-3xl font-bold mb-2">Pool #{poolId || '---'}</h1>
-          <p className="text-sm sm:text-base text-purple-100 mb-4 sm:mb-6">
+          <p className="text-sm sm:text-base text-white/80 mb-4 sm:mb-6">
             9-Player Tournament • {ENTRY_FEE} Entry
           </p>
 
@@ -83,15 +83,15 @@ export function PoolLobby({ poolId, onJoinPool, onStartGame }: PoolLobbyProps) {
       </div>
 
       {/* Pool Status */}
-      <div className="bg-white rounded-2xl shadow-xl p-6">
+      <div className="bg-white rounded-2xl shadow-xl p-6 border border-celo-dark-tan">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-gray-900">
+          <h2 className="text-xl font-bold text-celo-brown">
             Players ({players.length}/{POOL_SIZE})
           </h2>
           <div className={`px-4 py-2 rounded-full font-semibold ${
             isPoolFull
-              ? 'bg-green-100 text-green-700'
-              : 'bg-yellow-100 text-yellow-700'
+              ? 'bg-celo-success/10 text-celo-success'
+              : 'bg-celo-yellow/30 text-celo-brown'
           }`}>
             {isPoolFull ? 'Pool Full' : `${spotsLeft} spots left`}
           </div>
@@ -99,9 +99,9 @@ export function PoolLobby({ poolId, onJoinPool, onStartGame }: PoolLobbyProps) {
 
         {/* Progress Bar */}
         <div className="mb-6">
-          <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+          <div className="w-full bg-celo-dark-tan rounded-full h-4 overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-500"
+              className="h-full bg-celo-forest transition-all duration-500"
               style={{ width: `${(players.length / POOL_SIZE) * 100}%` }}
             />
           </div>
@@ -116,8 +116,8 @@ export function PoolLobby({ poolId, onJoinPool, onStartGame }: PoolLobbyProps) {
                 key={index}
                 className={`aspect-square rounded-xl flex items-center justify-center text-sm font-semibold ${
                   player
-                    ? 'bg-gradient-to-br from-purple-100 to-blue-100 text-purple-700 border-2 border-purple-300'
-                    : 'bg-gray-100 text-gray-400 border-2 border-gray-200 border-dashed'
+                    ? 'bg-celo-forest/10 text-celo-forest border-2 border-celo-forest/30'
+                    : 'bg-celo-dark-tan/30 text-celo-inactive border-2 border-celo-dark-tan border-dashed'
                 }`}
               >
                 {player ? (
@@ -141,27 +141,27 @@ export function PoolLobby({ poolId, onJoinPool, onStartGame }: PoolLobbyProps) {
             <button
               onClick={handleJoinPool}
               disabled={isJoining}
-              className="w-full px-6 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-lg font-semibold rounded-xl hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
+              className="w-full px-6 py-4 bg-celo-forest text-white text-lg font-semibold rounded-xl hover:bg-celo-forest/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
             >
               {isJoining ? 'Joining Pool...' : `Join Pool (${ENTRY_FEE})`}
             </button>
           )}
 
           {hasJoined && !isPoolFull && !isDemoMode && (
-            <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4 text-center">
+            <div className="bg-celo-success/10 border-2 border-celo-success/30 rounded-xl p-4 text-center">
               <div className="text-2xl mb-2">✅</div>
-              <div className="font-semibold text-green-700">
+              <div className="font-semibold text-celo-success">
                 You're in the pool!
               </div>
-              <div className="text-sm text-green-600">
+              <div className="text-sm text-celo-success/80">
                 Waiting for {spotsLeft} more {spotsLeft === 1 ? 'player' : 'players'}...
               </div>
             </div>
           )}
 
           {hasJoined && isDemoMode && !isPoolFull && (
-            <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-4 text-center mb-3">
-              <div className="text-sm text-yellow-700">
+            <div className="bg-celo-yellow/20 border-2 border-celo-yellow/50 rounded-xl p-4 text-center mb-3">
+              <div className="text-sm text-celo-brown">
                 🧪 <strong>Demo Mode:</strong> You can start the game now for testing
               </div>
             </div>
@@ -170,7 +170,7 @@ export function PoolLobby({ poolId, onJoinPool, onStartGame }: PoolLobbyProps) {
           {canStart && (
             <button
               onClick={onStartGame}
-              className="w-full px-6 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white text-lg font-semibold rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl"
+              className="w-full px-6 py-4 bg-celo-success text-white text-lg font-semibold rounded-xl hover:bg-celo-success/90 transition-all shadow-lg hover:shadow-xl"
             >
               {isDemoMode && !isPoolFull ? 'Start Game (Demo) 🎮' : 'Start Tournament 🎮'}
             </button>
@@ -179,9 +179,9 @@ export function PoolLobby({ poolId, onJoinPool, onStartGame }: PoolLobbyProps) {
       </div>
 
       {/* Game Rules */}
-      <div className="bg-gray-50 rounded-2xl p-6">
-        <h3 className="font-bold text-gray-900 mb-3">How to Win</h3>
-        <ul className="space-y-2 text-sm text-gray-700">
+      <div className="bg-celo-dark-tan/30 rounded-2xl p-6 border border-celo-dark-tan">
+        <h3 className="font-bold text-celo-brown mb-3">How to Win</h3>
+        <ul className="space-y-2 text-sm text-celo-body">
           <li className="flex items-start">
             <span className="mr-2">🎨</span>
             <span>Match the target color as closely as possible in 10 seconds</span>

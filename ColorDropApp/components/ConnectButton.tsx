@@ -51,14 +51,14 @@ export function ConnectButton() {
             <img
               src={farcasterUser.pfpUrl}
               alt={farcasterUser.displayName || farcasterUser.username || 'User'}
-              className="w-8 h-8 rounded-full border-2 border-purple-200"
+              className="w-8 h-8 rounded-full border-2 border-celo-dark-tan"
             />
           )}
           <div className="flex flex-col flex-1 min-w-0">
-            <span className="font-medium text-gray-900 text-sm truncate">
+            <span className="font-medium text-celo-brown text-sm truncate">
               {farcasterUser.displayName || `@${farcasterUser.username}`}
             </span>
-            <span className="text-xs text-green-600">✓ Auto-connected</span>
+            <span className="text-xs text-celo-success">✓ Auto-connected</span>
           </div>
         </div>
       );
@@ -69,10 +69,10 @@ export function ConnectButton() {
       return (
         <div className="flex items-center gap-2 w-full">
           <div className="flex-1">
-            <div className="text-sm font-mono text-gray-900">
+            <div className="text-sm font-mono text-celo-brown">
               {address.slice(0, 6)}...{address.slice(-4)}
             </div>
-            <div className="text-xs text-green-600">✓ Auto-connected</div>
+            <div className="text-xs text-celo-success">✓ Auto-connected</div>
           </div>
         </div>
       );
@@ -82,10 +82,10 @@ export function ConnectButton() {
     return (
       <div className="flex items-center gap-2 w-full">
         <div className="animate-pulse flex space-x-2">
-          <div className="w-8 h-8 bg-purple-200 rounded-full"></div>
+          <div className="w-8 h-8 bg-celo-dark-tan rounded-full"></div>
           <div className="flex-1 space-y-2 py-1">
-            <div className="h-3 bg-purple-200 rounded w-24"></div>
-            <div className="h-2 bg-purple-100 rounded w-20"></div>
+            <div className="h-3 bg-celo-dark-tan rounded w-24"></div>
+            <div className="h-2 bg-celo-dark-tan/50 rounded w-20"></div>
           </div>
         </div>
       </div>
@@ -100,14 +100,14 @@ export function ConnectButton() {
         <div className="flex flex-col gap-2 w-full">
           <div className="flex items-center gap-3">
             <div className="flex-1">
-              <div className="text-sm font-mono text-gray-900">
+              <div className="text-sm font-mono text-celo-brown">
                 {address?.slice(0, 6)}...{address?.slice(-4)}
               </div>
-              <div className="text-xs text-red-600">⚠️ Wrong Network</div>
+              <div className="text-xs text-celo-error">⚠️ Wrong Network</div>
             </div>
             <button
               onClick={() => disconnect()}
-              className="px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+              className="px-3 py-1.5 text-sm border border-celo-dark-tan rounded-md hover:bg-celo-dark-tan/30 transition-colors"
             >
               Disconnect
             </button>
@@ -115,7 +115,7 @@ export function ConnectButton() {
           <button
             onClick={() => switchChain({ chainId: celo.id })}
             disabled={isSwitchingChain}
-            className="w-full px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition-colors disabled:opacity-50"
+            className="w-full px-4 py-2 bg-celo-orange text-white rounded-md hover:bg-celo-orange/90 transition-colors disabled:opacity-50"
           >
             {isSwitchingChain ? 'Switching...' : 'Switch to Celo Mainnet'}
           </button>
@@ -126,14 +126,14 @@ export function ConnectButton() {
     return (
       <div className="flex items-center gap-3 w-full">
         <div className="flex-1">
-          <div className="text-sm font-mono text-gray-900">
+          <div className="text-sm font-mono text-celo-brown">
             {address?.slice(0, 6)}...{address?.slice(-4)}
           </div>
-          <div className="text-xs text-green-600">Connected to Celo</div>
+          <div className="text-xs text-celo-success">Connected to Celo</div>
         </div>
         <button
           onClick={() => disconnect()}
-          className="px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+          className="px-3 py-1.5 text-sm border border-celo-dark-tan rounded-md hover:bg-celo-dark-tan/30 transition-colors"
         >
           Disconnect
         </button>
@@ -145,7 +145,7 @@ export function ConnectButton() {
   return (
     <button
       onClick={handleBrowserConnect}
-      className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+      className="w-full px-4 py-2 bg-celo-forest text-white rounded-md hover:bg-celo-forest/90 transition-colors"
     >
       Connect Wallet
     </button>

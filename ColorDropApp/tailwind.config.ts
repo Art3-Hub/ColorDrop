@@ -12,6 +12,22 @@ const config: Config = {
       colors: {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        // Celo Brand Colors
+        celo: {
+          yellow: "#FCFF52",
+          forest: "#4E632A",
+          "light-tan": "#FBF6F1",
+          "dark-tan": "#E6E3D5",
+          brown: "#635949",
+          purple: "#1A0329",
+          success: "#329F3B",
+          error: "#E70532",
+          "light-blue": "#8AC0F9",
+          orange: "#F29E5F",
+          lime: "#B2EBA1",
+          body: "#666666",
+          inactive: "#9B9B9B",
+        },
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",

@@ -273,12 +273,12 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
           {/* Mobile: Ultra-compact motivating header */}
           <div className="sm:hidden">
             <div className="flex items-center justify-center gap-2 mb-1">
-              <div className="inline-flex items-center gap-1.5 bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full text-xs font-semibold">
-                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+              <div className="inline-flex items-center gap-1.5 bg-celo-forest/10 text-celo-forest px-2 py-0.5 rounded-full text-xs font-medium">
+                <span className="w-1.5 h-1.5 bg-celo-success rounded-full animate-pulse"></span>
                 Pool #{poolData?.poolId?.toString() || '...'}
               </div>
               {userStatus && (
-                <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
+                <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-celo-yellow/20 text-celo-brown border border-celo-yellow/50">
                   {currentPoolSlots >= MAX_UNVERIFIED_SLOTS
                     ? '🔐 SELF Required'
                     : `${Math.max(0, MAX_UNVERIFIED_SLOTS - currentPoolSlots)}/${MAX_UNVERIFIED_SLOTS} free`}
@@ -286,10 +286,10 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
               )}
             </div>
             {/* Motivating headline */}
-            <div className="text-sm font-bold text-gray-800 mb-1">
-              Win up to <span className="text-purple-600">{(ENTRY_FEE_VALUE * 7).toFixed(2)} CELO</span> now!
+            <div className="text-sm font-semibold text-celo-brown mb-1">
+              Win up to <span className="text-celo-forest">{(ENTRY_FEE_VALUE * 7).toFixed(2)} CELO</span> now!
             </div>
-            <div className="flex items-center justify-center gap-2 text-[11px] text-gray-500">
+            <div className="flex items-center justify-center gap-2 text-[11px] text-celo-body">
               <span>{ENTRY_FEE}/slot</span>
               <span>•</span>
               <span>🥇{(ENTRY_FEE_VALUE * 7).toFixed(2)} 🥈{(ENTRY_FEE_VALUE * 5).toFixed(2)} 🥉{(ENTRY_FEE_VALUE * 2.5).toFixed(2)}</span>
@@ -298,20 +298,20 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
 
           {/* Desktop/Tablet: Full detailed header */}
           <div className="hidden sm:block">
-            <div className="inline-flex items-center gap-2 bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-semibold mb-2">
-              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+            <div className="inline-flex items-center gap-2 bg-celo-forest/10 text-celo-forest px-3 py-1 rounded-full text-xs font-medium mb-2">
+              <span className="w-2 h-2 bg-celo-success rounded-full animate-pulse"></span>
               Pool #{poolData?.poolId?.toString() || '...'}
             </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">
-              Play & Win up to <span className="text-purple-600">{(ENTRY_FEE_VALUE * 7).toFixed(2)} CELO</span>!
+            <h2 className="text-xl sm:text-2xl font-bold text-celo-brown mb-1">
+              Play & Win up to <span className="text-celo-forest">{(ENTRY_FEE_VALUE * 7).toFixed(2)} CELO</span>!
             </h2>
-            <p className="text-sm text-gray-500 mb-3">
+            <p className="text-sm text-celo-body mb-3">
               {ENTRY_FEE} per slot • Top 3 win prizes!
             </p>
 
             {/* User Status Badge - v4.0.0: Always show slots status, never show "Unlimited" */}
             {userStatus && (
-              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium mb-3 bg-amber-50 text-amber-700 border border-amber-200">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium mb-3 bg-celo-yellow/20 text-celo-brown border border-celo-yellow/50">
                 {currentPoolSlots >= MAX_UNVERIFIED_SLOTS ? (
                   <>
                     <span>🔐</span>
@@ -327,23 +327,23 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
             )}
 
             {/* Prize Pool - Desktop only */}
-            <div className="bg-gradient-to-r from-purple-50 via-blue-50 to-purple-50 rounded-xl p-4 border border-purple-100">
-              <div className="text-xs text-gray-500 text-center mb-2 font-medium">🏆 Prize Pool</div>
+            <div className="bg-celo-dark-tan/30 rounded-xl p-4 border border-celo-dark-tan">
+              <div className="text-xs text-celo-body text-center mb-2 font-medium">🏆 Prize Pool</div>
               <div className="flex items-center justify-center gap-6">
                 <div className="text-center">
                   <div className="text-xl mb-0.5">🥇</div>
-                  <div className="text-lg font-bold text-yellow-600">{(ENTRY_FEE_VALUE * 7).toFixed(2)}</div>
-                  <div className="text-xs text-gray-500">CELO</div>
+                  <div className="text-lg font-bold text-celo-orange">{(ENTRY_FEE_VALUE * 7).toFixed(2)}</div>
+                  <div className="text-xs text-celo-inactive">CELO</div>
                 </div>
                 <div className="text-center">
                   <div className="text-xl mb-0.5">🥈</div>
-                  <div className="text-lg font-bold text-gray-500">{(ENTRY_FEE_VALUE * 5).toFixed(2)}</div>
-                  <div className="text-xs text-gray-500">CELO</div>
+                  <div className="text-lg font-bold text-celo-brown">{(ENTRY_FEE_VALUE * 5).toFixed(2)}</div>
+                  <div className="text-xs text-celo-inactive">CELO</div>
                 </div>
                 <div className="text-center">
                   <div className="text-xl mb-0.5">🥉</div>
-                  <div className="text-lg font-bold text-orange-500">{(ENTRY_FEE_VALUE * 2.5).toFixed(2)}</div>
-                  <div className="text-xs text-gray-500">CELO</div>
+                  <div className="text-lg font-bold text-celo-brown/70">{(ENTRY_FEE_VALUE * 2.5).toFixed(2)}</div>
+                  <div className="text-xs text-celo-inactive">CELO</div>
                 </div>
               </div>
             </div>
@@ -351,18 +351,18 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
 
           {/* Warnings - Show on all sizes when needed */}
           {hasActiveSlots && userStatus && !userStatus.canJoin && (
-            <div className="bg-orange-50 border border-orange-200 rounded-lg px-2 py-1.5 text-xs text-orange-700 mt-2">
-              <span className="font-semibold">⚠️</span> Tap your orange slot to play
+            <div className="bg-celo-orange/10 border border-celo-orange/30 rounded-lg px-2 py-1.5 text-xs text-celo-brown mt-2">
+              <span className="font-medium">⚠️</span> Tap your orange slot to play
             </div>
           )}
 
           {isWrongChain && (
-            <div className="bg-red-50 border border-red-200 rounded-lg px-2 py-1.5 text-xs text-red-700 flex items-center justify-between gap-2 mt-2">
+            <div className="bg-celo-error/10 border border-celo-error/30 rounded-lg px-2 py-1.5 text-xs text-celo-error flex items-center justify-between gap-2 mt-2">
               <span>Wrong Network: {connectedChain?.name || 'Unknown'}</span>
               <button
                 onClick={() => switchToCorrectChain()}
                 disabled={isSwitchingChain}
-                className="px-2 py-0.5 bg-red-600 text-white rounded text-xs font-medium hover:bg-red-700 disabled:opacity-50"
+                className="px-2 py-0.5 bg-celo-forest text-white rounded text-xs font-medium hover:bg-celo-forest/90 disabled:opacity-50"
               >
                 {isSwitchingChain ? '...' : 'Switch'}
               </button>
@@ -371,7 +371,7 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
         </div>
 
         {/* Play Grid - 16 slots in 4x4 grid */}
-        <div className="bg-white rounded-2xl shadow-lg p-3 sm:p-4 mb-4">
+        <div className="bg-white rounded-2xl shadow-sm border border-celo-dark-tan p-3 sm:p-4 mb-4">
           <div className="grid grid-cols-4 gap-2 sm:gap-3">
             {Array.from({ length: POOL_SIZE }, (_, i) => i + 1).map((slotNumber) => {
               const slotIndex = slotNumber - 1;
@@ -393,16 +393,16 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
               let slotClassName = '';
               if (isMySlot) {
                 if (hasSubmitted) {
-                  slotClassName = 'bg-gradient-to-br from-emerald-400 to-teal-500 border-emerald-300 text-white';
+                  slotClassName = 'bg-celo-success border-celo-success/50 text-white';
                 } else {
-                  slotClassName = 'bg-gradient-to-br from-orange-400 to-amber-500 border-orange-300 text-white hover:scale-[1.02] active:scale-[0.98] shadow-md hover:shadow-lg';
+                  slotClassName = 'bg-celo-orange border-celo-orange/50 text-white hover:scale-[1.02] active:scale-[0.98] shadow-sm hover:shadow-md';
                 }
               } else if (isOccupied) {
-                slotClassName = 'bg-gray-100 border-gray-200 text-gray-400';
+                slotClassName = 'bg-celo-dark-tan/50 border-celo-dark-tan text-celo-inactive';
               } else {
-                // v4.2.0: All available slots are purple/clickable
+                // v4.2.0: All available slots are forest green/clickable
                 // If user is at limit, clicking will show mandatory SELF verification
-                slotClassName = 'bg-gradient-to-br from-purple-500 to-indigo-600 border-purple-400 text-white hover:scale-[1.02] active:scale-[0.98] shadow-md hover:shadow-lg';
+                slotClassName = 'bg-celo-forest border-celo-forest/50 text-white hover:scale-[1.02] active:scale-[0.98] shadow-sm hover:shadow-md';
               }
 
               return (
@@ -411,7 +411,7 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
                   onClick={() => handleSlotClick(slotNumber)}
                   disabled={isDisabled}
                   className={`
-                    aspect-square rounded-xl border-2 font-semibold
+                    aspect-square rounded-xl border-2 font-medium
                     transition-all duration-150 transform
                     ${slotClassName}
                     disabled:cursor-not-allowed
@@ -428,7 +428,7 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
                     ) : (
                       <>
                         <span className="text-2xl sm:text-3xl">▶</span>
-                        <span className="text-[10px] sm:text-xs mt-0.5 font-bold">PLAY</span>
+                        <span className="text-[10px] sm:text-xs mt-0.5 font-semibold">PLAY</span>
                       </>
                     )
                   ) : isOccupied ? (
@@ -438,8 +438,8 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
                     </>
                   ) : (
                     <>
-                      <span className="text-[10px] sm:text-xs font-bold">TAP TO</span>
-                      <span className="text-[10px] sm:text-xs font-bold">PLAY</span>
+                      <span className="text-[10px] sm:text-xs font-semibold">TAP TO</span>
+                      <span className="text-[10px] sm:text-xs font-semibold">PLAY</span>
                       <span className="text-[9px] sm:text-[10px] mt-0.5 opacity-80">{ENTRY_FEE_VALUE} CELO</span>
                     </>
                   )}
@@ -449,65 +449,65 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
           </div>
 
           {/* Legend - compact */}
-          <div className="flex items-center justify-center gap-4 mt-3 pt-3 border-t border-gray-100 text-[10px] text-gray-500">
+          <div className="flex items-center justify-center gap-4 mt-3 pt-3 border-t border-celo-dark-tan/50 text-[10px] text-celo-body">
             <div className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded bg-gradient-to-br from-purple-500 to-indigo-600"></span>
+              <span className="w-3 h-3 rounded bg-celo-forest"></span>
               <span>Available</span>
             </div>
             <div className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded bg-gradient-to-br from-orange-400 to-amber-500"></span>
+              <span className="w-3 h-3 rounded bg-celo-orange"></span>
               <span>Your Turn</span>
             </div>
             <div className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded bg-gradient-to-br from-emerald-400 to-teal-500"></span>
+              <span className="w-3 h-3 rounded bg-celo-success"></span>
               <span>Complete</span>
             </div>
           </div>
         </div>
 
         {/* How to Play - Horizontal 3-column layout */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4 p-3">
-          <h3 className="text-sm font-bold text-gray-800 mb-2 text-center">How to Play</h3>
+        <div className="bg-white rounded-xl shadow-sm border border-celo-dark-tan mb-4 p-3">
+          <h3 className="text-sm font-semibold text-celo-brown mb-2 text-center">How to Play</h3>
           <div className="grid grid-cols-3 gap-2">
             <div className="flex flex-col items-center text-center">
-              <span className="w-6 h-6 rounded-full bg-purple-500 text-white flex items-center justify-center text-xs font-bold mb-1">1</span>
-              <div className="text-xs font-semibold text-gray-800">Pay {ENTRY_FEE}</div>
-              <div className="text-[10px] text-gray-500">Tap slot to join</div>
+              <span className="w-6 h-6 rounded-full bg-celo-forest text-white flex items-center justify-center text-xs font-medium mb-1">1</span>
+              <div className="text-xs font-medium text-celo-brown">Pay {ENTRY_FEE}</div>
+              <div className="text-[10px] text-celo-body">Tap slot to join</div>
             </div>
             <div className="flex flex-col items-center text-center">
-              <span className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-bold mb-1">2</span>
-              <div className="text-xs font-semibold text-gray-800">Match Color</div>
-              <div className="text-[10px] text-gray-500">10s with sliders</div>
+              <span className="w-6 h-6 rounded-full bg-celo-forest text-white flex items-center justify-center text-xs font-medium mb-1">2</span>
+              <div className="text-xs font-medium text-celo-brown">Match Color</div>
+              <div className="text-[10px] text-celo-body">10s with sliders</div>
             </div>
             <div className="flex flex-col items-center text-center">
-              <span className="w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center text-xs font-bold mb-1">3</span>
-              <div className="text-xs font-semibold text-gray-800">Win Prizes!</div>
-              <div className="text-[10px] text-gray-500">Top 3 win CELO</div>
+              <span className="w-6 h-6 rounded-full bg-celo-forest text-white flex items-center justify-center text-xs font-medium mb-1">3</span>
+              <div className="text-xs font-medium text-celo-brown">Win Prizes!</div>
+              <div className="text-[10px] text-celo-body">Top 3 win CELO</div>
             </div>
           </div>
         </div>
 
         {/* Stats Bar - Compact inline */}
-        <div className="flex items-center justify-between bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100 mb-4">
+        <div className="flex items-center justify-between bg-white rounded-xl px-4 py-3 shadow-sm border border-celo-dark-tan mb-4">
           <div className="text-center">
-            <div className="text-lg font-bold text-purple-600">
+            <div className="text-lg font-bold text-celo-forest">
               {poolData ? POOL_SIZE - poolData.playerCount : POOL_SIZE}
             </div>
-            <div className="text-[10px] text-gray-500">Open</div>
+            <div className="text-[10px] text-celo-body">Open</div>
           </div>
-          <div className="h-8 w-px bg-gray-200"></div>
+          <div className="h-8 w-px bg-celo-dark-tan"></div>
           <div className="text-center">
-            <div className="text-lg font-bold text-blue-600">
+            <div className="text-lg font-bold text-celo-brown">
               {poolData?.playerCount || 0}/{POOL_SIZE}
             </div>
-            <div className="text-[10px] text-gray-500">Filled</div>
+            <div className="text-[10px] text-celo-body">Filled</div>
           </div>
-          <div className="h-8 w-px bg-gray-200"></div>
+          <div className="h-8 w-px bg-celo-dark-tan"></div>
           <div className="text-center">
-            <div className="text-lg font-bold text-green-600">
+            <div className="text-lg font-bold text-celo-success">
               {(ENTRY_FEE_VALUE * POOL_SIZE).toFixed(1)}
             </div>
-            <div className="text-[10px] text-gray-500">Prize Pool</div>
+            <div className="text-[10px] text-celo-body">Prize Pool</div>
           </div>
         </div>
 
@@ -517,7 +517,7 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
           {poolData?.isComplete && onViewLeaderboard && (
             <button
               onClick={onViewLeaderboard}
-              className="w-full px-4 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-semibold rounded-xl hover:from-yellow-600 hover:to-orange-600 transition-all shadow-md flex items-center justify-center gap-2"
+              className="w-full px-4 py-3 bg-celo-orange text-white font-medium rounded-xl hover:bg-celo-orange/90 transition-all shadow-sm flex items-center justify-center gap-2"
             >
               <span className="text-lg">🏆</span>
               <span>View Results</span>
@@ -528,7 +528,7 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
           {onViewPastGames && (
             <button
               onClick={onViewPastGames}
-              className="w-full px-4 py-2.5 bg-white border border-gray-200 text-gray-600 font-medium rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center gap-2 text-sm"
+              className="w-full px-4 py-2.5 bg-white border border-celo-dark-tan text-celo-brown font-medium rounded-xl hover:bg-celo-light-tan transition-all flex items-center justify-center gap-2 text-sm"
             >
               <span>📜</span>
               <span>Past Games & Prizes</span>

@@ -27,8 +27,8 @@ export function PoolResults({ results, userAddress, onBackToLobby }: PoolResults
       {/* Header */}
       <div className={`rounded-2xl shadow-xl p-8 text-white ${
         isWinner
-          ? 'bg-gradient-to-r from-yellow-500 to-orange-500'
-          : 'bg-gradient-to-r from-purple-600 to-blue-600'
+          ? 'bg-celo-success'
+          : 'bg-celo-forest'
       }`}>
         <div className="text-center">
           <div className="text-6xl mb-4">
@@ -51,8 +51,8 @@ export function PoolResults({ results, userAddress, onBackToLobby }: PoolResults
       </div>
 
       {/* Top 3 Podium */}
-      <div className="bg-white rounded-2xl shadow-xl p-6">
-        <h2 className="text-2xl font-bold text-center text-gray-900 mb-6">
+      <div className="bg-white rounded-2xl shadow-xl p-6 border border-celo-dark-tan">
+        <h2 className="text-2xl font-bold text-center text-celo-brown mb-6">
           🏅 Winners
         </h2>
 
@@ -60,17 +60,17 @@ export function PoolResults({ results, userAddress, onBackToLobby }: PoolResults
           {/* 2nd Place */}
           {results[1] && (
             <div className="text-center order-1">
-              <div className="bg-gradient-to-br from-gray-200 to-gray-300 rounded-xl p-4 shadow-lg mb-3 h-32 flex flex-col justify-center">
+              <div className="bg-celo-dark-tan/50 rounded-xl p-4 shadow-lg mb-3 h-32 flex flex-col justify-center">
                 <div className="text-4xl mb-2">🥈</div>
-                <div className="text-3xl font-bold text-gray-700">2nd</div>
+                <div className="text-3xl font-bold text-celo-brown">2nd</div>
               </div>
-              <div className="text-sm font-semibold text-gray-900">
+              <div className="text-sm font-semibold text-celo-brown">
                 {results[1].username || `${results[1].address.slice(0, 6)}...`}
               </div>
-              <div className="text-xs text-gray-600">
+              <div className="text-xs text-celo-body">
                 {results[1].accuracy.toFixed(2)}%
               </div>
-              <div className="text-lg font-bold text-gray-700 mt-1">
+              <div className="text-lg font-bold text-celo-brown mt-1">
                 6 CELO
               </div>
             </div>
@@ -79,17 +79,17 @@ export function PoolResults({ results, userAddress, onBackToLobby }: PoolResults
           {/* 1st Place */}
           {results[0] && (
             <div className="text-center order-2">
-              <div className="bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-xl p-4 shadow-xl mb-3 h-40 flex flex-col justify-center transform scale-110">
+              <div className="bg-celo-yellow/50 rounded-xl p-4 shadow-xl mb-3 h-40 flex flex-col justify-center transform scale-110 border-2 border-celo-yellow">
                 <div className="text-5xl mb-2">🥇</div>
-                <div className="text-4xl font-bold text-yellow-900">1st</div>
+                <div className="text-4xl font-bold text-celo-forest">1st</div>
               </div>
-              <div className="text-base font-bold text-gray-900">
+              <div className="text-base font-bold text-celo-brown">
                 {results[0].username || `${results[0].address.slice(0, 6)}...`}
               </div>
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-celo-body">
                 {results[0].accuracy.toFixed(2)}%
               </div>
-              <div className="text-2xl font-bold text-yellow-600 mt-1">
+              <div className="text-2xl font-bold text-celo-forest mt-1">
                 10 CELO
               </div>
             </div>
@@ -98,17 +98,17 @@ export function PoolResults({ results, userAddress, onBackToLobby }: PoolResults
           {/* 3rd Place */}
           {results[2] && (
             <div className="text-center order-3">
-              <div className="bg-gradient-to-br from-orange-300 to-orange-400 rounded-xl p-4 shadow-lg mb-3 h-32 flex flex-col justify-center">
+              <div className="bg-celo-orange/20 rounded-xl p-4 shadow-lg mb-3 h-32 flex flex-col justify-center border border-celo-orange/50">
                 <div className="text-4xl mb-2">🥉</div>
-                <div className="text-3xl font-bold text-orange-900">3rd</div>
+                <div className="text-3xl font-bold text-celo-orange">3rd</div>
               </div>
-              <div className="text-sm font-semibold text-gray-900">
+              <div className="text-sm font-semibold text-celo-brown">
                 {results[2].username || `${results[2].address.slice(0, 6)}...`}
               </div>
-              <div className="text-xs text-gray-600">
+              <div className="text-xs text-celo-body">
                 {results[2].accuracy.toFixed(2)}%
               </div>
-              <div className="text-lg font-bold text-orange-700 mt-1">
+              <div className="text-lg font-bold text-celo-orange mt-1">
                 3 CELO
               </div>
             </div>
@@ -117,8 +117,8 @@ export function PoolResults({ results, userAddress, onBackToLobby }: PoolResults
       </div>
 
       {/* Full Leaderboard */}
-      <div className="bg-white rounded-2xl shadow-xl p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">
+      <div className="bg-white rounded-2xl shadow-xl p-6 border border-celo-dark-tan">
+        <h2 className="text-xl font-bold text-celo-brown mb-4">
           📊 Full Leaderboard
         </h2>
 
@@ -132,33 +132,33 @@ export function PoolResults({ results, userAddress, onBackToLobby }: PoolResults
                 key={result.address}
                 className={`flex items-center justify-between p-4 rounded-xl ${
                   isCurrentUser
-                    ? 'bg-blue-50 border-2 border-blue-300'
+                    ? 'bg-celo-forest/10 border-2 border-celo-forest/30'
                     : isTopThree
-                    ? 'bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200'
-                    : 'bg-gray-50 border border-gray-200'
+                    ? 'bg-celo-yellow/10 border-2 border-celo-yellow/50'
+                    : 'bg-celo-dark-tan/30 border border-celo-dark-tan'
                 }`}
               >
                 {/* Rank & Player */}
                 <div className="flex items-center gap-4 flex-1">
                   <div className={`text-2xl font-bold ${
-                    result.rank === 1 ? 'text-yellow-600' :
-                    result.rank === 2 ? 'text-gray-600' :
-                    result.rank === 3 ? 'text-orange-600' :
-                    'text-gray-400'
+                    result.rank === 1 ? 'text-celo-forest' :
+                    result.rank === 2 ? 'text-celo-brown' :
+                    result.rank === 3 ? 'text-celo-orange' :
+                    'text-celo-inactive'
                   }`}>
                     #{result.rank}
                   </div>
                   <div>
-                    <div className="font-semibold text-gray-900">
+                    <div className="font-semibold text-celo-brown">
                       {result.username || `${result.address.slice(0, 6)}...${result.address.slice(-4)}`}
                       {isCurrentUser && (
-                        <span className="ml-2 text-xs bg-blue-600 text-white px-2 py-1 rounded-full">
+                        <span className="ml-2 text-xs bg-celo-forest text-white px-2 py-1 rounded-full">
                           You
                         </span>
                       )}
                     </div>
                     {result.fid && (
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-celo-inactive">
                         FID: {result.fid}
                       </div>
                     )}
@@ -167,11 +167,11 @@ export function PoolResults({ results, userAddress, onBackToLobby }: PoolResults
 
                 {/* Accuracy */}
                 <div className="text-right">
-                  <div className="text-xl font-bold text-gray-900">
+                  <div className="text-xl font-bold text-celo-brown">
                     {result.accuracy.toFixed(2)}%
                   </div>
                   {result.prize && (
-                    <div className="text-sm font-semibold text-green-600">
+                    <div className="text-sm font-semibold text-celo-success">
                       {result.prize}
                     </div>
                   )}
@@ -186,7 +186,7 @@ export function PoolResults({ results, userAddress, onBackToLobby }: PoolResults
       <div className="flex gap-3">
         <button
           onClick={onBackToLobby}
-          className="flex-1 px-6 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all shadow-lg"
+          className="flex-1 px-6 py-4 bg-celo-forest text-white font-semibold rounded-xl hover:bg-celo-forest/90 transition-all shadow-lg"
         >
           Join New Pool
         </button>

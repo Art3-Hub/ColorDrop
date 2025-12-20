@@ -53,10 +53,10 @@ export function ColorPicker({ onColorChange, disabled = false }: ColorPickerProp
         {/* Hue Slider */}
         <div>
           <div className="flex justify-between items-center mb-1 sm:mb-2">
-            <label className="text-sm sm:text-sm font-medium text-gray-700">
+            <label className="text-sm sm:text-sm font-medium text-celo-brown">
               Hue
             </label>
-            <span className="text-sm sm:text-sm font-mono text-gray-600 bg-gray-100 px-2 py-0.5 rounded">{color.h}°</span>
+            <span className="text-sm sm:text-sm font-mono text-celo-body bg-celo-dark-tan/50 px-2 py-0.5 rounded">{color.h}°</span>
           </div>
           <input
             type="range"
@@ -83,10 +83,10 @@ export function ColorPicker({ onColorChange, disabled = false }: ColorPickerProp
         {/* Saturation Slider */}
         <div>
           <div className="flex justify-between items-center mb-1 sm:mb-2">
-            <label className="text-sm sm:text-sm font-medium text-gray-700">
+            <label className="text-sm sm:text-sm font-medium text-celo-brown">
               Saturation
             </label>
-            <span className="text-sm sm:text-sm font-mono text-gray-600 bg-gray-100 px-2 py-0.5 rounded">{color.s}%</span>
+            <span className="text-sm sm:text-sm font-mono text-celo-body bg-celo-dark-tan/50 px-2 py-0.5 rounded">{color.s}%</span>
           </div>
           <input
             type="range"
@@ -108,10 +108,10 @@ export function ColorPicker({ onColorChange, disabled = false }: ColorPickerProp
         {/* Lightness Slider */}
         <div>
           <div className="flex justify-between items-center mb-1 sm:mb-2">
-            <label className="text-sm sm:text-sm font-medium text-gray-700">
+            <label className="text-sm sm:text-sm font-medium text-celo-brown">
               Lightness
             </label>
-            <span className="text-sm sm:text-sm font-mono text-gray-600 bg-gray-100 px-2 py-0.5 rounded">{color.l}%</span>
+            <span className="text-sm sm:text-sm font-mono text-celo-body bg-celo-dark-tan/50 px-2 py-0.5 rounded">{color.l}%</span>
           </div>
           <input
             type="range"
@@ -133,8 +133,8 @@ export function ColorPicker({ onColorChange, disabled = false }: ColorPickerProp
       </div>
 
       {/* Color Values */}
-      <div className="bg-gray-50 rounded-lg p-2 sm:p-3">
-        <div className="text-xs font-mono text-gray-600 text-center">
+      <div className="bg-celo-dark-tan/30 rounded-lg p-2 sm:p-3 border border-celo-dark-tan">
+        <div className="text-xs font-mono text-celo-body text-center">
           {hslString}
         </div>
       </div>
@@ -149,7 +149,7 @@ export function ColorPicker({ onColorChange, disabled = false }: ColorPickerProp
           height: 28px;
           border-radius: 50%;
           background: white;
-          border: 3px solid #6366f1;
+          border: 3px solid #4E632A;
           box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
           cursor: pointer;
           margin-top: -4px;
@@ -160,7 +160,7 @@ export function ColorPicker({ onColorChange, disabled = false }: ColorPickerProp
           height: 28px;
           border-radius: 50%;
           background: white;
-          border: 3px solid #6366f1;
+          border: 3px solid #4E632A;
           box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
           cursor: pointer;
         }
@@ -168,12 +168,12 @@ export function ColorPicker({ onColorChange, disabled = false }: ColorPickerProp
         /* Active state for better feedback */
         .slider-thumb-large::-webkit-slider-thumb:active {
           transform: scale(1.1);
-          box-shadow: 0 3px 10px rgba(99, 102, 241, 0.4);
+          box-shadow: 0 3px 10px rgba(78, 99, 42, 0.4);
         }
 
         .slider-thumb-large::-moz-range-thumb:active {
           transform: scale(1.1);
-          box-shadow: 0 3px 10px rgba(99, 102, 241, 0.4);
+          box-shadow: 0 3px 10px rgba(78, 99, 42, 0.4);
         }
 
         /* Desktop: slightly smaller thumb */
