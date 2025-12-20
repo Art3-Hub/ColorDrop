@@ -26,6 +26,7 @@ interface SelfContextType {
   clearVerification: () => void
   startPolling: () => void
   stopPolling: () => void
+  setIsVerified: (verified: boolean) => void
 
   // Widget visibility
   showWidget: boolean
@@ -77,6 +78,7 @@ export function SelfProvider({ children }: SelfProviderProps) {
     if (!address) return
 
     try {
+      console.log('🔄 Polling verification status for:', address)
       const response = await fetch('/api/verify-self/check', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -84,21 +86,28 @@ export function SelfProvider({ children }: SelfProviderProps) {
       })
 
       const data = await response.json()
+      console.log('📊 Verification check response:', data)
 
       // v4.0.0: We check verification but DON'T persist it
       // This allows the current verification flow to complete
       // but next slot click will show SELF again
       if (data.verified) {
+        console.log('✅ Verification confirmed! Setting isVerified=true')
         // Temporarily set verified for current flow only
         setIsVerified(true)
         setVerificationData(data)
         setError(null)
+        setIsVerifying(false)
 
         // Stop polling if active
         if (pollingInterval) {
           clearInterval(pollingInterval)
           setPollingInterval(null)
         }
+      } else if (data.pending) {
+        console.log('⏳ On-chain verification pending, continuing to poll...')
+      } else {
+        console.log('❌ Not verified yet, continuing to poll...')
       }
     } catch (err) {
       console.error('Failed to check verification status:', err)
@@ -349,6 +358,7 @@ export function SelfProvider({ children }: SelfProviderProps) {
     clearVerification,
     startPolling,
     stopPolling,
+    setIsVerified,
     showWidget,
     setShowWidget,
   }
