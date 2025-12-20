@@ -62,16 +62,17 @@ export async function generateMetadata(): Promise<Metadata> {
       },
     },
 
-    // Icons
+    // Icons - favicon.ico for browser tab, icon.png for app icons
     icons: {
       icon: [
+        { url: "/favicon.ico", sizes: "any" },
         { url: "/icon.png", sizes: "32x32", type: "image/png" },
         { url: "/icon.png", sizes: "192x192", type: "image/png" },
       ],
       apple: [
         { url: "/icon.png", sizes: "180x180", type: "image/png" },
       ],
-      shortcut: "/icon.png",
+      shortcut: "/favicon.ico",
     },
 
     // Manifest for PWA
