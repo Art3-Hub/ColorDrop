@@ -23,7 +23,8 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
     isVerified,
     initiateSelfVerification,
     initiateDeeplinkVerification,
-    stopPolling
+    stopPolling,
+    clearVerification
   } = useSelf();
   const { shouldUseDeeplink } = usePlatformDetection();
 
@@ -31,7 +32,8 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
     poolData,
     currentPoolId,
     userStatus,
-    hasReachedSlotLimit,
+    // v4.2.0: Removed hasReachedSlotLimit - all slots are now clickable
+    // SELF verification modal shows skip option based on slotsUsed count
     joinPool,
     isJoinPending,
     isJoinConfirming,
@@ -85,14 +87,19 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
       console.log('🎮 Transaction confirmed! Starting game for slot:', pendingSlot);
       setLastProcessedHash(joinHash);
 
+      // v4.0.0: ALWAYS reset verification after successful payment
+      // This ensures SELF Protocol QR is shown on EVERY slot 3+ purchase (marketing requirement)
+      // User must re-verify with SELF for each slot beyond the 2 free slots
+      clearVerification();
+      console.log('🔄 Cleared verification state for next slot');
+
       // Start the game for this slot
-      // Note: SELF verification persists in session - verified users get unlimited slots
       onStartGame(pendingSlot);
       setFlowState('idle');
       setSelectedSlot(null);
       setPendingSlot(null);
     }
-  }, [isJoinSuccess, joinHash, lastProcessedHash, pendingSlot, onStartGame]);
+  }, [isJoinSuccess, joinHash, lastProcessedHash, pendingSlot, onStartGame, clearVerification]);
 
   const handleSlotClick = (slotNumber: number) => {
     const slotIndex = slotNumber - 1;
@@ -135,53 +142,47 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
       return;
     }
 
-    // IMPORTANT: Smart contract only allows ONE active slot at a time
-    // User must submit their score before buying another slot
-    // Check if user has an unfinished game (canJoin: false means they have an active slot)
+    // v4.2.0: Check if user has ACTUALLY unsubmitted slots (orange "PLAY NOW" slots)
+    // The canJoin flag from contract may be stale if activePoolId wasn't reset properly
+    // We check the actual slot data to see if user has pending games
+    const userHasUnsubmittedSlots = poolData?.playerSlots?.some((slot, idx) => {
+      const isUserSlot = poolData.players[idx]?.toLowerCase() === address?.toLowerCase();
+      return isUserSlot && !slot.hasSubmitted;
+    }) ?? false;
+
     console.log('🔎 CRITICAL CHECK - userStatus before allowing purple slot:', {
       userStatus: userStatus,
       canJoin: userStatus?.canJoin,
       slotsUsed: userStatus?.slotsUsed,
       slotsAvailable: userStatus?.slotsAvailable,
       isVerified: userStatus?.isVerified,
-      willBlock: userStatus && !userStatus.canJoin && userStatus.slotsUsed > 0
+      userHasUnsubmittedSlots,
+      willBlock: userHasUnsubmittedSlots
     });
 
-    if (userStatus && !userStatus.canJoin && userStatus.slotsUsed > 0) {
-      console.log('🚫 BLOCKED! User has unfinished game - canJoin is FALSE');
-      console.log('📊 Contract returned canJoin=false, meaning activePoolId[user] != 0');
-      console.log('💡 This should have been reset to 0 after submitScore() in v3.5.0');
+    // v4.2.0: Only block if user ACTUALLY has unsubmitted slots (orange slots)
+    // Don't rely solely on canJoin flag which may be stale
+    if (userHasUnsubmittedSlots) {
+      console.log('🚫 BLOCKED! User has unsubmitted slot - must play first');
       alert('You have an unfinished game! Please click your orange "PLAY NOW" slot to play and submit your score before buying another slot.');
       return;
     }
 
-    console.log('✅ ALLOWED - userStatus.canJoin is true, proceeding to payment');
+    console.log('✅ ALLOWED - No unsubmitted slots, proceeding to SELF verification');
 
     // For any available slot (purple), require payment
     // Each new slot costs 0.1 CELO regardless of how many slots user already has
     console.log('💰 Opening payment modal for new slot:', slotNumber);
     setSelectedSlot(slotNumber);
 
-    // v3.9.0: Show SELF verification on EVERY slot click for unverified users
-    // This encourages verification without blocking gameplay
-    // slotsUsed from contract is now PER-POOL (not lifetime)
+    // v4.1.0: ALWAYS show SELF verification modal for marketing
+    // - Slots 1-2: Show modal with SKIP option (can bypass)
+    // - Slots 3+: Show modal WITHOUT skip option (mandatory verification)
+    // This ensures SELF Protocol branding is ALWAYS shown for marketing purposes
     const slotsInCurrentPool = userStatus?.slotsUsed || 0;
-
-    if (!isVerified) {
-      // Always show verification prompt for unverified users
-      // They can skip if under the per-pool limit (2 slots)
-      if (slotsInCurrentPool >= MAX_UNVERIFIED_SLOTS) {
-        // At limit - must verify to continue (can't skip)
-        console.log('🔐 SELF verification REQUIRED - at per-pool slot limit');
-      } else {
-        // Under limit - can skip but we still encourage verification
-        console.log('🔐 Offering SELF verification (can skip)');
-      }
-      setFlowState('verification_prompt');
-    } else {
-      // Verified user - go directly to payment (unlimited slots)
-      setFlowState('payment');
-    }
+    console.log('🔐 Showing SELF verification modal - slot', slotsInCurrentPool + 1,
+      slotsInCurrentPool >= MAX_UNVERIFIED_SLOTS ? '(MANDATORY)' : '(can skip)');
+    setFlowState('verification_prompt');
   };
 
   const handleVerifySelf = async () => {
@@ -273,12 +274,10 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
                 Pool #{poolData?.poolId?.toString() || '...'}
               </div>
               {userStatus && (
-                <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-                  isVerified
-                    ? 'bg-green-50 text-green-700 border border-green-200'
-                    : 'bg-amber-50 text-amber-700 border border-amber-200'
-                }`}>
-                  {isVerified ? '✓ Unlimited' : `${Math.max(0, MAX_UNVERIFIED_SLOTS - currentPoolSlots)}/${MAX_UNVERIFIED_SLOTS} left`}
+                <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
+                  {currentPoolSlots >= MAX_UNVERIFIED_SLOTS
+                    ? '🔐 SELF Required'
+                    : `${Math.max(0, MAX_UNVERIFIED_SLOTS - currentPoolSlots)}/${MAX_UNVERIFIED_SLOTS} free`}
                 </div>
               )}
             </div>
@@ -306,22 +305,18 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
               {ENTRY_FEE} per slot • Top 3 win prizes!
             </p>
 
-            {/* User Status Badge */}
+            {/* User Status Badge - v4.0.0: Always show slots status, never show "Unlimited" */}
             {userStatus && (
-              <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium mb-3 ${
-                isVerified
-                  ? 'bg-green-50 text-green-700 border border-green-200'
-                  : 'bg-amber-50 text-amber-700 border border-amber-200'
-              }`}>
-                {isVerified ? (
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium mb-3 bg-amber-50 text-amber-700 border border-amber-200">
+                {currentPoolSlots >= MAX_UNVERIFIED_SLOTS ? (
                   <>
-                    <span>✓</span>
-                    <span>Unlimited Slots</span>
+                    <span>🔐</span>
+                    <span>SELF verification required for more slots</span>
                   </>
                 ) : (
                   <>
                     <span className="font-bold">{Math.max(0, MAX_UNVERIFIED_SLOTS - currentPoolSlots)}</span>
-                    <span>/ {MAX_UNVERIFIED_SLOTS} slots left</span>
+                    <span>/ {MAX_UNVERIFIED_SLOTS} free slots left</span>
                   </>
                 )}
               </div>
@@ -382,16 +377,15 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
                 poolData.players[slotIndex]?.toLowerCase() === address.toLowerCase();
               // Check if score has been submitted for this slot (on-chain)
               const hasSubmitted = poolData?.playerSlots?.[slotIndex]?.hasSubmitted ?? false;
-              // User can play if: they own the slot OR they haven't reached slot limit
-              const canPlay = isMySlot || !hasReachedSlotLimit;
-
-              // Button should be disabled if:
-              // 1. Slot is occupied by someone else (not my slot)
-              // 2. Slot is empty but user has reached slot limit
-              // 3. My slot but score already submitted (completed - can't play again)
-              const isDisabled = Boolean((isOccupied && !isMySlot) || (!isOccupied && hasReachedSlotLimit) || (isMySlot && hasSubmitted));
+              // v4.2.0: Button disabled conditions simplified
+              // - Slot is occupied by someone else (not my slot) = disabled
+              // - My slot but score already submitted = disabled
+              // - All available (empty) slots are ALWAYS clickable
+              // - If user at limit, clicking shows mandatory SELF verification (no skip)
+              const isDisabled = Boolean((isOccupied && !isMySlot) || (isMySlot && hasSubmitted));
 
               // Determine slot styling based on state
+              // v4.2.0: Removed "locked" state - all available slots are clickable
               let slotClassName = '';
               if (isMySlot) {
                 if (hasSubmitted) {
@@ -401,9 +395,9 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
                 }
               } else if (isOccupied) {
                 slotClassName = 'bg-gray-100 border-gray-200 text-gray-400';
-              } else if (!canPlay) {
-                slotClassName = 'bg-gray-50 border-gray-200 text-gray-300';
               } else {
+                // v4.2.0: All available slots are purple/clickable
+                // If user is at limit, clicking will show mandatory SELF verification
                 slotClassName = 'bg-gradient-to-br from-purple-500 to-indigo-600 border-purple-400 text-white hover:scale-[1.02] active:scale-[0.98] shadow-md hover:shadow-lg';
               }
 
@@ -420,6 +414,7 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
                     flex flex-col items-center justify-center
                   `}
                 >
+                  {/* v4.2.0: Removed locked state - all available slots are clickable */}
                   {isMySlot ? (
                     hasSubmitted ? (
                       <>
@@ -436,11 +431,6 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
                     <>
                       <span className="text-xl sm:text-2xl">●</span>
                       <span className="text-[10px] sm:text-xs mt-0.5">Taken</span>
-                    </>
-                  ) : !canPlay ? (
-                    <>
-                      <span className="text-xl sm:text-2xl">🔒</span>
-                      <span className="text-[10px] sm:text-xs mt-0.5">Limit</span>
                     </>
                   ) : (
                     <>
@@ -551,6 +541,7 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
         onCancel={handleCancelVerification}
         slotsRemaining={Math.max(0, MAX_UNVERIFIED_SLOTS - currentPoolSlots)}
         canSkip={canSkipVerification}
+        onProceedVerified={() => setFlowState('payment')}
       />
 
       {/* Payment Modal */}

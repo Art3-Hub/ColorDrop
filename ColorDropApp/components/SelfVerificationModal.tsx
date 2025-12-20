@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useSelf } from '@/contexts/SelfContext';
 import { usePlatformDetection } from '@/hooks/usePlatformDetection';
 import { SelfQRcodeWrapper } from '@selfxyz/qrcode';
@@ -11,6 +12,7 @@ interface SelfVerificationModalProps {
   onCancel: () => void;
   slotsRemaining: number;
   canSkip: boolean;
+  onProceedVerified?: () => void; // Called when verified user proceeds
 }
 
 export function SelfVerificationModal({
@@ -20,8 +22,9 @@ export function SelfVerificationModal({
   onCancel,
   slotsRemaining,
   canSkip,
+  onProceedVerified,
 }: SelfVerificationModalProps) {
-  const { isVerifying, error, selfApp, startPolling } = useSelf();
+  const { isVerified, isVerifying, error, selfApp, startPolling } = useSelf();
   const {
     shouldShowQRCode,
     shouldUseDeeplink,
@@ -40,90 +43,78 @@ export function SelfVerificationModal({
   // Determine if verification is mandatory (at slot limit)
   const isMandatory = !canSkip;
 
+  // v4.0.0: If verified, auto-proceed to payment (don't show success screen)
+  // This ensures SELF QR is always shown on next slot click for marketing
+  if (isVerified && onProceedVerified) {
+    // Auto-proceed after a brief moment
+    setTimeout(() => {
+      onProceedVerified();
+    }, 100);
+  }
+
+  // Always show verification screen with SELF branding (for marketing)
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
-        <div className="text-center space-y-4">
-          {/* Icon */}
-          <div className="text-6xl">🔐</div>
-
-          {/* Title */}
-          <h2 className="text-2xl font-bold text-gray-900">
-            {isMandatory ? 'Verification Required' : 'Unlock Unlimited Slots?'}
-          </h2>
-
-          {/* Description */}
-          <div className="space-y-3 text-sm text-gray-600">
-            <p>
-              Verify your age (18+) with SELF Protocol to {isMandatory ? 'continue playing' : 'unlock unlimited slots'}.
-            </p>
-
-            {isMandatory ? (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <p className="text-red-800 font-medium">
-                  🚫 You&apos;ve reached the 2-slot limit
-                </p>
-                <p className="text-xs text-red-700 mt-1">
-                  Verification is required to purchase more slots
-                </p>
-              </div>
-            ) : (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <p className="text-yellow-800 font-medium">
-                  ⚠️ You have {slotsRemaining} {slotsRemaining === 1 ? 'slot' : 'slots'} remaining
-                </p>
-                <p className="text-xs text-yellow-700 mt-1">
-                  Without verification, you&apos;re limited to 2 slots per game
-                </p>
-              </div>
-            )}
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-4 sm:p-6 max-h-[95vh] overflow-y-auto">
+        <div className="text-center space-y-3">
+          {/* SELF Protocol Logo + Header */}
+          <div className="flex flex-col items-center gap-2">
+            <Image
+              src="/self.png"
+              alt="SELF Protocol"
+              width={80}
+              height={80}
+              className="w-16 h-16 sm:w-20 sm:h-20"
+            />
+            <h2 className="text-lg sm:text-xl font-bold text-gray-900">
+              {isMandatory ? 'Age Verification Required' : 'Verify with SELF Protocol'}
+            </h2>
           </div>
 
-          {/* Benefits */}
-          <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-4 text-left">
-            <h3 className="font-bold text-gray-900 mb-2 text-sm">
-              ✨ Verification Benefits
-            </h3>
-            <ul className="space-y-1.5 text-xs text-gray-700">
-              <li className="flex items-start gap-2">
-                <span className="text-green-600 font-bold">✓</span>
-                <span>Unlimited slots in every game</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-green-600 font-bold">✓</span>
-                <span>One-time verification (persists in session)</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-green-600 font-bold">✓</span>
-                <span>Privacy-preserving (zero-knowledge proof)</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-green-600 font-bold">✓</span>
-                <span>No personal data stored or exposed</span>
-              </li>
-            </ul>
-          </div>
+          {/* Compact Description */}
+          <p className="text-xs sm:text-sm text-gray-600">
+            Verify your age (18+) to {isMandatory ? 'continue playing' : 'unlock more slots'}.
+          </p>
+
+          {/* Status Banner */}
+          {isMandatory ? (
+            <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+              <p className="text-red-800 font-medium text-sm">
+                🚫 You&apos;ve used your 2 free slots
+              </p>
+              <p className="text-xs text-red-700">
+                SELF verification required for additional slots
+              </p>
+            </div>
+          ) : (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+              <p className="text-amber-800 font-medium text-sm">
+                ⚠️ {slotsRemaining} free {slotsRemaining === 1 ? 'slot' : 'slots'} remaining
+              </p>
+            </div>
+          )}
 
           {/* Error Message */}
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-              <p className="text-sm text-red-800">{error}</p>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-2">
+              <p className="text-xs text-red-800">{error}</p>
             </div>
           )}
 
           {/* Verification Options */}
           {!isVerifying && !platformLoading && selfApp && (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {/* Farcaster: Show deeplink button first (primary action for mobile users) */}
               {shouldUseDeeplink && (
-                <div className="space-y-3">
+                <div className="space-y-1">
                   <button
                     onClick={onVerify}
-                    className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-4 rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition-all text-lg"
+                    className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-3 rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition-all text-sm flex items-center justify-center gap-2"
                   >
-                    📱 Open SELF App to Verify
+                    <Image src="/self.png" alt="" width={20} height={20} className="w-5 h-5" />
+                    Open SELF App to Verify
                   </button>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-[10px] text-gray-500">
                     Opens SELF app for verification, then returns here
                   </p>
                 </div>
@@ -131,26 +122,29 @@ export function SelfVerificationModal({
 
               {/* Divider when showing both options */}
               {shouldUseDeeplink && shouldShowQRCode && (
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <div className="flex-1 h-px bg-gray-200"></div>
-                  <span className="text-xs text-gray-400">or scan QR code</span>
+                  <span className="text-[10px] text-gray-400">or scan QR</span>
                   <div className="flex-1 h-px bg-gray-200"></div>
                 </div>
               )}
 
               {/* QR code option */}
               {shouldShowQRCode && (
-                <div className="space-y-3">
-                  <div className="bg-white p-4 rounded-lg border-2 border-purple-200 mx-auto inline-block">
-                    <SelfQRcodeWrapper
-                      selfApp={selfApp}
-                      onSuccess={handleQRSuccess}
-                      onError={(err) => {
-                        console.error('QR verification error:', err);
-                      }}
-                    />
+                <div className="space-y-2">
+                  <div className="bg-white p-2 rounded-lg border-2 border-purple-200 mx-auto inline-block qr-container">
+                    <div className="w-[180px] h-[180px] sm:w-[220px] sm:h-[220px] flex items-center justify-center overflow-hidden">
+                      <SelfQRcodeWrapper
+                        selfApp={selfApp}
+                        onSuccess={handleQRSuccess}
+                        size={160}
+                        onError={(err) => {
+                          console.error('QR verification error:', err);
+                        }}
+                      />
+                    </div>
                   </div>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-[10px] text-gray-500">
                     {isFarcaster
                       ? 'Or scan with SELF app on another device'
                       : 'Scan with SELF Protocol mobile app to verify'
@@ -163,27 +157,27 @@ export function SelfVerificationModal({
 
           {/* Verification in progress indicator */}
           {isVerifying && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
               <div className="flex items-center justify-center gap-2 text-blue-700">
-                <span className="animate-spin text-xl">⏳</span>
-                <span className="font-medium">Verifying your identity...</span>
+                <span className="animate-spin text-lg">⏳</span>
+                <span className="font-medium text-sm">Verifying...</span>
               </div>
-              <p className="text-xs text-blue-600 mt-2">
-                Complete verification in the SELF app. This may take up to 5 minutes.
+              <p className="text-[10px] text-blue-600 mt-1">
+                Complete verification in the SELF app
               </p>
             </div>
           )}
 
           {/* Action Buttons */}
-          <div className="flex flex-col gap-3 pt-2">
+          <div className="flex flex-col gap-2 pt-1">
             {/* Skip button - only show if user can skip */}
             {canSkip && (
               <button
                 onClick={onSkip}
                 disabled={isVerifying}
-                className="w-full bg-gray-100 text-gray-700 px-6 py-3 rounded-xl font-semibold hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-gray-100 text-gray-700 px-4 py-2.5 rounded-xl font-medium hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
               >
-                Skip for Now ({slotsRemaining} {slotsRemaining === 1 ? 'slot' : 'slots'} left)
+                Skip for Now ({slotsRemaining} free {slotsRemaining === 1 ? 'slot' : 'slots'} left)
               </button>
             )}
 
@@ -191,27 +185,41 @@ export function SelfVerificationModal({
             <button
               onClick={onCancel}
               disabled={isVerifying}
-              className="w-full bg-gray-100 text-gray-700 px-6 py-3 rounded-xl font-semibold hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-gray-100 text-gray-700 px-4 py-2.5 rounded-xl font-medium hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
             >
               Cancel
             </button>
           </div>
 
-          {/* Privacy Note */}
-          <p className="text-xs text-gray-500 pt-2">
-            SELF Protocol uses zero-knowledge proofs to verify age without
-            storing or exposing personal data.{' '}
-            <a
-              href="https://self.xyz"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-purple-600 hover:text-purple-700 underline"
-            >
-              Learn more
-            </a>
-          </p>
+          {/* SELF Protocol Branding Footer */}
+          <div className="pt-2 border-t border-gray-100">
+            <div className="flex items-center justify-center gap-1.5 text-[10px] text-gray-500">
+              <span>Powered by</span>
+              <a
+                href="https://self.xyz"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-purple-600 hover:text-purple-700 font-medium"
+              >
+                <Image src="/self.png" alt="" width={14} height={14} className="w-3.5 h-3.5" />
+                SELF Protocol
+              </a>
+              <span>• Zero-Knowledge Age Verification</span>
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* CSS to constrain QR code size */}
+      <style jsx global>{`
+        .qr-container svg,
+        .qr-container canvas {
+          max-width: 100% !important;
+          max-height: 100% !important;
+          width: 100% !important;
+          height: 100% !important;
+        }
+      `}</style>
     </div>
   );
 }

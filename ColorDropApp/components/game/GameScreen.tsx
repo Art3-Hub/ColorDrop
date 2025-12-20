@@ -153,30 +153,41 @@ export function GameScreen({ onBackToLobby, slotNumber }: GameScreenProps) {
       )}
 
       {gameState === 'playing' && (
-        <div className="space-y-4 sm:space-y-6">
-          {/* Timer */}
-          <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6">
-            <GameTimer
-              duration={GAME_DURATION}
-              onTimeUp={handleTimeUp}
-              isRunning={true}
-            />
+        <div className="space-y-3 sm:space-y-6">
+          {/* Combined Timer + Target Color Card - Side by side on mobile */}
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-3 sm:p-6">
+            <div className="flex items-center gap-3 sm:gap-6">
+              {/* Target Color - Left side */}
+              <div className="flex-shrink-0">
+                <div className="text-xs sm:text-sm font-semibold text-center text-gray-700 mb-1">
+                  Match This
+                </div>
+                <div
+                  className="w-20 h-20 sm:w-28 sm:h-28 rounded-xl shadow-lg border-3 border-white"
+                  style={{ backgroundColor: `hsl(${targetColor.h}, ${targetColor.s}%, ${targetColor.l}%)` }}
+                />
+                <div className="text-[8px] sm:text-[10px] font-mono text-purple-700 text-center mt-1 bg-purple-50 rounded px-1 py-0.5">
+                  H:{targetColor.h}° S:{targetColor.s}% L:{targetColor.l}%
+                </div>
+              </div>
+
+              {/* Timer - Right side, takes remaining space */}
+              <div className="flex-1 text-center">
+                <GameTimer
+                  duration={GAME_DURATION}
+                  onTimeUp={handleTimeUp}
+                  isRunning={true}
+                />
+              </div>
+            </div>
           </div>
 
-          {/* Game Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-            {/* Target Color */}
-            <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6">
-              <TargetColor color={targetColor} revealed={true} />
-            </div>
-
-            {/* User Color Picker */}
-            <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6">
-              <h3 className="text-base sm:text-lg font-semibold text-center text-gray-900 mb-4">
-                Your Color
-              </h3>
-              <ColorPicker onColorChange={handleColorChange} disabled={false} />
-            </div>
+          {/* User Color Picker - Full width for easy touch */}
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-3 sm:p-6">
+            <h3 className="text-sm sm:text-lg font-semibold text-center text-gray-900 mb-2 sm:mb-4">
+              Your Color
+            </h3>
+            <ColorPicker onColorChange={handleColorChange} disabled={false} />
           </div>
         </div>
       )}
