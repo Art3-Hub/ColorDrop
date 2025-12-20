@@ -119,33 +119,28 @@ export default function Home() {
   }, [poolData?.isComplete, appState]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
-      {/* Header */}
-      <header className="border-b border-gray-200 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 sm:py-4">
+    <div className="min-h-screen bg-celo-light-tan">
+      {/* Header - Elegant minimal design */}
+      <header className="border-b border-celo-dark-tan bg-white/90 backdrop-blur-sm sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 sm:gap-3">
               {/* Mobile Menu Button - Only show when connected */}
               {isConnected && (
                 <button
                   onClick={() => setMobileMenuOpen(true)}
-                  className="sm:hidden p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="sm:hidden p-1.5 rounded-md hover:bg-celo-dark-tan/50 transition-colors"
                   aria-label="Open menu"
                 >
-                  <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  <svg className="w-5 h-5 text-celo-brown" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 12h16M4 18h16" />
                   </svg>
                 </button>
               )}
-              <img src="/icon.png" alt="Color Drop" className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg" />
-              <div>
-                <div className="flex items-center gap-1.5 sm:gap-2">
-                  <h1 className="text-md sm:text-xl font-bold text-gray-900 leading-tight">
-                    <span className="block sm:inline">Color</span>
-                    <span className="block sm:inline sm:ml-1">Drop</span>
-                  </h1>
-                </div>
-              </div>
+              <img src="/icon.png" alt="Color Drop" className="w-14 h-14 sm:w-14 sm:h-14 rounded-lg" />
+              <h1 className="text-lg sm:text-xl font-semibold text-celo-brown tracking-tight">
+                Color Drop
+              </h1>
             </div>
 
             <div className="flex items-center gap-2 sm:gap-3">
@@ -158,11 +153,11 @@ export default function Home() {
                     ENTRY_FEE_VALUE * POOL_SIZE,
                     poolData ? POOL_SIZE - poolData.playerCount : POOL_SIZE
                   )}
-                  className="inline-flex items-center gap-1.5 px-3 py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg text-sm font-medium hover:from-purple-700 hover:to-blue-700 transition-all shadow-sm"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 bg-celo-forest text-white rounded-md text-sm font-medium hover:bg-celo-forest/90 transition-colors"
                   title="Invite friends to play"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                   </svg>
                   <span>Share</span>
                 </button>
@@ -188,18 +183,18 @@ export default function Home() {
           {/* Menu Panel */}
           <div className="absolute left-0 top-0 bottom-0 w-64 bg-white shadow-xl animate-slide-in-left">
             {/* Menu Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-100">
+            <div className="flex items-center justify-between p-4 border-b border-celo-dark-tan">
               <div className="flex items-center gap-2">
                 <img src="/icon.png" alt="Color Drop" className="w-8 h-8 rounded-lg" />
-                <span className="font-bold text-gray-900">Menu</span>
+                <span className="font-semibold text-celo-brown">Menu</span>
               </div>
               <button
                 onClick={() => setMobileMenuOpen(false)}
-                className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+                className="p-1.5 rounded-lg hover:bg-celo-dark-tan/50 transition-colors"
                 aria-label="Close menu"
               >
-                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg className="w-5 h-5 text-celo-body" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
@@ -211,16 +206,16 @@ export default function Home() {
                   setAppState('landing');
                   setMobileMenuOpen(false);
                 }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors ${
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${
                   appState === 'landing'
-                    ? 'bg-purple-100 text-purple-700'
-                    : 'hover:bg-gray-50 text-gray-700'
+                    ? 'bg-celo-forest/10 text-celo-forest'
+                    : 'hover:bg-celo-dark-tan/50 text-celo-brown'
                 }`}
               >
                 <span className="text-xl">🎮</span>
                 <div>
-                  <div className="font-semibold">Play Now</div>
-                  <div className="text-xs text-gray-500">Join a pool & compete</div>
+                  <div className="font-medium">Play Now</div>
+                  <div className="text-xs text-celo-body">Join a pool & compete</div>
                 </div>
               </button>
 
@@ -229,22 +224,22 @@ export default function Home() {
                   setAppState('pastGames');
                   setMobileMenuOpen(false);
                 }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors mt-1 ${
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors mt-1 ${
                   appState === 'pastGames'
-                    ? 'bg-purple-100 text-purple-700'
-                    : 'hover:bg-gray-50 text-gray-700'
+                    ? 'bg-celo-forest/10 text-celo-forest'
+                    : 'hover:bg-celo-dark-tan/50 text-celo-brown'
                 }`}
               >
                 <span className="text-xl">💰</span>
                 <div>
-                  <div className="font-semibold">Claim Prizes</div>
-                  <div className="text-xs text-gray-500">View past games & claim</div>
+                  <div className="font-medium">Claim Prizes</div>
+                  <div className="text-xs text-celo-body">View past games & claim</div>
                 </div>
               </button>
 
               {/* Wallet Section - Mobile only */}
-              <div className="mt-3 pt-3 border-t border-gray-100">
-                <div className="px-4 py-2 text-xs text-gray-400 font-medium">Wallet</div>
+              <div className="mt-3 pt-3 border-t border-celo-dark-tan">
+                <div className="px-4 py-2 text-xs text-celo-inactive font-medium uppercase tracking-wide">Wallet</div>
                 <div className="px-4">
                   <ConnectButton />
                 </div>
@@ -252,12 +247,12 @@ export default function Home() {
             </nav>
 
             {/* Menu Footer */}
-            <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100 bg-gray-50">
-              <div className="flex items-center justify-center gap-2 text-xs text-gray-400">
+            <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-celo-dark-tan bg-celo-light-tan">
+              <div className="flex items-center justify-center gap-2 text-xs text-celo-inactive">
                 <span>Built on</span>
-                <span className="font-semibold text-green-600">Celo</span>
+                <span className="font-medium text-celo-forest">Celo</span>
                 <span>•</span>
-                <span className="font-semibold text-purple-600">Farcaster</span>
+                <span className="font-medium text-celo-brown">Farcaster</span>
               </div>
             </div>
           </div>
@@ -268,46 +263,46 @@ export default function Home() {
       <main className="py-4 sm:py-8">
         {!isConnected && (
           <div className="max-w-2xl mx-auto px-3 sm:px-4">
-            <div className="bg-white rounded-2xl shadow-xl p-5 sm:p-10 text-center">
+            <div className="bg-white rounded-2xl shadow-sm border border-celo-dark-tan p-5 sm:p-10 text-center">
               {/* Hero Section */}
               <div className="mb-6 sm:mb-8">
                 <div className="text-5xl sm:text-7xl mb-4">🎨</div>
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                <h2 className="text-2xl sm:text-3xl font-bold text-celo-brown mb-2">
                   Color Drop Tournament
                 </h2>
-                <p className="text-base sm:text-lg text-gray-600 max-w-md mx-auto">
+                <p className="text-base sm:text-lg text-celo-body max-w-md mx-auto">
                   Match colors in 10 seconds. Top 3 win CELO prizes!
                 </p>
               </div>
 
               {/* Prize Highlight */}
-              <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-4 sm:p-6 mb-6">
-                <div className="text-sm text-gray-600 mb-3">Prize Pool per Game</div>
+              <div className="bg-celo-dark-tan/30 rounded-xl p-4 sm:p-6 mb-6">
+                <div className="text-sm text-celo-body mb-3">Prize Pool per Game</div>
                 <div className="flex justify-center items-center gap-3 sm:gap-6 flex-wrap">
                   <div className="text-center">
                     <div className="text-2xl mb-1">🥇</div>
-                    <div className="text-lg sm:text-xl font-bold text-yellow-600">{(ENTRY_FEE_VALUE * 7).toFixed(2)}</div>
-                    <div className="text-xs text-gray-500">CELO</div>
+                    <div className="text-lg sm:text-xl font-bold text-celo-orange">{(ENTRY_FEE_VALUE * 7).toFixed(2)}</div>
+                    <div className="text-xs text-celo-inactive">CELO</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl mb-1">🥈</div>
-                    <div className="text-lg sm:text-xl font-bold text-gray-500">{(ENTRY_FEE_VALUE * 5).toFixed(2)}</div>
-                    <div className="text-xs text-gray-500">CELO</div>
+                    <div className="text-lg sm:text-xl font-bold text-celo-brown">{(ENTRY_FEE_VALUE * 5).toFixed(2)}</div>
+                    <div className="text-xs text-celo-inactive">CELO</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl mb-1">🥉</div>
-                    <div className="text-lg sm:text-xl font-bold text-orange-500">{(ENTRY_FEE_VALUE * 2.5).toFixed(2)}</div>
-                    <div className="text-xs text-gray-500">CELO</div>
+                    <div className="text-lg sm:text-xl font-bold text-celo-brown/70">{(ENTRY_FEE_VALUE * 2.5).toFixed(2)}</div>
+                    <div className="text-xs text-celo-inactive">CELO</div>
                   </div>
                 </div>
-                <div className="text-xs text-gray-500 mt-3">
+                <div className="text-xs text-celo-inactive mt-3">
                   Entry: {ENTRY_FEE_VALUE} CELO • 16 players per pool
                 </div>
               </div>
 
               {/* Connect CTA */}
               <div className="mb-6">
-                <p className="text-sm text-gray-500 mb-4">
+                <p className="text-sm text-celo-body mb-4">
                   Connect your wallet to start playing
                 </p>
                 <div className="flex justify-center">
@@ -316,18 +311,18 @@ export default function Home() {
               </div>
 
               {NETWORK_INFO.isTestnet && NETWORK_INFO.faucet && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-                  <p className="text-sm text-yellow-800 mb-2">
+                <div className="bg-celo-yellow/20 border border-celo-yellow/50 rounded-lg p-4 mb-6">
+                  <p className="text-sm text-celo-brown mb-2">
                     🧪 <strong>Testing on {NETWORK_INFO.name}</strong>
                   </p>
-                  <p className="text-xs text-yellow-700 mb-3">
+                  <p className="text-xs text-celo-body mb-3">
                     Need test tokens? Get free CELO from the faucet:
                   </p>
                   <a
                     href={NETWORK_INFO.faucet}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white text-sm font-medium rounded-lg transition-colors"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-celo-forest hover:bg-celo-forest/90 text-white text-sm font-medium rounded-lg transition-colors"
                   >
                     Get Test CELO →
                   </a>
@@ -335,46 +330,46 @@ export default function Home() {
               )}
 
               {/* How It Works */}
-              <div className="bg-gray-50 rounded-xl p-5 sm:p-6 text-left">
-                <h3 className="font-bold text-gray-900 mb-4 text-center">How It Works</h3>
-                <div className="space-y-4 text-sm text-gray-700">
+              <div className="bg-celo-light-tan rounded-xl p-5 sm:p-6 text-left">
+                <h3 className="font-semibold text-celo-brown mb-4 text-center">How It Works</h3>
+                <div className="space-y-4 text-sm">
                   <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
-                      <span className="text-lg">1</span>
+                    <div className="w-8 h-8 rounded-full bg-celo-forest/10 flex items-center justify-center flex-shrink-0 text-celo-forest font-medium">
+                      1
                     </div>
                     <div>
-                      <div className="font-semibold text-gray-900">Choose a Slot</div>
-                      <div className="text-gray-600">Pay {ENTRY_FEE_VALUE} CELO to join the pool</div>
+                      <div className="font-medium text-celo-brown">Choose a Slot</div>
+                      <div className="text-celo-body">Pay {ENTRY_FEE_VALUE} CELO to join the pool</div>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                      <span className="text-lg">2</span>
+                    <div className="w-8 h-8 rounded-full bg-celo-forest/10 flex items-center justify-center flex-shrink-0 text-celo-forest font-medium">
+                      2
                     </div>
                     <div>
-                      <div className="font-semibold text-gray-900">Match the Color</div>
-                      <div className="text-gray-600">10 seconds to match using HSL sliders</div>
+                      <div className="font-medium text-celo-brown">Match the Color</div>
+                      <div className="text-celo-body">10 seconds to match using HSL sliders</div>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                      <span className="text-lg">3</span>
+                    <div className="w-8 h-8 rounded-full bg-celo-forest/10 flex items-center justify-center flex-shrink-0 text-celo-forest font-medium">
+                      3
                     </div>
                     <div>
-                      <div className="font-semibold text-gray-900">Win Prizes</div>
-                      <div className="text-gray-600">Top 3 most accurate players win CELO</div>
+                      <div className="font-medium text-celo-brown">Win Prizes</div>
+                      <div className="text-celo-body">Top 3 most accurate players win CELO</div>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Built on Celo badge */}
-              <div className="mt-6 flex items-center justify-center gap-2 text-xs text-gray-400">
+              <div className="mt-6 flex items-center justify-center gap-2 text-xs text-celo-inactive">
                 <span>Built on</span>
-                <span className="font-semibold text-green-600">Celo</span>
+                <span className="font-medium text-celo-forest">Celo</span>
                 <span>•</span>
                 <span>Powered by</span>
-                <span className="font-semibold text-purple-600">Farcaster</span>
+                <span className="font-medium text-celo-brown">Farcaster</span>
               </div>
             </div>
           </div>
@@ -402,22 +397,22 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-gray-200 bg-white/80 backdrop-blur-sm mt-8">
+      <footer className="border-t border-celo-dark-tan bg-white/80 backdrop-blur-sm mt-8">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 text-xs sm:text-sm text-gray-500">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 text-xs sm:text-sm text-celo-inactive">
             <div className="flex items-center gap-1.5">
               <span>Built on</span>
-              <span className="font-semibold text-green-600">Celo</span>
+              <span className="font-medium text-celo-forest">Celo</span>
             </div>
             <span className="hidden sm:inline">•</span>
             <div className="flex items-center gap-1.5">
               <span>Powered by</span>
-              <span className="font-semibold text-purple-600">Farcaster</span>
+              <span className="font-medium text-celo-brown">Farcaster</span>
             </div>
             <span className="hidden sm:inline">•</span>
             <a
-              href="https://github.com/art3hub/colordrop"
-              className="text-gray-500 hover:text-purple-600 font-medium transition-colors"
+              href="https://github.com/Art3-Hub/ColorDrop"
+              className="text-celo-inactive hover:text-celo-forest font-medium transition-colors"
               target="_blank"
               rel="noopener noreferrer"
             >

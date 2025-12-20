@@ -56,7 +56,7 @@ export function GameTimer({ duration, onTimeUp, isRunning }: GameTimerProps) {
       <div className="flex justify-center">
         <div
           className={`text-4xl sm:text-6xl font-bold transition-colors ${
-            isLowTime ? 'text-red-600 animate-pulse' : 'text-gray-900'
+            isLowTime ? 'text-celo-error animate-pulse' : 'text-celo-brown'
           }`}
         >
           {timeLeft}<span className="text-2xl sm:text-4xl">s</span>
@@ -64,20 +64,20 @@ export function GameTimer({ duration, onTimeUp, isRunning }: GameTimerProps) {
       </div>
 
       {/* Progress Bar */}
-      <div className="w-full bg-gray-200 rounded-full h-2 sm:h-3 overflow-hidden">
+      <div className="w-full bg-celo-dark-tan rounded-full h-2 sm:h-3 overflow-hidden">
         <div
           className={`h-full transition-all duration-1000 ${
-            isLowTime ? 'bg-red-500' : 'bg-gradient-to-r from-blue-500 to-purple-500'
+            isLowTime ? 'bg-celo-error' : 'bg-celo-forest'
           }`}
           style={{ width: `${progress}%` }}
         />
       </div>
 
       {/* Status Text - Compact on mobile */}
-      <div className="text-center text-xs sm:text-sm text-gray-600">
+      <div className="text-center text-xs sm:text-sm text-celo-body">
         {isRunning ? (
           isLowTime ? (
-            <span className="font-semibold text-red-600">⚡ Hurry!</span>
+            <span className="font-semibold text-celo-error">⚡ Hurry!</span>
           ) : (
             <span className="hidden sm:inline">Match the color as closely as you can</span>
           )

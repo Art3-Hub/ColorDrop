@@ -67,27 +67,27 @@ interface ClaimSuccessModalProps {
 function ClaimSuccessModal({ poolId, rank, prize, onClose }: ClaimSuccessModalProps) {
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 text-center">
+      <div className="bg-white rounded-2xl shadow-2xl border border-celo-dark-tan max-w-md w-full p-6 text-center">
         <div className="text-6xl mb-4">🎉</div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+        <h2 className="text-2xl font-bold text-celo-brown mb-2">
           Prize Claimed!
         </h2>
-        <p className="text-gray-600 mb-4">
-          You received <span className="font-bold text-green-600">{prize} CELO</span> for winning{' '}
+        <p className="text-celo-body mb-4">
+          You received <span className="font-bold text-celo-success">{prize} CELO</span> for winning{' '}
           {getRankEmoji(rank as 1 | 2 | 3)} {rank === 1 ? '1st' : rank === 2 ? '2nd' : '3rd'} place in Pool #{poolId.toString()}
         </p>
 
         <div className="space-y-3">
           <button
             onClick={() => shareOnFarcaster(poolId, rank, prize)}
-            className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition-all flex items-center justify-center gap-2"
+            className="w-full bg-celo-forest text-white px-6 py-3 rounded-xl font-semibold hover:bg-celo-forest/90 transition-all flex items-center justify-center gap-2"
           >
             <span>📣</span> Share on Farcaster
           </button>
 
           <button
             onClick={onClose}
-            className="w-full bg-gray-100 text-gray-700 px-6 py-3 rounded-xl font-semibold hover:bg-gray-200 transition-colors"
+            className="w-full bg-celo-dark-tan/50 text-celo-brown px-6 py-3 rounded-xl font-semibold hover:bg-celo-dark-tan transition-colors"
           >
             Close
           </button>
@@ -116,26 +116,26 @@ function ClaimAllProgressModal({ progress, isClaimingAll, onClose }: ClaimAllPro
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+      <div className="bg-white rounded-2xl shadow-2xl border border-celo-dark-tan max-w-md w-full p-6">
         <div className="text-center">
           {isClaimingAll ? (
             <>
               <div className="text-5xl mb-4 animate-bounce">💰</div>
-              <h2 className="text-xl font-bold text-gray-900 mb-2">
+              <h2 className="text-xl font-bold text-celo-brown mb-2">
                 Claiming Prizes...
               </h2>
-              <p className="text-gray-600 mb-4">
+              <p className="text-celo-body mb-4">
                 Processing {progress.current} of {progress.total} prizes
               </p>
               {progress.currentPoolId && (
-                <p className="text-sm text-purple-600 mb-4">
+                <p className="text-sm text-celo-forest mb-4">
                   Claiming Pool #{progress.currentPoolId.toString()}
                 </p>
               )}
               {/* Progress bar */}
-              <div className="w-full bg-gray-200 rounded-full h-3 mb-4">
+              <div className="w-full bg-celo-dark-tan rounded-full h-3 mb-4">
                 <div
-                  className="bg-gradient-to-r from-green-500 to-emerald-500 h-3 rounded-full transition-all duration-500"
+                  className="bg-celo-success h-3 rounded-full transition-all duration-500"
                   style={{ width: `${(progress.current / progress.total) * 100}%` }}
                 />
               </div>
@@ -143,11 +143,11 @@ function ClaimAllProgressModal({ progress, isClaimingAll, onClose }: ClaimAllPro
           ) : isComplete ? (
             <>
               <div className="text-5xl mb-4">🎉</div>
-              <h2 className="text-xl font-bold text-gray-900 mb-2">
+              <h2 className="text-xl font-bold text-celo-brown mb-2">
                 {hasErrors ? 'Partially Complete' : 'All Prizes Claimed!'}
               </h2>
-              <p className="text-gray-600 mb-4">
-                You received <span className="font-bold text-green-600">{totalClaimed.toFixed(3)} CELO</span>
+              <p className="text-celo-body mb-4">
+                You received <span className="font-bold text-celo-success">{totalClaimed.toFixed(3)} CELO</span>
               </p>
             </>
           ) : null}
@@ -157,19 +157,19 @@ function ClaimAllProgressModal({ progress, isClaimingAll, onClose }: ClaimAllPro
         {(isComplete || progress.claimedPrizes.length > 0) && (
           <div className="mt-4 space-y-2 max-h-48 overflow-y-auto">
             {progress.claimedPrizes.map((prize, i) => (
-              <div key={i} className="flex items-center justify-between bg-green-50 rounded-lg px-3 py-2 text-sm">
-                <span className="text-green-700">
+              <div key={i} className="flex items-center justify-between bg-celo-success/10 rounded-lg px-3 py-2 text-sm">
+                <span className="text-celo-success">
                   {getRankEmoji(prize.rank as 1 | 2 | 3)} Pool #{prize.poolId.toString()}
                 </span>
-                <span className="font-semibold text-green-600">+{prize.amount} CELO</span>
+                <span className="font-semibold text-celo-success">+{prize.amount} CELO</span>
               </div>
             ))}
             {progress.failedPrizes.map((prize, i) => (
-              <div key={`failed-${i}`} className="flex items-center justify-between bg-red-50 rounded-lg px-3 py-2 text-sm">
-                <span className="text-red-700">
+              <div key={`failed-${i}`} className="flex items-center justify-between bg-celo-error/10 rounded-lg px-3 py-2 text-sm">
+                <span className="text-celo-error">
                   ❌ Pool #{prize.poolId.toString()}
                 </span>
-                <span className="text-red-500 text-xs">Failed</span>
+                <span className="text-celo-error text-xs">Failed</span>
               </div>
             ))}
           </div>
@@ -185,14 +185,14 @@ function ClaimAllProgressModal({ progress, isClaimingAll, onClose }: ClaimAllPro
                   const embedUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://colordrop.app';
                   window.open(`https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(embedUrl)}`, '_blank');
                 }}
-                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition-all flex items-center justify-center gap-2"
+                className="w-full bg-celo-forest text-white px-6 py-3 rounded-xl font-semibold hover:bg-celo-forest/90 transition-all flex items-center justify-center gap-2"
               >
                 <span>📣</span> Share on Farcaster
               </button>
             )}
             <button
               onClick={onClose}
-              className="w-full bg-gray-100 text-gray-700 px-6 py-3 rounded-xl font-semibold hover:bg-gray-200 transition-colors"
+              className="w-full bg-celo-dark-tan/50 text-celo-brown px-6 py-3 rounded-xl font-semibold hover:bg-celo-dark-tan transition-colors"
             >
               Close
             </button>
@@ -215,22 +215,22 @@ function WinnerCard({
 
   return (
     <div className={`flex items-center justify-between p-3 rounded-lg ${
-      winner.rank === 1 ? 'bg-yellow-50 border border-yellow-200' :
-      winner.rank === 2 ? 'bg-gray-100 border border-gray-200' :
-      'bg-orange-50 border border-orange-200'
-    } ${isCurrentUser ? 'ring-2 ring-purple-400' : ''}`}>
+      winner.rank === 1 ? 'bg-celo-yellow/20 border border-celo-yellow' :
+      winner.rank === 2 ? 'bg-celo-dark-tan/50 border border-celo-dark-tan' :
+      'bg-celo-orange/10 border border-celo-orange/50'
+    } ${isCurrentUser ? 'ring-2 ring-celo-forest' : ''}`}>
       <div className="flex items-center gap-3">
         <span className="text-2xl">{getRankEmoji(winner.rank)}</span>
         <div>
-          <div className="font-mono text-sm text-gray-800 flex items-center gap-2">
+          <div className="font-mono text-sm text-celo-brown flex items-center gap-2">
             {formatAddress(winner.address)}
             {isCurrentUser && (
-              <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded-full font-semibold">
+              <span className="px-2 py-0.5 bg-celo-forest/10 text-celo-forest text-xs rounded-full font-semibold">
                 You
               </span>
             )}
           </div>
-          <div className="text-xs text-gray-500">
+          <div className="text-xs text-celo-inactive">
             Accuracy: {winner.accuracy.toFixed(2)}%
           </div>
         </div>
@@ -238,24 +238,24 @@ function WinnerCard({
       <div className="text-right flex flex-col items-end gap-1">
         {/* Always show prize amount */}
         <div className={`font-bold text-lg ${
-          winner.rank === 1 ? 'text-yellow-600' :
-          winner.rank === 2 ? 'text-gray-600' :
-          'text-orange-600'
+          winner.rank === 1 ? 'text-celo-forest' :
+          winner.rank === 2 ? 'text-celo-brown' :
+          'text-celo-orange'
         }`}>
           {winner.prize} CELO
         </div>
         {/* Show status indicator (no individual claim buttons - use summary box instead) */}
         {winner.claimed ? (
-          <div className="text-xs text-green-600">
+          <div className="text-xs text-celo-success">
             ✓ Claimed
           </div>
         ) : !hasClaimablePrizes ? (
           // Legacy pool - prizes were auto-distributed before v3.6.0
-          <div className="text-xs text-gray-400 italic">
+          <div className="text-xs text-celo-inactive italic">
             Auto-distributed
           </div>
         ) : isCurrentUser && winner.isClaimable ? (
-          <div className="text-xs text-green-600 font-medium">
+          <div className="text-xs text-celo-success font-medium">
             Ready to claim
           </div>
         ) : null}
@@ -276,20 +276,20 @@ function PendingPoolCard({
   const isFinalizing = isFinalizingPoolId === pool.poolId;
 
   return (
-    <div className="bg-amber-50 border-2 border-amber-300 rounded-xl p-4">
+    <div className="bg-celo-orange/10 border-2 border-celo-orange/50 rounded-xl p-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white font-bold text-sm">
+          <div className="w-10 h-10 rounded-full bg-celo-orange flex items-center justify-center text-white font-bold text-sm">
             #{pool.poolId.toString()}
           </div>
           <div>
-            <div className="font-semibold text-gray-900 flex items-center gap-2">
+            <div className="font-semibold text-celo-brown flex items-center gap-2">
               Pool #{pool.poolId.toString()}
-              <span className="px-2 py-0.5 bg-amber-200 text-amber-800 text-xs rounded-full font-semibold">
+              <span className="px-2 py-0.5 bg-celo-orange/20 text-celo-orange text-xs rounded-full font-semibold">
                 Needs Finalization
               </span>
             </div>
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-celo-inactive">
               {formatDate(pool.startTime)} • {pool.playerCount} players
             </div>
           </div>
@@ -304,8 +304,8 @@ function PendingPoolCard({
             disabled={isFinalizing}
             className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
               isFinalizing
-                ? 'bg-gray-200 text-gray-500 cursor-wait'
-                : 'bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600'
+                ? 'bg-celo-dark-tan text-celo-inactive cursor-wait'
+                : 'bg-celo-orange text-white hover:bg-celo-orange/90'
             }`}
           >
             {isFinalizing ? (
@@ -317,13 +317,13 @@ function PendingPoolCard({
             )}
           </button>
         ) : (
-          <div className="text-xs text-amber-600 bg-amber-100 px-3 py-1.5 rounded-lg">
+          <div className="text-xs text-celo-orange bg-celo-orange/20 px-3 py-1.5 rounded-lg">
             ⏱️ Waiting for timeout...
           </div>
         )}
       </div>
 
-      <div className="mt-3 text-sm text-amber-700 bg-amber-100 rounded-lg p-3">
+      <div className="mt-3 text-sm text-celo-orange bg-celo-orange/20 rounded-lg p-3">
         <p className="font-medium">💡 What's happening?</p>
         <p className="text-xs mt-1">
           This pool has {pool.playerCount} players but not everyone submitted their score.
@@ -363,27 +363,27 @@ function PoolCard({
 
   return (
     <div className={`bg-white rounded-xl shadow-md overflow-hidden border ${
-      userHasUnclaimedPrize ? 'border-green-300 ring-2 ring-green-200' : 'border-gray-100'
+      userHasUnclaimedPrize ? 'border-celo-success/50 ring-2 ring-celo-success/20' : 'border-celo-dark-tan'
     }`}>
       {/* Pool Header */}
       <button
         onClick={onToggle}
-        className="w-full px-4 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+        className="w-full px-4 py-4 flex items-center justify-between hover:bg-celo-light-tan/50 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-sm">
+          <div className="w-10 h-10 rounded-full bg-celo-forest flex items-center justify-center text-white font-bold text-sm">
             #{pool.poolId.toString()}
           </div>
           <div className="text-left">
-            <div className="font-semibold text-gray-900 flex items-center gap-2">
+            <div className="font-semibold text-celo-brown flex items-center gap-2">
               Pool #{pool.poolId.toString()}
               {userHasUnclaimedPrize && (
-                <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full font-semibold animate-pulse">
+                <span className="px-2 py-0.5 bg-celo-success/10 text-celo-success text-xs rounded-full font-semibold animate-pulse">
                   Claim Prize!
                 </span>
               )}
             </div>
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-celo-inactive">
               {formatDate(pool.startTime)} • {pool.playerCount} players
             </div>
           </div>
@@ -395,7 +395,7 @@ function PoolCard({
             ))}
           </div>
           <svg
-            className={`w-5 h-5 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+            className={`w-5 h-5 text-celo-inactive transition-transform ${isExpanded ? 'rotate-180' : ''}`}
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -407,25 +407,25 @@ function PoolCard({
 
       {/* Expanded Winners List */}
       {isExpanded && (
-        <div className="px-4 pb-4 space-y-2 border-t border-gray-100 pt-3">
+        <div className="px-4 pb-4 space-y-2 border-t border-celo-dark-tan pt-3">
           {/* User's claimable prizes summary - shown at top inside the card with claim button */}
           {userHasUnclaimedPrize && (
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-3 mb-3">
+            <div className="bg-celo-success/10 border border-celo-success/30 rounded-lg p-3 mb-3">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <span className="text-lg">💰</span>
                   <div>
-                    <div className="text-sm font-semibold text-green-800">
+                    <div className="text-sm font-semibold text-celo-success">
                       Your Prizes to Claim
                     </div>
-                    <div className="text-xs text-green-600">
+                    <div className="text-xs text-celo-success/80">
                       {userUnclaimedWinners.length} {userUnclaimedWinners.length === 1 ? 'prize' : 'prizes'} available
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="text-right">
-                    <div className="text-xl font-bold text-green-700">
+                    <div className="text-xl font-bold text-celo-success">
                       {userTotalClaimable.toFixed(3)} CELO
                     </div>
                   </div>
@@ -434,8 +434,8 @@ function PoolCard({
                     disabled={claimingPoolId === pool.poolId}
                     className={`px-4 py-2 rounded-lg font-semibold text-sm whitespace-nowrap transition-all ${
                       claimingPoolId === pool.poolId
-                        ? 'bg-gray-200 text-gray-500 cursor-wait'
-                        : 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600 shadow-md hover:shadow-lg'
+                        ? 'bg-celo-dark-tan text-celo-inactive cursor-wait'
+                        : 'bg-celo-success text-white hover:bg-celo-success/90 shadow-md hover:shadow-lg'
                     }`}
                   >
                     {claimingPoolId === pool.poolId ? (
@@ -453,8 +453,8 @@ function PoolCard({
 
           {/* Legacy pool notice */}
           {!pool.hasClaimablePrizes && (
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-2">
-              <p className="text-xs text-gray-500 text-center">
+            <div className="bg-celo-dark-tan/30 border border-celo-dark-tan rounded-lg p-3 mb-2">
+              <p className="text-xs text-celo-inactive text-center">
                 💰 Prizes for this pool were auto-distributed to winners
               </p>
             </div>
@@ -469,12 +469,12 @@ function PoolCard({
               />
             ))
           ) : (
-            <div className="text-center text-gray-500 py-4">
+            <div className="text-center text-celo-inactive py-4">
               No winner data available
             </div>
           )}
           <div className="text-center pt-2">
-            <div className="text-xs text-gray-400">
+            <div className="text-xs text-celo-inactive">
               Total Prize Pool: {(0.45 + 0.225 + 0.075).toFixed(2)} CELO
             </div>
           </div>
@@ -607,7 +607,7 @@ export function PastGames({ onBack }: PastGamesProps) {
       <div className="flex items-center justify-between mb-6">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+          className="flex items-center gap-2 text-celo-brown hover:text-celo-forest transition-colors"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -617,7 +617,7 @@ export function PastGames({ onBack }: PastGamesProps) {
         <button
           onClick={refetch}
           disabled={isLoading}
-          className="flex items-center gap-2 px-3 py-1.5 text-sm text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-3 py-1.5 text-sm text-celo-forest hover:text-celo-forest/80 hover:bg-celo-forest/10 rounded-lg transition-colors disabled:opacity-50"
         >
           <svg className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -628,14 +628,14 @@ export function PastGames({ onBack }: PastGamesProps) {
 
       {/* Title Section */}
       <div className="text-center mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+        <h1 className="text-2xl sm:text-3xl font-bold text-celo-brown mb-2">
           Past Games
         </h1>
-        <p className="text-gray-600">
+        <p className="text-celo-body">
           View completed pools, winners, and claim your prizes
         </p>
         {currentPoolId !== undefined && (
-          <div className="mt-2 text-sm text-purple-600">
+          <div className="mt-2 text-sm text-celo-forest">
             Current Pool: #{String(currentPoolId)}
           </div>
         )}
@@ -643,15 +643,15 @@ export function PastGames({ onBack }: PastGamesProps) {
 
       {/* Unclaimed Prizes Banner */}
       {userPrizes.length > 0 && (
-        <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 mb-6">
+        <div className="bg-celo-success/10 border border-celo-success/30 rounded-xl p-4 mb-6">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start gap-3">
               <span className="text-2xl">💰</span>
               <div>
-                <div className="font-semibold text-green-800">
+                <div className="font-semibold text-celo-success">
                   You have {userPrizes.length} unclaimed {userPrizes.length === 1 ? 'prize' : 'prizes'}!
                 </div>
-                <div className="text-sm text-green-700">
+                <div className="text-sm text-celo-success/80">
                   Total: <span className="font-bold">{totalUnclaimedValue.toFixed(3)} CELO</span>
                 </div>
               </div>
@@ -662,8 +662,8 @@ export function PastGames({ onBack }: PastGamesProps) {
                 disabled={isClaimingAll}
                 className={`px-4 py-2 rounded-lg font-semibold text-sm whitespace-nowrap transition-all ${
                   isClaimingAll
-                    ? 'bg-gray-200 text-gray-500 cursor-wait'
-                    : 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600 shadow-md hover:shadow-lg'
+                    ? 'bg-celo-dark-tan text-celo-inactive cursor-wait'
+                    : 'bg-celo-success text-white hover:bg-celo-success/90 shadow-md hover:shadow-lg'
                 }`}
               >
                 {isClaimingAll ? (
@@ -675,7 +675,7 @@ export function PastGames({ onBack }: PastGamesProps) {
                 )}
               </button>
             ) : (
-              <div className="text-xs text-green-600 mt-1">
+              <div className="text-xs text-celo-success mt-1">
                 👇 Scroll to claim
               </div>
             )}
@@ -687,17 +687,17 @@ export function PastGames({ onBack }: PastGamesProps) {
       {isLoading && (
         <div className="text-center py-12">
           <div className="inline-block animate-spin text-4xl mb-4">🎨</div>
-          <p className="text-gray-600">Loading past games...</p>
+          <p className="text-celo-body">Loading past games...</p>
         </div>
       )}
 
       {/* Error State */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
-          <div className="text-red-600 font-medium mb-2">Failed to load past games</div>
+        <div className="bg-celo-error/10 border border-celo-error/30 rounded-xl p-4 text-center">
+          <div className="text-celo-error font-medium mb-2">Failed to load past games</div>
           <button
             onClick={refetch}
-            className="text-sm text-red-700 underline hover:no-underline"
+            className="text-sm text-celo-error underline hover:no-underline"
           >
             Try again
           </button>
@@ -707,7 +707,7 @@ export function PastGames({ onBack }: PastGamesProps) {
       {/* Pending Finalization Pools */}
       {!isLoading && !error && pendingFinalizationPools.length > 0 && (
         <div className="mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-celo-brown mb-3 flex items-center gap-2">
             <span>⏳</span> Pools Awaiting Finalization
           </h2>
           <div className="space-y-3">
@@ -727,13 +727,13 @@ export function PastGames({ onBack }: PastGamesProps) {
       {!isLoading && !error && completedPools.length === 0 && pendingFinalizationPools.length === 0 && (
         <div className="bg-white rounded-xl shadow-md p-8 text-center">
           <div className="text-5xl mb-4">🎮</div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Completed Games Yet</h3>
-          <p className="text-gray-600 mb-4">
+          <h3 className="text-lg font-semibold text-celo-brown mb-2">No Completed Games Yet</h3>
+          <p className="text-celo-body mb-4">
             Be the first to complete a pool and see the results here!
           </p>
           <button
             onClick={onBack}
-            className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            className="px-6 py-2 bg-celo-forest text-white rounded-lg hover:bg-celo-forest/90 transition-colors"
           >
             Play Now
           </button>
@@ -743,7 +743,7 @@ export function PastGames({ onBack }: PastGamesProps) {
       {/* Pool List */}
       {!isLoading && !error && completedPools.length > 0 && (
         <div className="space-y-3">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-celo-brown mb-3 flex items-center gap-2">
             <span>🏆</span> Completed Games
           </h2>
           {completedPools.map((pool) => (
@@ -762,26 +762,26 @@ export function PastGames({ onBack }: PastGamesProps) {
 
       {/* Stats Summary */}
       {!isLoading && completedPools.length > 0 && (
-        <div className="mt-8 bg-gray-50 rounded-xl p-4">
-          <h3 className="font-semibold text-gray-900 mb-3 text-center">Stats</h3>
+        <div className="mt-8 bg-celo-dark-tan/30 rounded-xl p-4 border border-celo-dark-tan">
+          <h3 className="font-semibold text-celo-brown mb-3 text-center">Stats</h3>
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
-              <div className="text-2xl font-bold text-purple-600">
+              <div className="text-2xl font-bold text-celo-forest">
                 {completedPools.length}
               </div>
-              <div className="text-xs text-gray-500">Completed Pools</div>
+              <div className="text-xs text-celo-inactive">Completed Pools</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-2xl font-bold text-celo-success">
                 {(completedPools.length * 0.75).toFixed(2)}
               </div>
-              <div className="text-xs text-gray-500">Total CELO Won</div>
+              <div className="text-xs text-celo-inactive">Total CELO Won</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-blue-600">
+              <div className="text-2xl font-bold text-celo-brown">
                 {completedPools.reduce((sum, p) => sum + p.playerCount, 0)}
               </div>
-              <div className="text-xs text-gray-500">Total Players</div>
+              <div className="text-xs text-celo-inactive">Total Players</div>
             </div>
           </div>
         </div>

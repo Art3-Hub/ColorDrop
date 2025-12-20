@@ -78,13 +78,13 @@ export function LeaderboardView({ poolId, onBackToLobby }: LeaderboardViewProps)
   const getRankDisplay = (rank: number) => {
     switch (rank) {
       case 1:
-        return { emoji: '🥇', color: 'text-yellow-600', bg: 'bg-yellow-50 border-yellow-300' };
+        return { emoji: '🥇', color: 'text-celo-forest', bg: 'bg-celo-yellow/20 border-celo-yellow' };
       case 2:
-        return { emoji: '🥈', color: 'text-gray-600', bg: 'bg-gray-50 border-gray-300' };
+        return { emoji: '🥈', color: 'text-celo-brown', bg: 'bg-celo-dark-tan/50 border-celo-dark-tan' };
       case 3:
-        return { emoji: '🥉', color: 'text-orange-600', bg: 'bg-orange-50 border-orange-300' };
+        return { emoji: '🥉', color: 'text-celo-orange', bg: 'bg-celo-orange/10 border-celo-orange/50' };
       default:
-        return { emoji: `#${rank}`, color: 'text-gray-700', bg: 'bg-white border-gray-200' };
+        return { emoji: `#${rank}`, color: 'text-celo-body', bg: 'bg-white border-celo-dark-tan' };
     }
   };
 
@@ -93,53 +93,53 @@ export function LeaderboardView({ poolId, onBackToLobby }: LeaderboardViewProps)
       {/* Header */}
       <div className="text-center">
         <div className="text-5xl sm:text-6xl mb-3">🏆</div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+        <h1 className="text-2xl sm:text-3xl font-bold text-celo-brown mb-2">
           Pool #{poolId.toString()} Results
         </h1>
-        <p className="text-sm sm:text-base text-gray-600">
+        <p className="text-sm sm:text-base text-celo-body">
           {poolData?.isFinalized ? 'Prizes Distributed' : 'Waiting for Finalization'}
         </p>
       </div>
 
       {/* Prize Pool Summary */}
-      <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl p-4 sm:p-6 border-2 border-purple-200">
+      <div className="bg-celo-dark-tan/30 rounded-2xl p-4 sm:p-6 border border-celo-dark-tan">
         <div className="text-center mb-4">
-          <div className="text-sm font-medium text-gray-700 mb-1">Total Prize Pool</div>
-          <div className="text-3xl sm:text-4xl font-bold text-purple-700">
+          <div className="text-sm font-medium text-celo-body mb-1">Total Prize Pool</div>
+          <div className="text-3xl sm:text-4xl font-bold text-celo-forest">
             {(ENTRY_FEE_VALUE * 12).toFixed(1)} CELO
           </div>
         </div>
         <div className="grid grid-cols-3 gap-2 sm:gap-3">
-          <div className="bg-white rounded-lg p-2 sm:p-3 text-center">
+          <div className="bg-white rounded-lg p-2 sm:p-3 text-center border border-celo-dark-tan">
             <div className="text-xl sm:text-2xl mb-1">🥇</div>
-            <div className="text-sm sm:text-base font-bold text-yellow-700">{prizes.first} CELO</div>
+            <div className="text-sm sm:text-base font-bold text-celo-forest">{prizes.first} CELO</div>
           </div>
-          <div className="bg-white rounded-lg p-2 sm:p-3 text-center">
+          <div className="bg-white rounded-lg p-2 sm:p-3 text-center border border-celo-dark-tan">
             <div className="text-xl sm:text-2xl mb-1">🥈</div>
-            <div className="text-sm sm:text-base font-bold text-gray-700">{prizes.second} CELO</div>
+            <div className="text-sm sm:text-base font-bold text-celo-brown">{prizes.second} CELO</div>
           </div>
-          <div className="bg-white rounded-lg p-2 sm:p-3 text-center">
+          <div className="bg-white rounded-lg p-2 sm:p-3 text-center border border-celo-dark-tan">
             <div className="text-xl sm:text-2xl mb-1">🥉</div>
-            <div className="text-sm sm:text-base font-bold text-orange-700">{prizes.third} CELO</div>
+            <div className="text-sm sm:text-base font-bold text-celo-orange">{prizes.third} CELO</div>
           </div>
         </div>
       </div>
 
       {/* Leaderboard */}
-      <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-        <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-4 sm:p-6 text-white">
+      <div className="bg-white rounded-2xl shadow-lg border border-celo-dark-tan overflow-hidden">
+        <div className="bg-celo-forest p-4 sm:p-6 text-white">
           <h2 className="text-lg sm:text-xl font-bold">Final Leaderboard</h2>
           <p className="text-xs sm:text-sm opacity-90">Ranked by color matching accuracy</p>
         </div>
 
-        <div className="divide-y divide-gray-200">
+        <div className="divide-y divide-celo-dark-tan">
           {isLoading ? (
-            <div className="p-8 text-center text-gray-500">
+            <div className="p-8 text-center text-celo-inactive">
               <div className="animate-spin text-3xl mb-2">⏳</div>
               <p>Loading results...</p>
             </div>
           ) : leaderboard.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
+            <div className="p-8 text-center text-celo-inactive">
               <div className="text-4xl mb-2">🎯</div>
               <p>No results yet</p>
             </div>
@@ -160,11 +160,11 @@ export function LeaderboardView({ poolId, onBackToLobby }: LeaderboardViewProps)
 
                   {/* Player Info */}
                   <div className="flex-1 min-w-0">
-                    <div className="font-mono text-xs sm:text-sm text-gray-700 truncate">
+                    <div className="font-mono text-xs sm:text-sm text-celo-body truncate">
                       {entry.player}
                     </div>
                     <div className="flex items-center gap-2 mt-1">
-                      <div className="text-base sm:text-lg font-bold text-gray-900">
+                      <div className="text-base sm:text-lg font-bold text-celo-brown">
                         {(entry.score / 100).toFixed(2)}% accuracy
                       </div>
                     </div>
@@ -176,7 +176,7 @@ export function LeaderboardView({ poolId, onBackToLobby }: LeaderboardViewProps)
                       <div className={`text-base sm:text-lg font-bold ${rankStyle.color}`}>
                         {entry.prize}
                       </div>
-                      <div className="text-[10px] sm:text-xs text-gray-600">Prize</div>
+                      <div className="text-[10px] sm:text-xs text-celo-inactive">Prize</div>
                     </div>
                   )}
                 </div>
@@ -188,18 +188,18 @@ export function LeaderboardView({ poolId, onBackToLobby }: LeaderboardViewProps)
 
       {/* Pool Status */}
       {poolData && (
-        <div className="bg-gray-50 rounded-xl p-4 text-center">
-          <div className="text-sm text-gray-600">
+        <div className="bg-celo-dark-tan/30 rounded-xl p-4 text-center border border-celo-dark-tan">
+          <div className="text-sm">
             {poolData.isFinalized ? (
-              <span className="flex items-center justify-center gap-2 text-green-700 font-medium">
+              <span className="flex items-center justify-center gap-2 text-celo-success font-medium">
                 <span>✅</span> Prizes have been distributed
               </span>
             ) : poolData.isComplete ? (
-              <span className="flex items-center justify-center gap-2 text-yellow-700 font-medium">
+              <span className="flex items-center justify-center gap-2 text-celo-orange font-medium">
                 <span>⏳</span> Waiting for admin to finalize pool
               </span>
             ) : (
-              <span className="flex items-center justify-center gap-2 text-blue-700 font-medium">
+              <span className="flex items-center justify-center gap-2 text-celo-forest font-medium">
                 <span>🎮</span> Pool in progress ({poolData.playerCount}/12 players)
               </span>
             )}
@@ -212,7 +212,7 @@ export function LeaderboardView({ poolId, onBackToLobby }: LeaderboardViewProps)
         {onBackToLobby && (
           <button
             onClick={onBackToLobby}
-            className="w-full px-6 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all shadow-md"
+            className="w-full px-6 py-4 bg-celo-forest text-white font-semibold rounded-xl hover:bg-celo-forest/90 transition-all shadow-sm"
           >
             🎮 Join New Pool
           </button>
@@ -237,7 +237,7 @@ export function LeaderboardView({ poolId, onBackToLobby }: LeaderboardViewProps)
               window.open(`https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(embedUrl)}`, '_blank');
             }
           }}
-          className="w-full px-6 py-3 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-all flex items-center justify-center gap-2"
+          className="w-full px-6 py-3 bg-celo-dark-tan/50 text-celo-brown font-semibold rounded-xl hover:bg-celo-dark-tan transition-all flex items-center justify-center gap-2"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
