@@ -51,13 +51,12 @@ export function SelfVerificationModal({
   // Determine if verification is mandatory (at slot limit)
   const isMandatory = !canSkip;
 
-  // v4.0.0: If verified, auto-proceed to payment (don't show success screen)
-  // This ensures SELF QR is always shown on next slot click for marketing
-  if (isVerified && onProceedVerified) {
-    // Auto-proceed after a brief moment
-    setTimeout(() => {
-      onProceedVerified();
-    }, 100);
+  // v4.0.0: If already verified when modal opens, proceed immediately
+  // Note: The main flow control is handled by useEffect in PlayGrid.tsx
+  // This is just a safety check for edge cases
+  if (isVerified && onProceedVerified && !isVerifying) {
+    // Don't render the modal if already verified - let parent handle it
+    return null;
   }
 
   // Always show verification screen with SELF branding (for marketing)
