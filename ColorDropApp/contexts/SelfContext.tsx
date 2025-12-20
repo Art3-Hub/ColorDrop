@@ -49,8 +49,10 @@ interface SelfProviderProps {
 export function SelfProvider({ children }: SelfProviderProps) {
   const { address, isConnected } = useAccount()
 
-  // Note: isVerified is session-only, resets on page reload
-  // Each slot click requires fresh SELF verification
+  // v4.0.0: Verification is NEVER stored or cached
+  // Every slot click after the free limit (2 slots) requires fresh SELF verification
+  // This ensures SELF Protocol branding is always shown (marketing requirement)
+  // isVerified is always false - we don't track verification state
   const [isVerified, setIsVerified] = useState(false)
   const [verificationData, setVerificationData] = useState<VerificationData | null>(null)
   const [isVerifying, setIsVerifying] = useState(false)
@@ -68,7 +70,9 @@ export function SelfProvider({ children }: SelfProviderProps) {
   const excludedCountries: any[] = []
   const ofac = false
 
-  // Check verification status
+  // v4.0.0: Check verification status - but DON'T cache the result
+  // This is only used to check if a specific verification attempt succeeded
+  // We intentionally don't set isVerified=true to ensure SELF is shown every time
   const checkVerificationStatus = useCallback(async () => {
     if (!address) return
 
@@ -81,7 +85,11 @@ export function SelfProvider({ children }: SelfProviderProps) {
 
       const data = await response.json()
 
+      // v4.0.0: We check verification but DON'T persist it
+      // This allows the current verification flow to complete
+      // but next slot click will show SELF again
       if (data.verified) {
+        // Temporarily set verified for current flow only
         setIsVerified(true)
         setVerificationData(data)
         setError(null)
@@ -150,22 +158,10 @@ export function SelfProvider({ children }: SelfProviderProps) {
     }
   }, [address, isConnected, appName, scope, logoUrl, minimumAge, ofac])
 
-  // Check verification status when user returns from SELF app (callback redirect)
-  // This handles the mobile deep link flow where user is redirected back after verification
-  useEffect(() => {
-    if (!address || !isConnected) return
-
-    // Check if this is a return from SELF app verification
-    // When user returns from SELF app, we should check their verification status
-    const checkOnReturn = async () => {
-      // Small delay to ensure backend has processed the verification
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      await checkVerificationStatus()
-    }
-
-    // Check immediately on mount (handles callback return scenario)
-    checkOnReturn()
-  }, [address, isConnected]) // Note: intentionally not including checkVerificationStatus to avoid loops
+  // v4.0.0: REMOVED auto-check on page load
+  // We don't want to auto-detect verification status anymore
+  // Every slot click after 2 slots must show SELF verification (marketing requirement)
+  // The checkVerificationStatus is only called during active verification polling
 
   // Cleanup polling on unmount
   useEffect(() => {

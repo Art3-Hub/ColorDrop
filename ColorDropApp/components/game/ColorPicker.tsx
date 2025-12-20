@@ -34,25 +34,29 @@ export function ColorPicker({ onColorChange, disabled = false }: ColorPickerProp
 
   const hslString = `hsl(${color.h}, ${color.s}%, ${color.l}%)`;
 
+  // Common slider classes for touch-friendly interaction
+  // h-8 = 32px height for easy finger touch on mobile
+  const sliderClasses = "w-full h-6 sm:h-4 rounded-full appearance-none cursor-pointer touch-pan-x slider-thumb-large";
+
   return (
-    <div className="space-y-6">
-      {/* Color Preview */}
+    <div className="space-y-4 sm:space-y-6">
+      {/* Color Preview - Smaller on mobile */}
       <div className="flex justify-center">
         <div
-          className="w-32 h-32 rounded-2xl shadow-lg border-4 border-white"
+          className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl shadow-lg border-4 border-white"
           style={{ backgroundColor: hslString }}
         />
       </div>
 
-      {/* HSL Sliders */}
-      <div className="space-y-4">
+      {/* HSL Sliders - Touch optimized */}
+      <div className="space-y-5 sm:space-y-4">
         {/* Hue Slider */}
         <div>
-          <div className="flex justify-between items-center mb-2">
-            <label className="text-sm font-medium text-gray-700">
+          <div className="flex justify-between items-center mb-1 sm:mb-2">
+            <label className="text-sm sm:text-sm font-medium text-gray-700">
               Hue
             </label>
-            <span className="text-sm font-mono text-gray-600">{color.h}°</span>
+            <span className="text-sm sm:text-sm font-mono text-gray-600 bg-gray-100 px-2 py-0.5 rounded">{color.h}°</span>
           </div>
           <input
             type="range"
@@ -61,7 +65,7 @@ export function ColorPicker({ onColorChange, disabled = false }: ColorPickerProp
             value={color.h}
             onChange={(e) => handleHueChange(Number(e.target.value))}
             disabled={disabled}
-            className="w-full h-3 rounded-lg appearance-none cursor-pointer"
+            className={sliderClasses}
             style={{
               background: `linear-gradient(to right,
                 hsl(0, ${color.s}%, ${color.l}%),
@@ -78,11 +82,11 @@ export function ColorPicker({ onColorChange, disabled = false }: ColorPickerProp
 
         {/* Saturation Slider */}
         <div>
-          <div className="flex justify-between items-center mb-2">
-            <label className="text-sm font-medium text-gray-700">
+          <div className="flex justify-between items-center mb-1 sm:mb-2">
+            <label className="text-sm sm:text-sm font-medium text-gray-700">
               Saturation
             </label>
-            <span className="text-sm font-mono text-gray-600">{color.s}%</span>
+            <span className="text-sm sm:text-sm font-mono text-gray-600 bg-gray-100 px-2 py-0.5 rounded">{color.s}%</span>
           </div>
           <input
             type="range"
@@ -91,7 +95,7 @@ export function ColorPicker({ onColorChange, disabled = false }: ColorPickerProp
             value={color.s}
             onChange={(e) => handleSaturationChange(Number(e.target.value))}
             disabled={disabled}
-            className="w-full h-3 rounded-lg appearance-none cursor-pointer"
+            className={sliderClasses}
             style={{
               background: `linear-gradient(to right,
                 hsl(${color.h}, 0%, ${color.l}%),
@@ -103,11 +107,11 @@ export function ColorPicker({ onColorChange, disabled = false }: ColorPickerProp
 
         {/* Lightness Slider */}
         <div>
-          <div className="flex justify-between items-center mb-2">
-            <label className="text-sm font-medium text-gray-700">
+          <div className="flex justify-between items-center mb-1 sm:mb-2">
+            <label className="text-sm sm:text-sm font-medium text-gray-700">
               Lightness
             </label>
-            <span className="text-sm font-mono text-gray-600">{color.l}%</span>
+            <span className="text-sm sm:text-sm font-mono text-gray-600 bg-gray-100 px-2 py-0.5 rounded">{color.l}%</span>
           </div>
           <input
             type="range"
@@ -116,7 +120,7 @@ export function ColorPicker({ onColorChange, disabled = false }: ColorPickerProp
             value={color.l}
             onChange={(e) => handleLightnessChange(Number(e.target.value))}
             disabled={disabled}
-            className="w-full h-3 rounded-lg appearance-none cursor-pointer"
+            className={sliderClasses}
             style={{
               background: `linear-gradient(to right,
                 hsl(${color.h}, ${color.s}%, 0%),
@@ -129,11 +133,63 @@ export function ColorPicker({ onColorChange, disabled = false }: ColorPickerProp
       </div>
 
       {/* Color Values */}
-      <div className="bg-gray-50 rounded-lg p-3">
+      <div className="bg-gray-50 rounded-lg p-2 sm:p-3">
         <div className="text-xs font-mono text-gray-600 text-center">
           {hslString}
         </div>
       </div>
+
+      {/* Custom slider styles for larger thumb on touch devices */}
+      <style jsx global>{`
+        /* Large touch-friendly thumb for sliders */
+        .slider-thumb-large::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          background: white;
+          border: 3px solid #6366f1;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+          cursor: pointer;
+          margin-top: -4px;
+        }
+
+        .slider-thumb-large::-moz-range-thumb {
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          background: white;
+          border: 3px solid #6366f1;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+          cursor: pointer;
+        }
+
+        /* Active state for better feedback */
+        .slider-thumb-large::-webkit-slider-thumb:active {
+          transform: scale(1.1);
+          box-shadow: 0 3px 10px rgba(99, 102, 241, 0.4);
+        }
+
+        .slider-thumb-large::-moz-range-thumb:active {
+          transform: scale(1.1);
+          box-shadow: 0 3px 10px rgba(99, 102, 241, 0.4);
+        }
+
+        /* Desktop: slightly smaller thumb */
+        @media (min-width: 640px) {
+          .slider-thumb-large::-webkit-slider-thumb {
+            width: 22px;
+            height: 22px;
+            border-width: 2px;
+          }
+          .slider-thumb-large::-moz-range-thumb {
+            width: 22px;
+            height: 22px;
+            border-width: 2px;
+          }
+        }
+      `}</style>
     </div>
   );
 }

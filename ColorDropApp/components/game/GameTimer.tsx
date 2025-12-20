@@ -51,35 +51,35 @@ export function GameTimer({ duration, onTimeUp, isRunning }: GameTimerProps) {
   const isLowTime = timeLeft <= 3;
 
   return (
-    <div className="space-y-2">
-      {/* Timer Display */}
+    <div className="space-y-1 sm:space-y-2">
+      {/* Timer Display - Larger and more prominent */}
       <div className="flex justify-center">
         <div
-          className={`text-5xl font-bold transition-colors ${
+          className={`text-4xl sm:text-6xl font-bold transition-colors ${
             isLowTime ? 'text-red-600 animate-pulse' : 'text-gray-900'
           }`}
         >
-          {timeLeft}s
+          {timeLeft}<span className="text-2xl sm:text-4xl">s</span>
         </div>
       </div>
 
       {/* Progress Bar */}
-      <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+      <div className="w-full bg-gray-200 rounded-full h-2 sm:h-3 overflow-hidden">
         <div
           className={`h-full transition-all duration-1000 ${
-            isLowTime ? 'bg-red-500' : 'bg-blue-500'
+            isLowTime ? 'bg-red-500' : 'bg-gradient-to-r from-blue-500 to-purple-500'
           }`}
           style={{ width: `${progress}%` }}
         />
       </div>
 
-      {/* Status Text */}
-      <div className="text-center text-sm text-gray-600">
+      {/* Status Text - Compact on mobile */}
+      <div className="text-center text-xs sm:text-sm text-gray-600">
         {isRunning ? (
           isLowTime ? (
-            <span className="font-semibold text-red-600">Hurry up!</span>
+            <span className="font-semibold text-red-600">⚡ Hurry!</span>
           ) : (
-            'Match the color as closely as you can'
+            <span className="hidden sm:inline">Match the color as closely as you can</span>
           )
         ) : (
           'Game not started'
