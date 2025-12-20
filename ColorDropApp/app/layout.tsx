@@ -144,8 +144,8 @@ export async function generateMetadata(): Promise<Metadata> {
       // Farcaster Mini App frame
       "fc:frame": JSON.stringify({
         version: "next",
-        imageUrl: `${appUrl}/banner.png`,
-        aspectRatio: "1.91:1",
+        imageUrl: `${appUrl}/banner2.png`,
+        aspectRatio: "1:1",
         button: {
           title: "Play Color Drop",
           action: {
