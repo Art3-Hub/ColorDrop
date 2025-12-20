@@ -1,5 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { SelfBackendVerifier, DefaultConfigStore, AllIds } from '@selfxyz/core'
+import { createWalletClient, createPublicClient, http } from 'viem'
+import { privateKeyToAccount } from 'viem/accounts'
+import { celo } from 'viem/chains'
+
+// Contract ABI for setUserVerification function only
+const SET_USER_VERIFICATION_ABI = [
+  {
+    inputs: [
+      { name: 'user', type: 'address' },
+      { name: 'verified', type: 'bool' }
+    ],
+    name: 'setUserVerification',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function'
+  }
+] as const
 
 // Initialize the Self Backend Verifier
 // Note: Using NEXT_PUBLIC_APP_URL for consistency with SelfContext
@@ -15,6 +32,72 @@ const selfBackendVerifier = new SelfBackendVerifier(
   }),
   'hex' // user identifier type (ethereum address)
 )
+
+// Contract address from environment
+const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS_MAINNET as `0x${string}`
+
+// Function to call smart contract setUserVerification
+async function setUserVerificationOnChain(userAddress: string): Promise<boolean> {
+  const privateKey = process.env.PRIVATE_KEY
+
+  if (!privateKey) {
+    console.error('❌ PRIVATE_KEY not set in environment')
+    return false
+  }
+
+  if (!CONTRACT_ADDRESS) {
+    console.error('❌ CONTRACT_ADDRESS not set in environment')
+    return false
+  }
+
+  try {
+    console.log('🔗 Setting up wallet client for on-chain verification...')
+
+    // Create account from private key
+    const account = privateKeyToAccount(`0x${privateKey.replace('0x', '')}` as `0x${string}`)
+    console.log('👛 Verifier wallet address:', account.address)
+
+    // Create wallet client for transactions
+    const walletClient = createWalletClient({
+      account,
+      chain: celo,
+      transport: http(process.env.NEXT_PUBLIC_CELO_RPC_URL || 'https://forno.celo.org')
+    })
+
+    // Create public client for reading
+    const publicClient = createPublicClient({
+      chain: celo,
+      transport: http(process.env.NEXT_PUBLIC_CELO_RPC_URL || 'https://forno.celo.org')
+    })
+
+    console.log('📝 Calling setUserVerification on contract:', CONTRACT_ADDRESS)
+    console.log('👤 User address:', userAddress)
+
+    // Send transaction to set user verification
+    const hash = await walletClient.writeContract({
+      address: CONTRACT_ADDRESS,
+      abi: SET_USER_VERIFICATION_ABI,
+      functionName: 'setUserVerification',
+      args: [userAddress as `0x${string}`, true]
+    })
+
+    console.log('📤 Transaction sent:', hash)
+
+    // Wait for transaction confirmation
+    const receipt = await publicClient.waitForTransactionReceipt({ hash })
+
+    if (receipt.status === 'success') {
+      console.log('✅ On-chain verification successful! Block:', receipt.blockNumber)
+      return true
+    } else {
+      console.error('❌ Transaction reverted')
+      return false
+    }
+  } catch (error) {
+    console.error('❌ Failed to set on-chain verification:', error)
+    return false
+  }
+}
 
 export async function POST(request: NextRequest) {
   console.log('🚀 /api/verify-self POST endpoint hit!')
@@ -94,13 +177,26 @@ export async function POST(request: NextRequest) {
     if (walletAddress) {
       global.verificationCache = global.verificationCache || new Map()
 
+      // 1. Store in memory cache for immediate polling response
       global.verificationCache.set(walletAddress, {
         verified: true,
         timestamp: Date.now()
       })
 
-      console.log('✅ Stored age verification (18+) for wallet:', walletAddress)
+      console.log('✅ Stored age verification (18+) in cache for wallet:', walletAddress)
       console.log('🗂️ Cache size:', global.verificationCache.size)
+
+      // 2. Call smart contract to set on-chain verification (allows unlimited slots)
+      console.log('🔗 Calling smart contract to set on-chain verification...')
+      const onChainSuccess = await setUserVerificationOnChain(walletAddress)
+
+      if (onChainSuccess) {
+        console.log('✅ On-chain verification set successfully!')
+      } else {
+        console.log('⚠️ On-chain verification failed - user may still be limited to 2 slots')
+        // Don't fail the whole request - cache verification still works for polling
+        // The user can retry verification if needed
+      }
     } else {
       console.log('❌ Could not store - missing walletAddress')
     }
