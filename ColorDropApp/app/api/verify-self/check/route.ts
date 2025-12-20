@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// Declare global type for verification cache
-// Only stores verified status (18+), no personal data
+// Shared with main verify-self route
 declare global {
-  var verificationCache: Map<string, {
-    verified: boolean
-    timestamp: number
-  }> | undefined
+  var selfVerificationResults: Map<string, { verified: boolean; timestamp: number }> | undefined
 }
+
+// 5 minute expiry for temp verification results
+const VERIFICATION_EXPIRY_MS = 5 * 60 * 1000
 
 export async function POST(request: NextRequest) {
   const requestId = Math.random().toString(36).substring(7)
@@ -16,70 +15,41 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { userId } = body
 
-    console.log(`[${requestId}] 📥 Verification check request:`, {
-      userId,
-      bodyReceived: !!body
-    })
+    console.log(`[${requestId}] 📥 Verification check request for:`, userId)
 
     if (!userId) {
-      console.log(`[${requestId}] ❌ Missing userId in request`)
-      return NextResponse.json({
-        error: 'User ID is required'
-      }, { status: 400 })
+      return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
     }
-
-    // Initialize cache if it doesn't exist
-    global.verificationCache = global.verificationCache || new Map()
 
     const normalizedUserId = userId.toLowerCase()
-    const cacheSize = global.verificationCache.size
 
-    console.log(`[${requestId}] 🔍 Cache status:`, {
-      normalizedUserId,
-      cacheSize,
-      hasEntry: global.verificationCache.has(normalizedUserId)
-    })
+    // Check temporary verification results (for deeplink flow)
+    global.selfVerificationResults = global.selfVerificationResults || new Map()
+    const result = global.selfVerificationResults.get(normalizedUserId)
 
-    // Check if verification exists for this user
-    const verification = global.verificationCache.get(normalizedUserId)
+    if (result) {
+      const age = Date.now() - result.timestamp
 
-    if (verification) {
-      const now = Date.now()
-      const oneHourAgo = now - 3600000
-      const age = now - verification.timestamp
-      const ageMinutes = Math.floor(age / 60000)
-
-      console.log(`[${requestId}] ✅ Found verification:`, {
-        verified: verification.verified,
-        ageMinutes
-      })
-
-      // Clean up old entries (older than 1 hour)
-      if (verification.timestamp < oneHourAgo) {
-        global.verificationCache.delete(normalizedUserId)
-        console.log(`[${requestId}] ⏰ Verification expired (${ageMinutes} minutes old)`)
-        return NextResponse.json({
-          verified: false
-        })
+      // Check if expired (5 minutes)
+      if (age > VERIFICATION_EXPIRY_MS) {
+        console.log(`[${requestId}] ⏰ Verification expired (${Math.floor(age / 1000)}s old)`)
+        global.selfVerificationResults.delete(normalizedUserId)
+        return NextResponse.json({ verified: false })
       }
 
-      // Return only verified status - no personal data
-      return NextResponse.json({
-        verified: verification.verified
-      })
+      if (result.verified) {
+        console.log(`[${requestId}] ✅ Found valid verification`)
+        // Clear after successful check (one-time use)
+        global.selfVerificationResults.delete(normalizedUserId)
+        return NextResponse.json({ verified: true })
+      }
     }
 
-    // No verification found yet
     console.log(`[${requestId}] ❌ No verification found`)
-    return NextResponse.json({
-      verified: false
-    })
+    return NextResponse.json({ verified: false })
 
   } catch (error) {
-    console.error(`[${requestId}] 🔴 Check verification error:`, {
-      error: error instanceof Error ? error.message : error
-    })
-
+    console.error(`[${requestId}] 🔴 Check verification error:`, error)
     return NextResponse.json({
       error: error instanceof Error ? error.message : 'Unknown error occurred'
     }, { status: 500 })

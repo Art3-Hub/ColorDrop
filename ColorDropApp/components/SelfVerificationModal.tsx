@@ -24,7 +24,7 @@ export function SelfVerificationModal({
   canSkip,
   onProceedVerified,
 }: SelfVerificationModalProps) {
-  const { isVerified, isVerifying, error, selfApp, startPolling } = useSelf();
+  const { isVerified, isVerifying, error, selfApp, setIsVerified } = useSelf();
   const {
     shouldShowQRCode,
     shouldUseDeeplink,
@@ -35,9 +35,17 @@ export function SelfVerificationModal({
   if (!isOpen) return null;
 
   // Handle QR code verification success
+  // This is called when SELF app successfully verifies and our backend returns success
   const handleQRSuccess = () => {
-    console.log('✅ QR scan completed, starting polling for verification result');
-    startPolling();
+    console.log('✅ SELF verification completed successfully!');
+    // Mark as verified and proceed immediately
+    setIsVerified(true);
+    // Auto-proceed to payment after brief moment
+    if (onProceedVerified) {
+      setTimeout(() => {
+        onProceedVerified();
+      }, 500);
+    }
   };
 
   // Determine if verification is mandatory (at slot limit)

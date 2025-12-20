@@ -13,11 +13,12 @@ import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
  * @notice 16 players compete @ 0.1 CELO, top 3 win prizes (0.70, 0.50, 0.25 CELO)
  * @custom:security-contact security@colordrop.app
  *
- * v3.9.0 Changes:
- * - Added per-pool slot tracking (poolSlotCount) - 2 slots max per pool for unverified
- * - Added lifetime statistics (UserStats) - track winnings, games played, wins
- * - Changed slot limit from lifetime to per-pool for unverified users
- * - Added getUserFullStats() for comprehensive user data
+ * v4.0.0 Changes:
+ * - REMOVED on-chain verification enforcement (SELF verification is now backend-only)
+ * - All users can play unlimited slots per pool
+ * - SELF Protocol verification still shown in UI for marketing (backend validates 18+)
+ * - Kept verifiedUsers mapping for backwards compatibility but not enforced
+ * - Slot limits removed from joinPool()
  */
 contract ColorDropPool is
     Initializable,
@@ -98,11 +99,11 @@ contract ColorDropPool is
     // User lifetime statistics (v3.9.0+)
     mapping(address => UserStats) public userStats;
 
-    // SELF Age Verification Architecture:
+    // SELF Age Verification Architecture (v4.0.0):
     // - Backend validates SELF zero-knowledge proofs (18+ age verification)
-    // - Backend calls setUserVerification() to grant unlimited slots on-chain
-    // - Contract enforces 4-slot limit for unverified, unlimited for verified
-    // - Frontend calls /api/verify-self/check before allowing joinPool()
+    // - Frontend shows SELF verification UI for marketing purposes
+    // - Contract does NOT enforce slot limits - all users can play unlimited slots
+    // - verifiedUsers mapping kept for backwards compatibility only
 
     // Events
     event PoolCreated(uint256 indexed poolId, bytes32 targetColor);
@@ -192,22 +193,22 @@ contract ColorDropPool is
     /**
      * @dev Join current pool with 0.1 CELO entry fee
      * @param fid Farcaster ID of the player
-     * @notice Enforces 2-slot per-pool limit for unverified users, unlimited for SELF-verified (18+)
+     * @notice v4.0.0: All users can play unlimited slots (SELF verification is UI/backend only)
      */
     function joinPool(uint256 fid) external payable nonReentrant whenNotPaused {
         if (msg.value != ENTRY_FEE) revert InvalidEntryFee();
         if (fid == 0) revert InvalidFID();
         if (activePoolId[msg.sender] != 0) revert AlreadyInActivePool();
 
-        // Enforce PER-POOL slot limits: 2 per pool for unverified, unlimited for verified
-        bool isVerified = verifiedUsers[msg.sender];
-        uint8 userPoolSlots = poolSlotCount[currentPoolId][msg.sender];
-        if (!isVerified && userPoolSlots >= UNVERIFIED_POOL_SLOT_LIMIT) {
-            revert SlotLimitExceeded();
-        }
+        // v4.0.0: REMOVED slot limit enforcement
+        // SELF Protocol verification is now handled in the UI/backend for marketing
+        // All users can play unlimited slots per pool
 
         Pool storage pool = pools[currentPoolId];
         if (pool.playerCount >= POOL_SIZE) revert PoolFull();
+
+        // Track if this is user's first slot in this pool (for stats)
+        uint8 userPoolSlotsBefore = poolSlotCount[currentPoolId][msg.sender];
 
         // Add player to pool
         pool.players[pool.playerCount] = Player({
@@ -221,12 +222,12 @@ contract ColorDropPool is
         pool.playerCount++;
         activePoolId[msg.sender] = currentPoolId;
         playerSlotCount[msg.sender]++; // Increment lifetime slot count (for tracking)
-        poolSlotCount[currentPoolId][msg.sender]++; // Increment per-pool slot count (for limits)
+        poolSlotCount[currentPoolId][msg.sender]++; // Increment per-pool slot count (for tracking)
 
-        // Update user stats (v3.9.0+)
+        // Update user stats
         userStats[msg.sender].totalSpent += ENTRY_FEE;
         // Only increment gamesPlayed on first slot in this pool
-        if (userPoolSlots == 0) {
+        if (userPoolSlotsBefore == 0) {
             userStats[msg.sender].gamesPlayed++;
         }
 
@@ -656,10 +657,11 @@ contract ColorDropPool is
     /**
      * @dev Get user verification status and slot availability
      * @param user Address to check
-     * @return isVerified Whether user is SELF-verified (18+)
+     * @return isVerified Whether user is SELF-verified (18+) - kept for backwards compatibility
      * @return slotsUsed Number of slots in CURRENT pool
-     * @return slotsAvailable Max slots per pool (2 or unlimited)
+     * @return slotsAvailable Max slots per pool (unlimited for all users in v4.0.0)
      * @return canJoin Whether user can join current pool
+     * @notice v4.0.0: All users can play unlimited slots, no on-chain verification enforcement
      */
     function getUserStatus(address user) external view returns (
         bool isVerified,
@@ -667,19 +669,18 @@ contract ColorDropPool is
         uint8 slotsAvailable,
         bool canJoin
     ) {
-        isVerified = verifiedUsers[user];
-        // v3.9.0: Return per-pool slot count instead of lifetime
+        isVerified = verifiedUsers[user]; // Kept for backwards compatibility
         slotsUsed = poolSlotCount[currentPoolId][user];
-        slotsAvailable = isVerified ? type(uint8).max : UNVERIFIED_POOL_SLOT_LIMIT;
-        canJoin = activePoolId[user] == 0 && (isVerified || slotsUsed < UNVERIFIED_POOL_SLOT_LIMIT);
+        slotsAvailable = type(uint8).max; // v4.0.0: Unlimited for all users
+        canJoin = activePoolId[user] == 0; // v4.0.0: Can join if not in active pool
     }
 
     /**
-     * @dev Get comprehensive user statistics (v3.9.0+)
+     * @dev Get comprehensive user statistics
      * @param user Address to check
-     * @return isVerified Whether user is SELF-verified (18+)
+     * @return isVerified Whether user is SELF-verified (18+) - kept for backwards compatibility
      * @return currentPoolSlots Slots used in current pool
-     * @return maxPoolSlots Max slots per pool (2 or unlimited)
+     * @return maxPoolSlots Max slots per pool (unlimited for all in v4.0.0)
      * @return lifetimeSlots Total slots ever purchased
      * @return canJoin Whether user can join current pool
      * @return totalClaimed Total CELO claimed from winnings
@@ -688,6 +689,7 @@ contract ColorDropPool is
      * @return wins1st Times won 1st place
      * @return wins2nd Times won 2nd place
      * @return wins3rd Times won 3rd place
+     * @notice v4.0.0: All users can play unlimited slots, no on-chain verification enforcement
      */
     function getUserFullStats(address user) external view returns (
         bool isVerified,
@@ -702,11 +704,11 @@ contract ColorDropPool is
         uint16 wins2nd,
         uint16 wins3rd
     ) {
-        isVerified = verifiedUsers[user];
+        isVerified = verifiedUsers[user]; // Kept for backwards compatibility
         currentPoolSlots = poolSlotCount[currentPoolId][user];
-        maxPoolSlots = isVerified ? type(uint8).max : UNVERIFIED_POOL_SLOT_LIMIT;
+        maxPoolSlots = type(uint8).max; // v4.0.0: Unlimited for all users
         lifetimeSlots = playerSlotCount[user];
-        canJoin = activePoolId[user] == 0 && (isVerified || currentPoolSlots < UNVERIFIED_POOL_SLOT_LIMIT);
+        canJoin = activePoolId[user] == 0; // v4.0.0: Can join if not in active pool
 
         UserStats storage stats = userStats[user];
         totalClaimed = stats.totalClaimed;
@@ -755,7 +757,7 @@ contract ColorDropPool is
      * @dev Get contract version for upgrade tracking
      */
     function version() external pure returns (string memory) {
-        return "3.9.0";
+        return "4.0.0";
     }
 
     /**
