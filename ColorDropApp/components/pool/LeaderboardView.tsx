@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useColorDropPool } from '@/hooks/useColorDropPool';
 import { formatEther } from 'viem';
+import { sdk } from '@farcaster/miniapp-sdk';
 
 interface LeaderboardEntry {
   rank: number;
@@ -218,13 +219,30 @@ export function LeaderboardView({ poolId, onBackToLobby }: LeaderboardViewProps)
         )}
 
         <button
-          onClick={() => {
-            // TODO: Implement share functionality
-            console.log('Share results');
+          onClick={async () => {
+            const topPlayer = leaderboard[0];
+            const topScore = topPlayer ? (topPlayer.score / 100).toFixed(2) : '??';
+            const text = `🏆 Color Drop Pool #${poolId.toString()} Results!\n\n🥇 Top Score: ${topScore}% accuracy\n🎟️ Entry: ${ENTRY_FEE_VALUE} CELO\n💰 Prize Pool: ${(ENTRY_FEE_VALUE * 16).toFixed(2)} CELO\n\n🎨 Think you can beat that? Join the next pool!`;
+            const embedUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://colordrop.app';
+
+            try {
+              const isInMiniApp = await sdk.isInMiniApp();
+              if (isInMiniApp) {
+                await sdk.actions.openUrl(`https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(embedUrl)}`);
+              } else {
+                window.open(`https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(embedUrl)}`, '_blank');
+              }
+            } catch (error) {
+              console.error('Failed to share:', error);
+              window.open(`https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(embedUrl)}`, '_blank');
+            }
           }}
-          className="w-full px-6 py-3 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-all"
+          className="w-full px-6 py-3 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-all flex items-center justify-center gap-2"
         >
-          📢 Share Results
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+          </svg>
+          Share Results
         </button>
       </div>
     </div>
