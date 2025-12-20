@@ -20,7 +20,7 @@ console.log('🔧 ColorDropPool Hook Configuration - MAINNET ONLY:', {
   CHAIN_ID: TARGET_CHAIN.id,
   ENTRY_FEE: ENTRY_FEE.toString(),
   ENTRY_FEE_CELO: (Number(ENTRY_FEE) / 1e18).toFixed(2) + ' CELO',
-  EXPECTED_VERSION: '3.9.0 - per-pool slot tracking + lifetime stats',
+  EXPECTED_VERSION: '4.0.0 - updated pool mechanics',
 });
 
 export interface PlayerSlot {
@@ -120,7 +120,7 @@ export function useColorDropPool() {
     },
   });
 
-  // DEBUG: Read contract version to verify v3.5.0 is deployed
+  // DEBUG: Read contract version to verify v4.0.0 is deployed
   const { data: contractVersion } = useReadContract({
     address: POOL_ADDRESS,
     abi: ColorDropPoolABI.abi,
@@ -132,14 +132,14 @@ export function useColorDropPool() {
   useEffect(() => {
     if (address) {
       console.log('📋 CONTRACT VERSION:', contractVersion);
-      console.log('   → Expected: "3.9.0" (per-pool slot tracking + lifetime stats)');
+      console.log('   → Expected: "4.0.0" (updated pool mechanics)');
       console.log('🔐 Direct activePoolId read for', address, ':', activePoolIdForUser?.toString());
       console.log('   → If activePoolId is NOT 0, then submitScore did NOT reset it');
       if (activePoolIdForUser && BigInt(activePoolIdForUser.toString()) !== BigInt(0)) {
         console.log('🚨 PROBLEM: activePoolId is still set! User cannot join new slot.');
-        console.log('   → v3.5.0 should have reset this to 0 after submitScore()');
+        console.log('   → v4.0.0 should have reset this to 0 after submitScore()');
         console.log('   → Possible causes:');
-        console.log('     1. Contract upgrade to v3.5.0 not completed');
+        console.log('     1. Contract upgrade to v4.0.0 not completed');
         console.log('     2. Score was submitted BEFORE v3.5.0 upgrade');
         console.log('     3. Implementation address mismatch');
       }
