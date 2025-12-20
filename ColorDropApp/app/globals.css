@@ -96,3 +96,19 @@
 .animate-slide-in-left {
   animation: slide-in-left 0.2s ease-out;
 }
+
+/* Subtle pulse animation for claim button */
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.95;
+    transform: scale(1.01);
+  }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s ease-in-out infinite;
+}

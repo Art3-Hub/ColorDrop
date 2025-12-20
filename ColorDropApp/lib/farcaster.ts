@@ -25,7 +25,8 @@ export type FarcasterContext = {
 
 /**
  * Initialize Farcaster SDK and check if in Mini App environment
- * Also calls sdk.actions.ready() to signal the app is ready
+ * NOTE: Does NOT call sdk.actions.ready() - that should be called from the main page
+ * after the UI is fully rendered to properly dismiss the splash screen
  */
 export async function initializeFarcaster(): Promise<boolean> {
   try {
@@ -36,20 +37,31 @@ export async function initializeFarcaster(): Promise<boolean> {
       return false;
     }
 
-    // IMPORTANT: Call ready() early to signal to Farcaster that the app is ready
-    // This also triggers the wallet connector to become available
-    try {
-      sdk.actions.ready();
-      console.log('✅ Farcaster SDK ready() called - splash screen hidden');
-    } catch (readyError) {
-      console.warn('⚠️ Failed to call sdk.actions.ready():', readyError);
-    }
+    // NOTE: We intentionally do NOT call ready() here
+    // The splash screen should only hide after the main UI is rendered
+    // See signalReady() function below which should be called from page.tsx
 
-    console.log('✅ Farcaster SDK initialized');
+    console.log('✅ Farcaster SDK initialized (splash still visible until UI ready)');
     return true;
   } catch (error) {
     console.error('❌ Failed to initialize Farcaster SDK:', error);
     return false;
+  }
+}
+
+/**
+ * Signal to Farcaster that the app is ready and splash screen can be hidden
+ * Should be called from the main page component after UI is rendered
+ */
+export async function signalReady(): Promise<void> {
+  try {
+    const isInMiniApp = await sdk.isInMiniApp();
+    if (!isInMiniApp) return;
+
+    sdk.actions.ready();
+    console.log('✅ Farcaster SDK ready() called - splash screen hidden');
+  } catch (error) {
+    console.warn('⚠️ Failed to call sdk.actions.ready():', error);
   }
 }
 
