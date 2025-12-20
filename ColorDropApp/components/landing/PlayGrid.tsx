@@ -62,7 +62,7 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
   }, [isVerified, flowState, stopPolling]);
 
   const POOL_SIZE = 16; // 16-player pools for attractive economics
-  const ENTRY_FEE_VALUE = parseFloat(process.env.NEXT_PUBLIC_ENTRY_FEE || '0.1');
+  const ENTRY_FEE_VALUE = parseFloat(process.env.NEXT_PUBLIC_ENTRY_FEE || '0.5');
   const ENTRY_FEE = `${ENTRY_FEE_VALUE} CELO`;
 
   // Debug: Log transaction states and user status
@@ -87,9 +87,9 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
       console.log('🎮 Transaction confirmed! Starting game for slot:', pendingSlot);
       setLastProcessedHash(joinHash);
 
-      // v4.0.0: ALWAYS reset verification after successful payment
-      // This ensures SELF Protocol QR is shown on EVERY slot 3+ purchase (marketing requirement)
-      // User must re-verify with SELF for each slot beyond the 2 free slots
+      // v5.0.0: ALWAYS reset verification after successful payment
+      // This ensures SELF Protocol QR is shown on EVERY slot 5+ purchase (marketing requirement)
+      // User must re-verify with SELF for each slot beyond the 4 free slots
       clearVerification();
       console.log('🔄 Cleared verification state for next slot');
 
@@ -171,7 +171,7 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
     console.log('✅ ALLOWED - No unsubmitted slots, proceeding to SELF verification');
 
     // For any available slot (purple), require payment
-    // Each new slot costs 0.1 CELO regardless of how many slots user already has
+    // Each new slot costs 0.5 CELO regardless of how many slots user already has
     console.log('💰 Opening payment modal for new slot:', slotNumber);
     setSelectedSlot(slotNumber);
 
@@ -206,7 +206,7 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
   // Check if user can skip verification (only if under per-pool slot limit)
   // v3.9.0: This is now PER-POOL slots, not lifetime
   const currentPoolSlots = userStatus?.slotsUsed || 0;
-  const MAX_UNVERIFIED_SLOTS = 2; // Must match contract UNVERIFIED_POOL_SLOT_LIMIT
+  const MAX_UNVERIFIED_SLOTS = 4; // UI limit for unverified users (contract has no limit in v5.0.0)
   const canSkipVerification = currentPoolSlots < MAX_UNVERIFIED_SLOTS;
 
   const handleSkipVerification = () => {

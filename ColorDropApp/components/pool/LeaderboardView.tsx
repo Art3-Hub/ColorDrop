@@ -22,7 +22,7 @@ export function LeaderboardView({ poolId, onBackToLobby }: LeaderboardViewProps)
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const ENTRY_FEE_VALUE = parseFloat(process.env.NEXT_PUBLIC_ENTRY_FEE || '0.1');
+  const ENTRY_FEE_VALUE = parseFloat(process.env.NEXT_PUBLIC_ENTRY_FEE || '0.5');
 
   // Calculate prizes
   const prizes = {
@@ -200,7 +200,7 @@ export function LeaderboardView({ poolId, onBackToLobby }: LeaderboardViewProps)
               </span>
             ) : (
               <span className="flex items-center justify-center gap-2 text-celo-forest font-medium">
-                <span>🎮</span> Pool in progress ({poolData.playerCount}/12 players)
+                <span>🎮</span> Pool in progress ({poolData.playerCount}/16 players)
               </span>
             )}
           </div>

@@ -10,8 +10,15 @@ import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 /**
  * @title ColorDropPool
  * @dev Upgradeable tournament-style pool for Color Drop game on Farcaster x Celo
- * @notice 16 players compete @ 0.1 CELO, top 3 win prizes (0.70, 0.50, 0.25 CELO)
+ * @notice 16 players compete @ 0.5 CELO, top 3 win prizes (3.5, 2.5, 1.25 CELO)
  * @custom:security-contact security@colordrop.app
+ *
+ * v5.0.0 Changes:
+ * - Entry fee increased from 0.1 CELO to 0.5 CELO (5× multiplier)
+ * - Added third treasury wallet for fee distribution
+ * - System fee split 3 ways (primary treasury gets remainder if not divisible)
+ * - Prizes updated: 1st: 3.5 CELO, 2nd: 2.5 CELO, 3rd: 1.25 CELO
+ * - Total pool: 8 CELO (16 × 0.5), Prizes: 7.25 CELO, System fee: 0.75 CELO
  *
  * v4.0.0 Changes:
  * - REMOVED on-chain verification enforcement (SELF verification is now backend-only)
@@ -30,16 +37,16 @@ contract ColorDropPool is
     // Role definitions
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
-    // Constants - 16 players x 0.1 CELO = 1.6 CELO total pool
-    uint256 public constant ENTRY_FEE = 0.1 ether; // 0.1 CELO per player
+    // Constants - 16 players x 0.5 CELO = 8 CELO total pool (v5.0.0)
+    uint256 public constant ENTRY_FEE = 0.5 ether; // 0.5 CELO per player
     uint8 public constant POOL_SIZE = 16; // Pool size (16 players)
     uint8 public constant STORAGE_POOL_SIZE = 16; // Storage array size
     uint8 public constant UNVERIFIED_SLOT_LIMIT = 4; // Legacy: lifetime max (kept for compatibility)
-    uint8 public constant UNVERIFIED_POOL_SLOT_LIMIT = 2; // Max slots per pool for unverified users
-    uint256 public constant PRIZE_1ST = 0.7 ether; // 43.75% of prize pool (0.70 CELO = 7× entry)
-    uint256 public constant PRIZE_2ND = 0.5 ether; // 31.25% of prize pool (0.50 CELO = 5× entry)
-    uint256 public constant PRIZE_3RD = 0.25 ether; // 15.625% of prize pool (0.25 CELO = 2.5× entry)
-    uint256 public constant SYSTEM_FEE = 0.15 ether; // 9.375% of total pool
+    uint8 public constant UNVERIFIED_POOL_SLOT_LIMIT = 4; // UI limit per pool for unverified users (not enforced on-chain)
+    uint256 public constant PRIZE_1ST = 3.5 ether; // 43.75% of prize pool (3.5 CELO = 7× entry)
+    uint256 public constant PRIZE_2ND = 2.5 ether; // 31.25% of prize pool (2.5 CELO = 5× entry)
+    uint256 public constant PRIZE_3RD = 1.25 ether; // 15.625% of prize pool (1.25 CELO = 2.5× entry)
+    uint256 public constant SYSTEM_FEE = 0.75 ether; // 9.375% of total pool (split 3 ways)
     uint256 public constant FINALIZATION_TIMEOUT = 2 minutes;
 
     // Structs
@@ -78,9 +85,10 @@ contract ColorDropPool is
     mapping(address => bool) public verifiedUsers; // SELF-verified users (unlimited slots)
     uint256 public currentPoolId;
 
-    // Dual treasury addresses
-    address public treasury1;
+    // Triple treasury addresses (v5.0.0: 3-way fee split)
+    address public treasury1; // Primary treasury (gets remainder if fee not divisible by 3)
     address public treasury2;
+    address public treasury3;
 
     // Prize claiming (v3.6.0+)
     // Maps poolId => rank (1,2,3) => winner address
@@ -90,8 +98,7 @@ contract ColorDropPool is
     // Maps user => total unclaimed prizes
     mapping(address => uint256) public unclaimedPrizes;
 
-    // Backend verifier wallet (calls setUserVerification after SELF proof validation)
-    address public verifier;
+    // NOTE: verifier removed in v5.0.0 - SELF verification is UI/backend only
 
     // Per-pool slot tracking (v3.9.0+) - tracks slots per user per pool
     mapping(uint256 => mapping(address => uint8)) public poolSlotCount;
@@ -119,15 +126,12 @@ contract ColorDropPool is
     event PrizePaid(address indexed winner, uint256 amount);
     event PrizeClaimed(uint256 indexed poolId, address indexed winner, uint8 rank, uint256 amount);
     event SystemFeePaid(address indexed treasury, uint256 amount);
-    event TreasuryUpdated(address indexed treasury1, address indexed treasury2);
-    event UserVerified(address indexed user, bool verified);
-    event VerifierUpdated(address indexed oldVerifier, address indexed newVerifier);
+    event TreasuryUpdated(address indexed treasury1, address indexed treasury2, address indexed treasury3);
     event ActivePoolIdReset(address indexed user);
     event PlayerSlotCountReset(address indexed user);
 
     // Custom errors (gas efficient)
     error InvalidTreasuryAddress();
-    error InvalidVerifierAddress();
     error InvalidFID();
     error AlreadyInActivePool();
     error PoolFull();
@@ -140,7 +144,6 @@ contract ColorDropPool is
     error PoolDoesNotExist();
     error PoolNotActive();
     error SlotLimitExceeded();
-    error UnauthorizedVerifier();
     error NoPrizeToClaim();
     error PrizeAlreadyClaimed();
 
@@ -153,25 +156,22 @@ contract ColorDropPool is
      * @dev Initialize the contract (replaces constructor for upgradeable contracts)
      * @param _admin Primary admin wallet (can grant/revoke roles, manage treasuries)
      * @param _upgrader Upgrader wallet (can deploy and upgrade contracts)
-     * @param _treasury1 First treasury wallet address (receives 50% of system fee)
-     * @param _treasury2 Second treasury wallet address (receives 50% of system fee)
-     * @param _verifier Backend wallet address authorized to verify users after SELF validation
+     * @param _treasury1 First treasury wallet address (primary - gets remainder if fee not divisible)
+     * @param _treasury2 Second treasury wallet address
+     * @param _treasury3 Third treasury wallet address
      */
     function initialize(
         address _admin,
         address _upgrader,
         address _treasury1,
         address _treasury2,
-        address _verifier
+        address _treasury3
     ) public initializer {
         if (_admin == address(0) || _upgrader == address(0)) {
             revert InvalidTreasuryAddress();
         }
-        if (_treasury1 == address(0) || _treasury2 == address(0)) {
+        if (_treasury1 == address(0) || _treasury2 == address(0) || _treasury3 == address(0)) {
             revert InvalidTreasuryAddress();
-        }
-        if (_verifier == address(0)) {
-            revert InvalidVerifierAddress();
         }
 
         __AccessControl_init();
@@ -185,13 +185,13 @@ contract ColorDropPool is
 
         treasury1 = _treasury1;
         treasury2 = _treasury2;
-        verifier = _verifier;
+        treasury3 = _treasury3;
 
         _createNewPool();
     }
 
     /**
-     * @dev Join current pool with 0.1 CELO entry fee
+     * @dev Join current pool with 0.5 CELO entry fee
      * @param fid Farcaster ID of the player
      * @notice v4.0.0: All users can play unlimited slots (SELF verification is UI/backend only)
      */
@@ -355,7 +355,8 @@ contract ColorDropPool is
 
     /**
      * @dev Finalize pool and record winners for prize claiming
-     * @notice System fees are auto-distributed, but player prizes must be claimed manually
+     * @notice System fees are auto-distributed (3-way split), player prizes must be claimed manually
+     * @notice v5.0.0: Fee split 3 ways with remainder going to primary treasury (treasury1)
      */
     function _distributePrizes(uint256 poolId) private {
         Pool storage pool = pools[poolId];
@@ -366,10 +367,13 @@ contract ColorDropPool is
         // Find top 3 players
         address[3] memory winners = _getTopThree(poolId);
 
-        // Split system fee 50/50 between treasury wallets (auto-distributed)
-        uint256 feePerTreasury = SYSTEM_FEE / 2;
-        _payFee(treasury1, feePerTreasury);
+        // Split system fee 3 ways between treasury wallets (auto-distributed)
+        // Primary treasury (treasury1) gets any remainder if fee not evenly divisible
+        uint256 feePerTreasury = SYSTEM_FEE / 3;
+        uint256 remainder = SYSTEM_FEE - (feePerTreasury * 3);
+        _payFee(treasury1, feePerTreasury + remainder); // Primary gets remainder
         _payFee(treasury2, feePerTreasury);
+        _payFee(treasury3, feePerTreasury);
 
         // Record winners and their unclaimed prizes (manual claiming)
         uint256[3] memory prizes = [PRIZE_1ST, PRIZE_2ND, PRIZE_3RD];
@@ -575,39 +579,18 @@ contract ColorDropPool is
 
     /**
      * @dev Update treasury addresses (only admin)
-     * @param _treasury1 New first treasury address
+     * @param _treasury1 New first treasury address (primary - gets remainder if fee not divisible)
      * @param _treasury2 New second treasury address
+     * @param _treasury3 New third treasury address
      */
-    function setTreasuries(address _treasury1, address _treasury2) external onlyRole(ADMIN_ROLE) {
-        if (_treasury1 == address(0) || _treasury2 == address(0)) {
+    function setTreasuries(address _treasury1, address _treasury2, address _treasury3) external onlyRole(ADMIN_ROLE) {
+        if (_treasury1 == address(0) || _treasury2 == address(0) || _treasury3 == address(0)) {
             revert InvalidTreasuryAddress();
         }
         treasury1 = _treasury1;
         treasury2 = _treasury2;
-        emit TreasuryUpdated(_treasury1, _treasury2);
-    }
-
-    /**
-     * @dev Set user verification status (called by backend after SELF validation)
-     * @param user Address of the user to verify
-     * @param verified Verification status (true if 18+ via SELF)
-     * @notice Only the backend verifier wallet can call this
-     */
-    function setUserVerification(address user, bool verified) external {
-        if (msg.sender != verifier) revert UnauthorizedVerifier();
-        verifiedUsers[user] = verified;
-        emit UserVerified(user, verified);
-    }
-
-    /**
-     * @dev Update verifier address (only admin)
-     * @param newVerifier New backend verifier wallet address
-     */
-    function setVerifier(address newVerifier) external onlyRole(ADMIN_ROLE) {
-        if (newVerifier == address(0)) revert InvalidVerifierAddress();
-        address oldVerifier = verifier;
-        verifier = newVerifier;
-        emit VerifierUpdated(oldVerifier, newVerifier);
+        treasury3 = _treasury3;
+        emit TreasuryUpdated(_treasury1, _treasury2, _treasury3);
     }
 
     /**
@@ -757,7 +740,7 @@ contract ColorDropPool is
      * @dev Get contract version for upgrade tracking
      */
     function version() external pure returns (string memory) {
-        return "4.0.0";
+        return "5.0.0";
     }
 
     /**

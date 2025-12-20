@@ -12,20 +12,20 @@ async function main() {
   // Role addresses from environment variables
   const admin = process.env.ADMIN_ADDRESS; // Primary owner
   const upgrader = process.env.UPGRADER_ADDRESS; // Can deploy and upgrade
-  const treasury1 = process.env.TREASURY_ADDRESS_1;
+  const treasury1 = process.env.TREASURY_ADDRESS_1; // Primary treasury (gets remainder)
   const treasury2 = process.env.TREASURY_ADDRESS_2;
-  const verifier = process.env.VERIFIER_ADDRESS;
+  const treasury3 = process.env.TREASURY_ADDRESS_3;
 
-  if (!admin || !upgrader || !treasury1 || !treasury2 || !verifier) {
-    throw new Error("❌ ADMIN_ADDRESS, UPGRADER_ADDRESS, TREASURY_ADDRESS_1, TREASURY_ADDRESS_2, and VERIFIER_ADDRESS must be set in .env file");
+  if (!admin || !upgrader || !treasury1 || !treasury2 || !treasury3) {
+    throw new Error("❌ ADMIN_ADDRESS, UPGRADER_ADDRESS, TREASURY_ADDRESS_1, TREASURY_ADDRESS_2, and TREASURY_ADDRESS_3 must be set in .env file");
   }
 
   console.log("👑 Admin (Primary Owner):", admin);
   console.log("🔧 Upgrader (Deploy/Upgrade):", upgrader);
-  console.log("🏦 Treasury 1:", treasury1);
+  console.log("🏦 Treasury 1 (Primary):", treasury1);
   console.log("🏦 Treasury 2:", treasury2);
-  console.log("🔐 Verifier:", verifier);
-  console.log("💸 Each treasury receives: 0.1 CELO per pool (50/50 split)\n");
+  console.log("🏦 Treasury 3:", treasury3);
+  console.log("💸 Each treasury receives: 0.25 CELO per pool (3-way split)\n");
 
   // Deploy upgradeable contract
   const ColorDropPool = await ethers.getContractFactory("ColorDropPool");
@@ -33,7 +33,7 @@ async function main() {
   console.log("⏳ Deploying proxy contract...");
   const colorDropPool = await upgrades.deployProxy(
     ColorDropPool,
-    [admin, upgrader, treasury1, treasury2, verifier],
+    [admin, upgrader, treasury1, treasury2, treasury3],
     {
       initializer: "initialize",
       kind: "uups" // Can be 'transparent' or 'uups'
@@ -64,7 +64,7 @@ async function main() {
   console.log("✓ 1st Prize:", ethers.formatEther(prize1st), "CELO");
   console.log("✓ 2nd Prize:", ethers.formatEther(prize2nd), "CELO");
   console.log("✓ 3rd Prize:", ethers.formatEther(prize3rd), "CELO");
-  console.log("✓ System Fee:", ethers.formatEther(systemFee), "CELO (split 50/50)");
+  console.log("✓ System Fee:", ethers.formatEther(systemFee), "CELO (split 3 ways)");
   console.log("✓ Current Pool ID:", currentPoolId.toString());
   console.log("✓ Contract Version:", version);
 

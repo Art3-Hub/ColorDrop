@@ -8,7 +8,7 @@ Last Updated: December 2025
 
 ## 📋 Project Overview
 
-Color Drop Tournament is a skill-based Farcaster Mini App where 12 players compete to match colors in 10 seconds, with winners receiving CELO prizes (0.60, 0.30, 0.10 CELO). The project integrates:
+Color Drop Tournament is a skill-based Farcaster Mini App where 16 players compete to match colors in 10 seconds, with winners receiving CELO prizes (3.5, 2.5, 1.25 CELO). The project integrates:
 
 - **Frontend**: Next.js 16 + React + TypeScript
 - **Blockchain**: Celo (Solidity 0.8.20 upgradeable contracts)
@@ -17,15 +17,16 @@ Color Drop Tournament is a skill-based Farcaster Mini App where 12 players compe
 - **Wallet**: Wagmi v3 + Viem
 
 ### Core Game Mechanics
-- **Entry Fee**: 0.1 CELO per slot
-- **Pool Size**: 12 slots per game (4×3 grid)
+- **Entry Fee**: 0.5 CELO per slot
+- **Pool Size**: 16 slots per game (4×4 grid)
 - **Game Duration**: 10 seconds to match color
 - **Color System**: HSL sliders (Hue, Saturation, Lightness)
 - **Scoring**: Delta E 2000 color difference algorithm
-- **Winners**: Top 3 most accurate matches (0.60, 0.30, 0.10 CELO)
+- **Winners**: Top 3 most accurate matches (3.5, 2.5, 1.25 CELO)
 - **Multi-Slot**: Users can play multiple slots per pool
   - Unverified: Maximum 4 slots
   - SELF-verified (18+): Unlimited slots
+- **System Fee**: 0.75 CELO (split equally among 3 treasuries)
 
 ---
 
@@ -44,26 +45,30 @@ Pool Completion → Winner Calculation → Prize Distribution
 **User arrives at Pool Status Screen**
 
 ```
-┌─────────────────────────────────────────┐
-│     POOL STATUS SCREEN                  │
-│  Pool #248 • 5/9 Filled • Live 🔴       │
-│                                          │
-│  ✅ Verified - Unlimited Slots          │
-│  (or: ⚠️ 2 slots remaining)            │
-│                                          │
-│  ┌────┬────┬────┐                       │
-│  │ ✓  │ ✓  │ 🎮 │  Click slot          │
-│  │ #1 │ #2 │ #3 │  to play             │
-│  └────┴────┴────┘                       │
-│  ┌────┬────┬────┐                       │
-│  │ 🎮 │ ✓  │ 🎮 │                       │
-│  │ #4 │ #5 │ #6 │                       │
-│  └────┴────┴────┘                       │
-│  ┌────┬────┬────┐                       │
-│  │ ✓  │ ✓  │ 🎮 │                       │
-│  │ #7 │ #8 │ #9 │                       │
-│  └────┴────┴────┘                       │
-└─────────────────────────────────────────┘
+┌─────────────────────────────────────────────┐
+│     POOL STATUS SCREEN                      │
+│  Pool #248 • 10/16 Filled • Live 🔴         │
+│                                              │
+│  ✅ Verified - Unlimited Slots              │
+│  (or: ⚠️ 2 slots remaining)                │
+│                                              │
+│  ┌────┬────┬────┬────┐                      │
+│  │ ✓  │ ✓  │ 🎮 │ ✓  │  Click slot         │
+│  │ #1 │ #2 │ #3 │ #4 │  to play            │
+│  └────┴────┴────┴────┘                      │
+│  ┌────┬────┬────┬────┐                      │
+│  │ 🎮 │ ✓  │ 🎮 │ ✓  │                      │
+│  │ #5 │ #6 │ #7 │ #8 │                      │
+│  └────┴────┴────┴────┘                      │
+│  ┌────┬────┬────┬────┐                      │
+│  │ ✓  │ ✓  │ 🎮 │ ✓  │                      │
+│  │ #9 │#10 │#11 │#12 │                      │
+│  └────┴────┴────┴────┘                      │
+│  ┌────┬────┬────┬────┐                      │
+│  │ 🎮 │ 🎮 │ ✓  │ 🎮 │                      │
+│  │#13 │#14 │#15 │#16 │                      │
+│  └────┴────┴────┴────┘                      │
+└─────────────────────────────────────────────┘
 ```
 
 **State Management:**
@@ -136,10 +141,10 @@ const checkVerification = async () => {
 ```
 ┌─────────────────────────────────────────┐
 │  PAYMENT MODAL                           │
-│  Slot #3 • Entry Fee: 0.1 CELO          │
+│  Slot #3 • Entry Fee: 0.5 CELO          │
 │                                          │
-│  Prize Pool: 1.2 CELO                   │
-│  Your Potential: 0.6 CELO (1st)         │
+│  Prize Pool: 8 CELO                     │
+│  Your Potential: 3.5 CELO (1st)         │
 │                                          │
 │  [Confirm Payment →]                     │
 └─────────────────────────────────────────┘
@@ -153,7 +158,7 @@ const joinPool = useCallback(async (fid: number) => {
     abi: ColorDropPoolABI.abi,
     functionName: 'joinPool',
     args: [BigInt(fid)],
-    value: parseEther('0.1'), // Entry fee
+    value: parseEther('0.5'), // Entry fee
   });
 }, [joinWriteContract]);
 ```
@@ -404,7 +409,7 @@ function submitScore(uint256 score) external {
 
 ### 7. Pool Completion & Winner Calculation
 
-**Triggered when all 9 slots submitted scores:**
+**Triggered when all 16 slots submitted scores:**
 
 **Winner Calculation Algorithm:**
 ```solidity
@@ -442,14 +447,16 @@ function _finalizePool(uint256 poolId) internal {
 
 function _distributePrizes(address winner1, address winner2, address winner3) internal {
     // Transfer prizes
-    payable(winner1).transfer(PRIZE_1ST);  // 1.8 CELO
-    payable(winner2).transfer(PRIZE_2ND);  // 0.9 CELO
-    payable(winner3).transfer(PRIZE_3RD);  // 0.3 CELO
+    payable(winner1).transfer(PRIZE_1ST);  // 3.5 CELO
+    payable(winner2).transfer(PRIZE_2ND);  // 2.5 CELO
+    payable(winner3).transfer(PRIZE_3RD);  // 1.25 CELO
 
-    // Split system fee between treasuries
-    uint256 feePerTreasury = SYSTEM_FEE / 2;  // 0.3 CELO each
-    payable(treasury1).transfer(feePerTreasury);
+    // Split system fee between 3 treasuries
+    uint256 feePerTreasury = SYSTEM_FEE / 3;  // 0.25 CELO each
+    uint256 remainder = SYSTEM_FEE - (feePerTreasury * 3);
+    payable(treasury1).transfer(feePerTreasury + remainder); // Primary gets remainder
     payable(treasury2).transfer(feePerTreasury);
+    payable(treasury3).transfer(feePerTreasury);
 }
 ```
 
@@ -457,15 +464,22 @@ function _distributePrizes(address winner1, address winner2, address winner3) in
 ```
 Pool #248 - Final Results
 
-🥇 1st  @alice   97.64%  →  0.45 CELO
-🥈 2nd  @bob     95.23%  →  0.225 CELO
-🥉 3rd  @charlie 92.47%  →  0.075 CELO
+🥇 1st  @alice   97.64%  →  3.5 CELO
+🥈 2nd  @bob     95.23%  →  2.5 CELO
+🥉 3rd  @charlie 92.47%  →  1.25 CELO
    4th  @dave    88.91%
    5th  @eve     85.56%
    6th  @frank   82.34%
    7th  @grace   79.12%
    8th  @henry   75.67%
    9th  @iris    71.23%
+  10th  @jack    68.45%
+  11th  @kate    65.12%
+  12th  @leo     62.89%
+  13th  @mia     59.34%
+  14th  @noah    55.78%
+  15th  @olivia  52.45%
+  16th  @peter   48.91%
 ```
 
 ### 8. Multi-Slot Strategy Example
@@ -474,7 +488,7 @@ Pool #248 - Final Results
 ```
 Session Timeline:
 ─────────────────────────────────────────
-Pool #248 opens (0/9 filled)
+Pool #248 opens (0/16 filled)
 
 1. Play Slot #1
    → Color: H:120, S:80%, L:50% (target)
@@ -498,27 +512,28 @@ Pool #248 opens (0/9 filled)
    → Prompt: "Verify age (18+) for unlimited slots"
 
 Final Results:
-Investment: 3 × 0.1 = 0.3 CELO
-Winnings: 0.075 CELO (3rd place)
-Net: -0.225 CELO
+Investment: 3 × 0.5 = 1.5 CELO
+Winnings: 1.25 CELO (3rd place)
+Net: -0.25 CELO
 ```
 
 **Verified User (unlimited slots):**
 ```
 Session Timeline:
 ─────────────────────────────────────────
-Pool #249 opens (0/9 filled)
+Pool #249 opens (0/16 filled)
 
-1-9. Play all 9 slots
-     Scores: 97.64%, 95.23%, 92.47%, 88.91%, 85.56%,
-             82.34%, 79.12%, 75.67%, 71.23%
+1-16. Play all 16 slots
+      Scores: 97.64%, 95.23%, 92.47%, 88.91%, 85.56%,
+              82.34%, 79.12%, 75.67%, 71.23%, 68.45%,
+              65.12%, 62.89%, 59.34%, 55.78%, 52.45%, 48.91%
 
-     Rankings: 🥇 1st, 🥈 2nd, 🥉 3rd (all yours!)
+      Rankings: 🥇 1st, 🥈 2nd, 🥉 3rd (all yours!)
 
 Final Results:
-Investment: 9 × 0.1 = 0.9 CELO
-Winnings: 0.45 + 0.225 + 0.075 = 0.75 CELO
-Net: -0.15 CELO (guaranteed top 3 but negative ROI)
+Investment: 16 × 0.5 = 8 CELO
+Winnings: 3.5 + 2.5 + 1.25 = 7.25 CELO
+Net: -0.75 CELO (guaranteed top 3 but negative ROI)
 
 Note: This is an extreme example. The optimal strategy
 is typically 3-4 slots for competitive play.
@@ -572,7 +587,7 @@ ColorDrop/
 │
 ├── Contracts/             # Hardhat smart contract workspace
 │   ├── contracts/        # Solidity contracts
-│   │   └── ColorDropPool.sol  # Main game contract (v2.0.0)
+│   │   └── ColorDropPool.sol  # Main game contract (v5.0.0)
 │   ├── scripts/          # Deployment scripts
 │   │   ├── deploy.ts     # Upgradeable proxy deployment
 │   │   └── upgrade.ts    # Contract upgrade script
@@ -588,22 +603,22 @@ ColorDrop/
 
 ## 🔧 Smart Contract Architecture
 
-### ColorDropPool.sol v3.1.0
+### ColorDropPool.sol v5.0.0
 
 **Contract Type**: Upgradeable (OpenZeppelin UUPS pattern)
 
 #### Key Features
-- **Entry Fee**: 0.1 CELO per slot
-- **Pool Size**: 9 players (3×3 grid for faster games)
+- **Entry Fee**: 0.5 CELO per slot
+- **Pool Size**: 16 players (4×4 grid)
 - **Age Verification**: SELF Protocol integration
 - **Slot Limits**:
   - Unverified users: 4 slots max
   - SELF-verified (18+): Unlimited slots
 - **Prize Distribution**:
-  - 1st: 0.45 CELO (50%)
-  - 2nd: 0.225 CELO (25%)
-  - 3rd: 0.075 CELO (8.33%)
-  - System Fee: 0.15 CELO (split 50/50 between dual treasuries)
+  - 1st: 3.5 CELO (43.75%)
+  - 2nd: 2.5 CELO (31.25%)
+  - 3rd: 1.25 CELO (15.625%)
+  - System Fee: 0.75 CELO (9.375% - split equally among 3 treasuries)
 
 #### State Variables
 ```solidity
@@ -611,30 +626,31 @@ mapping(uint256 => Pool) public pools;
 mapping(address => uint256) public activePoolId;
 mapping(address => uint8) public playerSlotCount;    // Track slots used
 mapping(address => bool) public verifiedUsers;       // SELF-verified (18+)
-address public treasury1;
+address public treasury1;  // Primary treasury (gets remainder if fee not divisible by 3)
 address public treasury2;
+address public treasury3;
 address public verifier;                             // Backend verifier wallet
 ```
 
 #### Critical Constants
 ```solidity
-uint256 public constant ENTRY_FEE = 0.1 ether;
-uint8 public constant POOL_SIZE = 9;
-uint8 public constant UNVERIFIED_SLOT_LIMIT = 4;     // Max slots for unverified
-uint256 public constant PRIZE_1ST = 0.45 ether;      // 50% of prize pool
-uint256 public constant PRIZE_2ND = 0.225 ether;     // 25% of prize pool
-uint256 public constant PRIZE_3RD = 0.075 ether;     // 8.33% of prize pool
-uint256 public constant SYSTEM_FEE = 0.15 ether;     // 16.67% of total pool
+uint256 public constant ENTRY_FEE = 0.5 ether;        // 0.5 CELO per player
+uint8 public constant POOL_SIZE = 16;                 // 16 players per pool
+uint8 public constant UNVERIFIED_SLOT_LIMIT = 4;      // Max slots for unverified
+uint256 public constant PRIZE_1ST = 3.5 ether;        // 43.75% of prize pool
+uint256 public constant PRIZE_2ND = 2.5 ether;        // 31.25% of prize pool
+uint256 public constant PRIZE_3RD = 1.25 ether;       // 15.625% of prize pool
+uint256 public constant SYSTEM_FEE = 0.75 ether;      // 9.375% of total pool (split 3 ways)
 ```
 
 #### Key Functions
-- `initialize(address _treasury1, address _treasury2, address _verifier)` - Initializer
+- `initialize(address _treasury1, address _treasury2, address _treasury3, address _verifier)` - Initializer
 - `joinPool(uint256 fid)` - Join pool (enforces 4-slot limit for unverified)
 - `submitScore(uint256 poolId, uint16 accuracy)` - Submit color accuracy
 - `finalizePool(uint256 poolId)` - Distribute prizes
 - `setUserVerification(address user, bool verified)` - Backend sets verification (verifier-only)
 - `getUserStatus(address user)` - Check verification and slot availability
-- `setTreasuries(address _treasury1, address _treasury2)` - Update treasury addresses
+- `setTreasuries(address _treasury1, address _treasury2, address _treasury3)` - Update treasury addresses
 - `setVerifier(address newVerifier)` - Update verifier wallet (owner-only)
 
 ---
@@ -706,7 +722,7 @@ VERIFIER_PRIVATE_KEY=0x...  # Backend wallet for setUserVerification calls
 ### Prerequisites
 1. Node.js 18+
 2. Celo wallet with CELO for gas
-3. Two treasury wallet addresses
+3. Three treasury wallet addresses (for 3-way fee split)
 4. Backend verifier wallet address
 
 ### Smart Contract Deployment
@@ -720,8 +736,9 @@ cp .env.example .env
 Edit `.env`:
 ```env
 PRIVATE_KEY=0x...  # Deployer private key
-TREASURY_ADDRESS_1=0x...
+TREASURY_ADDRESS_1=0x...  # Primary treasury (gets remainder if fee not divisible by 3)
 TREASURY_ADDRESS_2=0x...
+TREASURY_ADDRESS_3=0x...
 VERIFIER_ADDRESS=0x...  # Backend service wallet
 CELO_RPC_URL=https://forno.celo.org
 CELOSCAN_API_KEY=...
@@ -934,6 +951,12 @@ npm run type-check      # TypeScript check
   - Reduced pool size from 12 to 9 players for faster games
   - Updated prize distribution (0.45, 0.225, 0.075 CELO)
   - 3×3 grid layout for better UX
+- **v5.0.0** (Dec 2025):
+  - Increased pool size to 16 players (4×4 grid)
+  - Increased entry fee to 0.5 CELO
+  - Updated prizes: 3.5, 2.5, 1.25 CELO (top 3)
+  - Added third treasury for 3-way fee split (0.25 CELO each)
+  - System fee: 0.75 CELO (9.375% of pool)
 
 ### Future Enhancements
 - [ ] NFT rewards for top performers
@@ -976,7 +999,7 @@ When Claude works on this project:
 3. **Common tasks**:
    - Update prize distribution → Edit constants in ColorDropPool.sol
    - Change slot limits → Edit `UNVERIFIED_SLOT_LIMIT` constant
-   - Add treasury → Modify `initialize()` and `_distributePrizes()`
+   - Update treasuries → Modify `initialize()`, `_distributePrizes()`, and `setTreasuries()`
    - Fix SELF integration → Check `/api/verify-self/` routes
 
 ---

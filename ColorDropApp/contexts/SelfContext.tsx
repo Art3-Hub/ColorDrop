@@ -50,8 +50,8 @@ interface SelfProviderProps {
 export function SelfProvider({ children }: SelfProviderProps) {
   const { address, isConnected } = useAccount()
 
-  // v4.0.0: Verification is NEVER stored or cached
-  // Every slot click after the free limit (2 slots) requires fresh SELF verification
+  // v5.0.0: Verification is NEVER stored or cached
+  // Every slot click after the free limit (4 slots) requires fresh SELF verification
   // This ensures SELF Protocol branding is always shown (marketing requirement)
   // isVerified is always false - we don't track verification state
   const [isVerified, setIsVerified] = useState(false)
@@ -167,9 +167,9 @@ export function SelfProvider({ children }: SelfProviderProps) {
     }
   }, [address, isConnected, appName, scope, logoUrl, minimumAge, ofac])
 
-  // v4.0.0: REMOVED auto-check on page load
+  // v5.0.0: REMOVED auto-check on page load
   // We don't want to auto-detect verification status anymore
-  // Every slot click after 2 slots must show SELF verification (marketing requirement)
+  // Every slot click after 4 slots must show SELF verification (marketing requirement)
   // The checkVerificationStatus is only called during active verification polling
 
   // Cleanup polling on unmount

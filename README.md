@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Color Drop Banner](https://colordrop.art3hub.xyz/og-image.png)
+![Color Drop Banner](https://colordrop.art3hub.xyz/banner.png)
 
 ### **The Ultimate Color Matching Challenge on Web3**
 
@@ -20,10 +20,10 @@
 
 ## ⚡ What is Color Drop?
 
-Color Drop Tournament is a **skill-based micro-gaming experience** where 9 players compete in real-time to match a target color with surgical precision. Built as a **Farcaster Mini App** on **Celo blockchain**, it combines the addictive simplicity of casual gaming with the transparency and instant payouts of Web3.
+Color Drop Tournament is a **skill-based micro-gaming experience** where 16 players compete in real-time to match a target color with surgical precision. Built as a **Farcaster Mini App** on **Celo blockchain**, it combines the addictive simplicity of casual gaming with the transparency and instant payouts of Web3.
 
 ```
-🎯 Match the color → 🏆 Beat 8 opponents → 💰 Win up to 0.45 CELO
+🎯 Match the color → 🏆 Beat 15 opponents → 💰 Win up to 3.5 CELO
 ```
 
 **No luck. No randomness. Pure skill.**
@@ -48,8 +48,8 @@ Color Drop Tournament is a **skill-based micro-gaming experience** where 9 playe
 ```mermaid
 flowchart LR
     subgraph JOIN["🎯 JOIN POOL"]
-        A[Select Slot] --> B[Pay 0.1 CELO]
-        B --> C[Wait for 9 Players]
+        A[Select Slot] --> B[Pay 0.5 CELO]
+        B --> C[Wait for 16 Players]
     end
 
     subgraph PLAY["🎨 PLAY GAME"]
@@ -62,10 +62,10 @@ flowchart LR
     subgraph WIN["🏆 WIN PRIZES"]
         G --> H[Delta E Scoring]
         H --> I{Rank in Top 3?}
-        I -->|🥇 1st| J[0.45 CELO]
-        I -->|🥈 2nd| K[0.225 CELO]
-        I -->|🥉 3rd| L[0.075 CELO]
-        I -->|4th-9th| M[Try Again!]
+        I -->|🥇 1st| J[3.5 CELO]
+        I -->|🥈 2nd| K[2.5 CELO]
+        I -->|🥉 3rd| L[1.25 CELO]
+        I -->|4th-16th| M[Try Again!]
     end
 
     style JOIN fill:#35D07F,color:#fff
@@ -75,8 +75,8 @@ flowchart LR
 
 ### The Game Loop
 
-1. **Join a Pool** — Pick any empty slot in the 3×3 grid, pay 0.1 CELO
-2. **Wait for Players** — Pool starts when all 9 slots are filled
+1. **Join a Pool** — Pick any empty slot in the 4×4 grid, pay 0.5 CELO
+2. **Wait for Players** — Pool starts when all 16 slots are filled
 3. **Match the Color** — You have exactly 10 seconds to match the target using Hue, Saturation, and Lightness sliders
 4. **Score Calculated** — Delta E 2000 algorithm measures your accuracy (used by professional colorists!)
 5. **Winners Announced** — Top 3 players claim prizes directly from the smart contract
@@ -95,7 +95,7 @@ graph TB
 
     subgraph BLOCKCHAIN["⛓️ Celo Blockchain"]
         PROXY[UUPS Proxy Contract]
-        IMPL[ColorDropPool v4.0.0]
+        IMPL[ColorDropPool v5.0.0]
         SELF_STORE[(Verification Storage)]
     end
 
@@ -144,11 +144,11 @@ sequenceDiagram
     Note over P,S: 🎮 JOINING A POOL
     P->>F: Open Color Drop Mini App
     F->>C: Read current pool status
-    C-->>F: Pool #248: 5/9 players
+    C-->>F: Pool #248: 8/16 players
     P->>F: Select empty slot #6
 
     Note over P,S: 💳 PAYMENT FLOW
-    F->>C: joinPool(fid) + 0.1 CELO
+    F->>C: joinPool(fid) + 0.5 CELO
     C->>C: Check slot limits
     C-->>F: Transaction confirmed (5s)
     F-->>P: ✅ You're in slot #6!
@@ -156,7 +156,7 @@ sequenceDiagram
     Note over P,S: ⏳ WAITING FOR POOL
     loop Every 2 seconds
         F->>C: Poll player count
-        C-->>F: 6/9... 7/9... 8/9... 9/9!
+        C-->>F: 9/16... 12/16... 15/16... 16/16!
     end
 
     Note over P,S: 🎨 GAMEPLAY (10 SECONDS)
@@ -168,11 +168,11 @@ sequenceDiagram
     C-->>F: Score recorded: 94.67%
 
     Note over P,S: 🏆 RESULTS & PRIZES
-    C->>C: All 9 scores submitted
+    C->>C: All 16 scores submitted
     C->>C: Rank players by accuracy
     C-->>F: You ranked #2! 🥈
     P->>C: claimPrize(poolId)
-    C-->>P: 💰 0.225 CELO sent!
+    C-->>P: 💰 2.5 CELO sent!
 ```
 
 ---
@@ -331,6 +331,7 @@ classDiagram
         +mapping verifiedUsers
         +address treasury1
         +address treasury2
+        +address treasury3
         +joinPool(fid) payable
         +submitScore(accuracy)
         +claimPrize(poolId, rank)
@@ -345,7 +346,7 @@ classDiagram
         +bool isCompleted
         +uint32 startTime
         +bytes32 targetColor
-        +Player[9] players
+        +Player[16] players
     }
 
     class Player {
@@ -372,7 +373,7 @@ classDiagram
     ColorDropPool --|> ReentrancyGuard
     ColorDropPool --|> Pausable
     ColorDropPool "1" *-- "many" Pool
-    Pool "1" *-- "9" Player
+    Pool "1" *-- "16" Player
 ```
 
 ### Contract Details
@@ -380,21 +381,22 @@ classDiagram
 | Property | Value |
 |----------|-------|
 | **Mainnet Proxy** | [`0x05342b1bA42A5B35807592912d7f073DfB95873a`](https://celo.blockscout.com/address/0x05342b1bA42A5B35807592912d7f073DfB95873a) |
-| **Version** | v4.0.0 |
+| **Version** | v5.0.0 |
 | **Network** | Celo Mainnet (Chain ID: 42220) |
-| **Entry Fee** | 0.1 CELO |
-| **Pool Size** | 9 players |
+| **Entry Fee** | 0.5 CELO |
+| **Pool Size** | 16 players |
+| **Treasuries** | 3 (fee split equally) |
 | **Upgradeable** | UUPS Pattern |
 
 ### Prize Distribution
 
 ```
-Total Pool: 0.9 CELO (9 × 0.1 CELO)
+Total Pool: 8 CELO (16 × 0.5 CELO)
 
-🥇 1st Place:  0.45 CELO  (50%)
-🥈 2nd Place:  0.225 CELO (25%)
-🥉 3rd Place:  0.075 CELO (8.33%)
-💼 Platform:   0.15 CELO  (16.67%)
+🥇 1st Place:  3.5 CELO   (43.75%)
+🥈 2nd Place:  2.5 CELO   (31.25%)
+🥉 3rd Place:  1.25 CELO  (15.625%)
+💼 Platform:   0.75 CELO  (9.375% - split 3 ways)
 ```
 
 ---
@@ -456,7 +458,7 @@ flowchart LR
 
 1. **Open Farcaster** and search for Color Drop
 2. **Connect wallet** (auto-connects in Mini App)
-3. **Join a pool** (0.1 CELO entry)
+3. **Join a pool** (0.5 CELO entry)
 4. **Match colors** when pool is full
 5. **Claim prizes** if you're in top 3!
 
