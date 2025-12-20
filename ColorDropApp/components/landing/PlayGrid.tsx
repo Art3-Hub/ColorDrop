@@ -188,9 +188,13 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
   const handleVerifySelf = async () => {
     // Use deeplink for Farcaster mobile, otherwise QR code handles it via modal
     if (shouldUseDeeplink) {
+      // Start deeplink verification - this opens SELF app and starts polling
+      // DO NOT proceed to payment here - wait for polling to set isVerified=true
+      // The useEffect above (lines 56-62) will handle proceeding to payment when verified
       await initiateDeeplinkVerification();
-      // After verification starts, proceed to payment
-      setFlowState('payment');
+      console.log('🔗 Deeplink opened, waiting for verification to complete via polling...');
+      // Keep flowState as 'verification_prompt' - the modal will show "Verifying..." state
+      // Once polling detects verification success, isVerified becomes true and useEffect proceeds to payment
     } else {
       // For browser/farcaster-browser, the QR code is shown in the modal
       // and polling starts when QR is scanned - no need to call initiateSelfVerification here
