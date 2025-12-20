@@ -16,8 +16,8 @@ const jetBrainsMono = JetBrains_Mono({
 export async function generateMetadata(): Promise<Metadata> {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://colordrop.art3hub.xyz";
   const appName = "Color Drop Tournament";
-  const appDescription = "Test your color perception in this fast-paced 9-player tournament on Celo. Match colors in 10 seconds, compete for CELO prizes. Top 3 players win!";
-  const shortDescription = "Match colors, win CELO prizes. 9-player tournament with 10-second gameplay.";
+  const appDescription = "Test your color perception in this fast-paced 16-player tournament on Celo. Match colors in 10 seconds, compete for CELO prizes. Top 3 players win!";
+  const shortDescription = "Match colors, win CELO prizes. 16-player tournament with 10-second gameplay.";
 
   return {
     // Basic metadata
