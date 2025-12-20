@@ -36,7 +36,7 @@ export async function generateMetadata(): Promise<Metadata> {
     other: {
       "fc:frame": JSON.stringify({
         version: "next",
-        imageUrl: `${appUrl}/og-image.png`,
+        imageUrl: `${appUrl}/banner.png`,
         aspectRatio: "1:1",
         button: {
           title: "Play Color Drop",
