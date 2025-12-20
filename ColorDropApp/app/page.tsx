@@ -16,6 +16,7 @@ import { useColorDropPool } from '@/hooks/useColorDropPool';
 type AppState = 'landing' | 'game' | 'leaderboard' | 'pastGames';
 
 // Share pool on Farcaster to invite friends
+// Uses sdk.actions.composeCast() for proper mini app embed display in Farcaster
 async function sharePoolOnFarcaster(poolId: bigint | undefined, prizePool: number, slotsRemaining: number) {
   const poolIdStr = poolId?.toString() || '???';
 
@@ -36,18 +37,30 @@ async function sharePoolOnFarcaster(poolId: bigint | undefined, prizePool: numbe
 
   const entryFee = parseFloat(process.env.NEXT_PUBLIC_ENTRY_FEE || '0.1');
   const text = `${emoji} Join me in Color Drop Pool #${poolIdStr}!\n\n🎨 Match colors in 10 seconds\n🎟️ Entry: ${entryFee} CELO\n💰 Prize Pool: ${prizePool.toFixed(2)} CELO\n🏆 Top 3 win prizes!\n\n${callToAction}`;
-  const embedUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://colordrop.app';
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://colordrop.art3hub.xyz';
 
   try {
     const isInMiniApp = await sdk.isInMiniApp();
     if (isInMiniApp) {
-      await sdk.actions.openUrl(`https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(embedUrl)}`);
+      // Use composeCast with embeds for proper mini app display in Farcaster
+      // This shows the mini app card in the cast instead of just a link
+      console.log('[Share] Using composeCast with embeds:', [appUrl]);
+      await sdk.actions.composeCast({
+        text,
+        embeds: [appUrl],
+      });
     } else {
-      window.open(`https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(embedUrl)}`, '_blank');
+      // Fallback for browser - use warpcast compose URL
+      const encodedText = encodeURIComponent(text);
+      const embedsParam = `&embeds[]=${encodeURIComponent(appUrl)}`;
+      window.open(`https://farcaster.xyz/~/compose?text=${encodedText}${embedsParam}`, '_blank');
     }
   } catch (error) {
     console.error('Failed to share on Farcaster:', error);
-    window.open(`https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(embedUrl)}`, '_blank');
+    // Fallback to warpcast URL
+    const encodedText = encodeURIComponent(text);
+    const embedsParam = `&embeds[]=${encodeURIComponent(appUrl)}`;
+    window.open(`https://farcaster.xyz/~/compose?text=${encodedText}${embedsParam}`, '_blank');
   }
 }
 
