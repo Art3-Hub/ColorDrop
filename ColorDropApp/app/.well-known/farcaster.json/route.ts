@@ -15,7 +15,7 @@ export async function GET() {
       version: "1",
       name: "Color Drop Tournament",
       homeUrl: appUrl,
-      iconUrl: `${appUrl}/icon.png`,
+      iconUrl: `${appUrl}/logo.png`,
       splashImageUrl: `${appUrl}/splash.png`,
       splashBackgroundColor: "#7c3aed", // Purple brand color
       subtitle: "Match colors, win CELO prizes",
