@@ -15,7 +15,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { userId } = body
 
-    console.log(`[${requestId}] 📥 Verification check request:`, {
     console.log(`[${requestId}] 📥 Verification check request for:`, userId)
 
     if (!userId) {
