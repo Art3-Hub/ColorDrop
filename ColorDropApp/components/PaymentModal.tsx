@@ -12,6 +12,65 @@ interface PaymentModalProps {
   error?: Error | null;
 }
 
+// Helper to detect if error is a user rejection/cancellation
+function isUserRejection(error: Error | null): boolean {
+  if (!error) return false;
+  const message = error.message?.toLowerCase() || '';
+  return (
+    message.includes('user rejected') ||
+    message.includes('user denied') ||
+    message.includes('rejected the request') ||
+    message.includes('user cancelled') ||
+    message.includes('user canceled') ||
+    message.includes('action_rejected') ||
+    message.includes('denied transaction signature')
+  );
+}
+
+// Helper to get user-friendly error message
+function getErrorDisplay(error: Error | null): { icon: string; title: string; message: string; variant: 'info' | 'error' } {
+  if (!error) {
+    return { icon: '❌', title: 'Error', message: 'An unknown error occurred.', variant: 'error' };
+  }
+
+  if (isUserRejection(error)) {
+    return {
+      icon: '↩️',
+      title: 'Transaction Cancelled',
+      message: 'You cancelled the transaction. No payment was made. Feel free to try again when you\'re ready!',
+      variant: 'info'
+    };
+  }
+
+  // Check for insufficient funds
+  if (error.message?.toLowerCase().includes('insufficient funds')) {
+    return {
+      icon: '💰',
+      title: 'Insufficient Funds',
+      message: 'You don\'t have enough CELO to complete this transaction. Please add more CELO to your wallet.',
+      variant: 'error'
+    };
+  }
+
+  // Check for network issues
+  if (error.message?.toLowerCase().includes('network') || error.message?.toLowerCase().includes('connection')) {
+    return {
+      icon: '🌐',
+      title: 'Network Error',
+      message: 'There was a network issue. Please check your connection and try again.',
+      variant: 'error'
+    };
+  }
+
+  // Default error
+  return {
+    icon: '❌',
+    title: 'Transaction Failed',
+    message: error.message || 'An unknown error occurred. Please try again.',
+    variant: 'error'
+  };
+}
+
 export function PaymentModal({
   isOpen,
   slotNumber,
@@ -90,18 +149,26 @@ export function PaymentModal({
           </div>
         </div>
 
-        {/* Error Message */}
-        {error && (
-          <div className="bg-celo-error/10 border border-celo-error/30 rounded-lg p-3 sm:p-4">
-            <div className="flex items-start gap-2">
-              <span className="text-lg">❌</span>
-              <div className="text-xs sm:text-sm text-celo-error">
-                <p className="font-medium mb-1">Transaction Failed:</p>
-                <p>{error.message || 'An unknown error occurred. Please try again.'}</p>
+        {/* Error/Cancellation Message */}
+        {error && (() => {
+          const errorDisplay = getErrorDisplay(error);
+          const isInfo = errorDisplay.variant === 'info';
+          return (
+            <div className={`rounded-lg p-3 sm:p-4 ${
+              isInfo
+                ? 'bg-celo-forest/10 border border-celo-forest/30'
+                : 'bg-celo-error/10 border border-celo-error/30'
+            }`}>
+              <div className="flex items-start gap-3">
+                <span className="text-2xl">{errorDisplay.icon}</span>
+                <div className={`text-xs sm:text-sm ${isInfo ? 'text-celo-forest' : 'text-celo-error'}`}>
+                  <p className="font-semibold mb-1">{errorDisplay.title}</p>
+                  <p className="opacity-90">{errorDisplay.message}</p>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Important Notice */}
         <div className="bg-celo-yellow/20 border border-celo-yellow/50 rounded-lg p-3 sm:p-4">
