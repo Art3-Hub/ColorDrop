@@ -10,8 +10,10 @@ import { GameScreen } from '@/components/game/GameScreen';
 import { LeaderboardView } from '@/components/pool/LeaderboardView';
 import { PastGames } from '@/components/pool/PastGames';
 import { useFarcaster } from '@/contexts/FarcasterContext';
+import { signalReady } from '@/lib/farcaster';
 import { NETWORK_INFO } from '@/lib/wagmi';
 import { useColorDropPool } from '@/hooks/useColorDropPool';
+import { usePastGames } from '@/hooks/usePastGames';
 
 type AppState = 'landing' | 'game' | 'leaderboard' | 'pastGames';
 
@@ -68,19 +70,29 @@ export default function Home() {
   const { address, isConnected } = useAccount();
   const { poolData, currentPoolId } = useColorDropPool();
   const { isInMiniApp, isAuthenticated } = useFarcaster();
+  const { userPrizes } = usePastGames();
   const [appState, setAppState] = useState<AppState>('landing');
   const [currentSlot, setCurrentSlot] = useState<number>(1);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // Count of unclaimed prizes for badge display
+  // userPrizes only includes unclaimed, claimable prizes (isClaimable=true, claimed=false)
+  const unclaimedCount = userPrizes?.length || 0;
+
   const POOL_SIZE = 16;
   const ENTRY_FEE_VALUE = parseFloat(process.env.NEXT_PUBLIC_ENTRY_FEE || '0.1');
 
-  // Log Farcaster environment detection
-  // Note: sdk.actions.ready() is now called earlier in initializeFarcaster() (lib/farcaster.ts)
+  // Signal to Farcaster that the app UI is ready (hides splash screen)
+  // This must be called AFTER the component mounts, not during SDK initialization
   useEffect(() => {
     if (isInMiniApp) {
       console.log('[ColorDrop] 🎯 Farcaster MiniApp detected');
       console.log('[ColorDrop] 💡 Wallet should auto-connect via wagmi useAccount()');
+      // Signal ready after a short delay to ensure UI is fully rendered
+      const timer = setTimeout(() => {
+        signalReady();
+      }, 100);
+      return () => clearTimeout(timer);
     } else {
       console.log('[ColorDrop] 🌐 Running in browser mode');
     }
@@ -233,10 +245,24 @@ export default function Home() {
                     : 'hover:bg-celo-dark-tan/50 text-celo-brown'
                 }`}
               >
-                <span className="text-xl">💰</span>
-                <div>
-                  <div className="font-medium">Claim Prizes</div>
-                  <div className="text-xs text-celo-body">View past games & claim</div>
+                <span className="text-xl relative">
+                  💰
+                  {unclaimedCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-celo-orange text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse">
+                      {unclaimedCount > 9 ? '9+' : unclaimedCount}
+                    </span>
+                  )}
+                </span>
+                <div className="flex-1">
+                  <div className="font-medium flex items-center gap-2">
+                    Claims & History
+                    {unclaimedCount > 0 && (
+                      <span className="text-[10px] px-1.5 py-0.5 bg-celo-orange text-white rounded-full font-semibold">
+                        {unclaimedCount} to claim
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-xs text-celo-body">View past games & claim prizes</div>
                 </div>
               </button>
 
@@ -383,6 +409,7 @@ export default function Home() {
             onStartGame={handleStartGame}
             onViewLeaderboard={handleViewLeaderboard}
             onViewPastGames={handleViewPastGames}
+            unclaimedPrizesCount={unclaimedCount}
           />
         )}
 

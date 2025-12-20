@@ -13,11 +13,12 @@ interface PlayGridProps {
   onStartGame: (slot: number) => void;
   onViewLeaderboard?: () => void;
   onViewPastGames?: () => void;
+  unclaimedPrizesCount?: number;
 }
 
 type FlowState = 'idle' | 'verification_prompt' | 'payment' | 'playing';
 
-export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: PlayGridProps) {
+export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames, unclaimedPrizesCount = 0 }: PlayGridProps) {
   const { address } = useAccount();
   const {
     isVerified,
@@ -272,6 +273,17 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
         <div className="text-center mb-3 sm:mb-4">
           {/* Mobile: Ultra-compact motivating header */}
           <div className="sm:hidden">
+            {/* Claim Prizes Button - Show when user has unclaimed prizes */}
+            {unclaimedPrizesCount > 0 && onViewPastGames && (
+              <button
+                onClick={onViewPastGames}
+                className="w-full mb-2 px-3 py-2 bg-gradient-to-r from-celo-orange to-celo-yellow text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 animate-pulse-subtle"
+              >
+                <span className="text-lg">🏆</span>
+                <span>Claim {unclaimedPrizesCount} Prize{unclaimedPrizesCount > 1 ? 's' : ''}!</span>
+                <span className="bg-white/20 px-1.5 py-0.5 rounded text-xs font-bold">{unclaimedPrizesCount}</span>
+              </button>
+            )}
             <div className="flex items-center justify-center gap-2 mb-1">
               <div className="inline-flex items-center gap-1.5 bg-celo-forest/10 text-celo-forest px-2 py-0.5 rounded-full text-xs font-medium">
                 <span className="w-1.5 h-1.5 bg-celo-success rounded-full animate-pulse"></span>
@@ -280,8 +292,8 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
               {userStatus && (
                 <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-celo-yellow/20 text-celo-brown border border-celo-yellow/50">
                   {currentPoolSlots >= MAX_UNVERIFIED_SLOTS
-                    ? '🔐 SELF Required'
-                    : `${Math.max(0, MAX_UNVERIFIED_SLOTS - currentPoolSlots)}/${MAX_UNVERIFIED_SLOTS} free`}
+                    ? '🔐 Verify for more'
+                    : `${Math.max(0, MAX_UNVERIFIED_SLOTS - currentPoolSlots)} no-verify`}
                 </div>
               )}
             </div>
@@ -298,6 +310,17 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
 
           {/* Desktop/Tablet: Full detailed header */}
           <div className="hidden sm:block">
+            {/* Claim Prizes Button - Show when user has unclaimed prizes */}
+            {unclaimedPrizesCount > 0 && onViewPastGames && (
+              <button
+                onClick={onViewPastGames}
+                className="w-full mb-3 px-4 py-2.5 bg-gradient-to-r from-celo-orange to-celo-yellow text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 animate-pulse-subtle"
+              >
+                <span className="text-xl">🏆</span>
+                <span>You have {unclaimedPrizesCount} prize{unclaimedPrizesCount > 1 ? 's' : ''} to claim!</span>
+                <span className="bg-white/20 px-2 py-0.5 rounded text-sm font-bold">Claim Now</span>
+              </button>
+            )}
             <div className="inline-flex items-center gap-2 bg-celo-forest/10 text-celo-forest px-3 py-1 rounded-full text-xs font-medium mb-2">
               <span className="w-2 h-2 bg-celo-success rounded-full animate-pulse"></span>
               Pool #{poolData?.poolId?.toString() || '...'}
@@ -320,7 +343,7 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames }: Pl
                 ) : (
                   <>
                     <span className="font-bold">{Math.max(0, MAX_UNVERIFIED_SLOTS - currentPoolSlots)}</span>
-                    <span>/ {MAX_UNVERIFIED_SLOTS} free slots left</span>
+                    <span>slots without verification</span>
                   </>
                 )}
               </div>
