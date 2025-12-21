@@ -50,63 +50,34 @@ export function FarcasterProvider({ children }: FarcasterProviderProps) {
       setLoading(true)
       setError(null)
 
-      console.log('[FarcasterContext] Checking Mini App environment...')
+      // Step 1: Use official SDK method for environment detection
+      // This is fast (~100ms timeout) and handles all edge cases internally
+      // See: https://miniapps.farcaster.xyz/docs/sdk/is-in-mini-app
+      const isMiniApp = await sdk.isInMiniApp()
+      console.log('[FarcasterContext] sdk.isInMiniApp():', isMiniApp)
 
-      // Get SDK context first
-      console.log('[FarcasterContext] Getting SDK context...')
+      setIsInMiniApp(isMiniApp)
+
+      if (!isMiniApp) {
+        console.log('[FarcasterContext] Not in Mini App - browser mode')
+        setUser(null)
+        setLoading(false)
+        return
+      }
+
+      // Step 2: Only fetch context if we're in a Mini App
+      // Context is automatically available, no auth needed
+      console.log('[FarcasterContext] In Mini App, fetching context...')
       const context = await sdk.context
-      console.log('[FarcasterContext] SDK context:', context)
 
-      // 3-method environment detection (like ZodiacCards)
-      // Method 1: Official SDK method
-      const sdkIsInMiniApp = await sdk.isInMiniApp()
-
-      // Method 2: Context-based detection
-      const contextCheck = context as { client?: { clientFid?: number }, isMinApp?: boolean, miniApp?: unknown }
-      const hasContext = !!(
-        contextCheck?.client?.clientFid ||
-        contextCheck?.isMinApp ||
-        contextCheck?.miniApp
-      )
-
-      // Method 3: User agent check for Farcaster mobile
-      const userAgentCheck = typeof navigator !== 'undefined' &&
-        navigator.userAgent.includes('Farcaster')
-
-      // Combined detection - any method returning true means we're in Farcaster
-      const isFarcasterEnv = sdkIsInMiniApp || hasContext || userAgentCheck
-
-      console.log('[FarcasterContext] Environment detection:', {
-        sdkIsInMiniApp,
-        hasContext,
-        clientFid: contextCheck?.client?.clientFid,
-        isMinApp: contextCheck?.isMinApp,
-        miniApp: contextCheck?.miniApp,
-        userAgentCheck,
-        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'N/A',
-        finalResult: isFarcasterEnv
-      })
-
-      setIsInMiniApp(isFarcasterEnv)
-
-      if (!isFarcasterEnv) {
-        console.log('[FarcasterContext] Not in Farcaster environment - no Farcaster user available')
+      if (!context?.user) {
+        console.log('[FarcasterContext] No user in context')
         setUser(null)
         setLoading(false)
         return
       }
 
-      console.log('[FarcasterContext] Running in Farcaster environment')
-
-      if (!context?.user && !context?.client) {
-        console.log('[FarcasterContext] No user context available from SDK')
-        setUser(null)
-        setLoading(false)
-        return
-      }
-
-      // Extract user data from context
-      // Use type assertion since SDK types may be incomplete
+      // Step 3: Extract user data from context
       const contextUser = context.user as {
         fid?: number
         username?: string
@@ -117,10 +88,10 @@ export function FarcasterProvider({ children }: FarcasterProviderProps) {
         bio?: string
         followerCount?: number
         followingCount?: number
-      } | undefined
+      }
 
       const farcasterUser: FarcasterUser = {
-        fid: contextUser?.fid || (context.client as { clientFid?: number })?.clientFid || 0,
+        fid: contextUser?.fid || 0,
         username: contextUser?.username || 'user',
         displayName: contextUser?.displayName || contextUser?.username || 'User',
         pfpUrl: contextUser?.pfpUrl || '/placeholder.svg',
@@ -131,11 +102,7 @@ export function FarcasterProvider({ children }: FarcasterProviderProps) {
         followingCount: contextUser?.followingCount,
       }
 
-      console.log('[FarcasterContext] Farcaster user loaded:', {
-        fid: farcasterUser.fid,
-        username: farcasterUser.username,
-        connectedAddress: farcasterUser.connectedAddress
-      })
+      console.log('[FarcasterContext] User loaded:', farcasterUser.username, 'fid:', farcasterUser.fid)
       setUser(farcasterUser)
 
     } catch (err) {
@@ -143,6 +110,8 @@ export function FarcasterProvider({ children }: FarcasterProviderProps) {
       setError(errorMessage)
       console.error('[FarcasterContext] Error:', err)
       setUser(null)
+      // On error, assume not in mini app for safety
+      setIsInMiniApp(false)
     } finally {
       setLoading(false)
     }
