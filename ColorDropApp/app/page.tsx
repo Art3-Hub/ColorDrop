@@ -70,7 +70,7 @@ async function sharePoolOnFarcaster(poolId: bigint | undefined, prizePool: numbe
 export default function Home() {
   const { address, isConnected } = useAccount();
   const { poolData, currentPoolId } = useColorDropPool();
-  const { isInMiniApp, isAuthenticated } = useFarcaster();
+  const { isInMiniApp, isAuthenticated, loading: farcasterLoading } = useFarcaster();
   const { userPrizes } = usePastGames();
   const [appState, setAppState] = useState<AppState>('landing');
   const [currentSlot, setCurrentSlot] = useState<number>(1);
@@ -83,21 +83,41 @@ export default function Home() {
   const POOL_SIZE = 16;
   const ENTRY_FEE_VALUE = parseFloat(process.env.NEXT_PUBLIC_ENTRY_FEE || '0.1');
 
-  // Signal to Farcaster that the app UI is ready (hides splash screen)
-  // Uses useRenderComplete for reliable render detection instead of arbitrary timeout
-  useRenderComplete(
+  // Track if we've completed render detection
+  const { isComplete: renderComplete } = useRenderComplete(
     () => {
-      if (isInMiniApp) {
-        console.log('[ColorDrop] 🎨 UI render complete, signaling ready to Farcaster');
-        signalReady({ source: 'useRenderComplete' });
-      }
+      console.log('[ColorDrop] 🎨 Initial render complete');
     },
     {
-      enabled: isInMiniApp,
-      minDelay: 50,    // Small buffer to ensure paint is visible
-      maxDelay: 2000,  // Safety timeout - never wait longer than 2s
+      enabled: true,  // Always run - we need render detection for all environments
+      minDelay: 50,
+      maxDelay: 2000,
     }
   );
+
+  // Signal to Farcaster that the app UI is ready (hides splash screen)
+  // Must wait for BOTH: render complete AND Farcaster context loaded
+  useEffect(() => {
+    // Wait for Farcaster context to finish loading
+    if (farcasterLoading) {
+      console.log('[ColorDrop] ⏳ Waiting for Farcaster context...');
+      return;
+    }
+
+    // Wait for render to complete
+    if (!renderComplete) {
+      console.log('[ColorDrop] ⏳ Waiting for render complete...');
+      return;
+    }
+
+    // Now we know the environment and render is complete
+    if (isInMiniApp) {
+      console.log('[ColorDrop] 🎯 Farcaster MiniApp + render complete → signaling ready');
+      signalReady({ source: 'page-effect' });
+    } else {
+      console.log('[ColorDrop] 🌐 Browser mode detected (no splash to dismiss)');
+    }
+  }, [farcasterLoading, renderComplete, isInMiniApp]);
 
   // Log environment detection
   useEffect(() => {
