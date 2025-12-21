@@ -87,7 +87,7 @@ export function SelfVerificationModal({
           {isMandatory ? (
             <div className="bg-celo-error/10 border border-celo-error/30 rounded-lg px-3 py-2">
               <p className="text-celo-error font-medium text-sm">
-                🚫 You&apos;ve used your 4 free slots
+                🚫 You&apos;ve used your 4 non-verified slots
               </p>
               <p className="text-xs text-celo-error/80">
                 SELF verification required for additional slots
@@ -184,7 +184,7 @@ export function SelfVerificationModal({
                 disabled={isVerifying}
                 className="w-full bg-celo-dark-tan/50 text-celo-brown px-4 py-2.5 rounded-xl font-medium hover:bg-celo-dark-tan transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
               >
-                Skip for Now ({slotsRemaining} free {slotsRemaining === 1 ? 'slot' : 'slots'} left)
+                Skip for Now ({slotsRemaining} non-verified {slotsRemaining === 1 ? 'slot' : 'slots'} left)
               </button>
             )}
 
