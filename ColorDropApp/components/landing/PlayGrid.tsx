@@ -90,7 +90,7 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames, uncl
 
       // v5.0.0: ALWAYS reset verification after successful payment
       // This ensures SELF Protocol QR is shown on EVERY slot 5+ purchase (marketing requirement)
-      // User must re-verify with SELF for each slot beyond the 4 free slots
+      // User must re-verify with SELF for each slot beyond the 4 non-verified slots
       clearVerification();
       console.log('🔄 Cleared verification state for next slot');
 
