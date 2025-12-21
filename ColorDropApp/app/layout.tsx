@@ -95,7 +95,7 @@ export async function generateMetadata(): Promise<Metadata> {
           type: "image/png",
         },
         {
-          url: `${appUrl}/logo.png`,
+          url: `${appUrl}/logo2.png`,
           width: 512,
           height: 512,
           alt: `${appName} Logo`,
@@ -152,7 +152,7 @@ export async function generateMetadata(): Promise<Metadata> {
             type: "launch_frame",
             name: appName,
             url: appUrl,
-            splashImageUrl: `${appUrl}/splash.png`,
+            splashImageUrl: `${appUrl}/splash2.png`,
             splashBackgroundColor: "#F6F3EC",
           },
         },

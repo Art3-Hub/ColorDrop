@@ -11,6 +11,7 @@ import { LeaderboardView } from '@/components/pool/LeaderboardView';
 import { PastGames } from '@/components/pool/PastGames';
 import { useFarcaster } from '@/contexts/FarcasterContext';
 import { signalReady } from '@/lib/farcaster';
+import { useRenderComplete } from '@/hooks/useRenderComplete';
 import { NETWORK_INFO } from '@/lib/wagmi';
 import { useColorDropPool } from '@/hooks/useColorDropPool';
 import { usePastGames } from '@/hooks/usePastGames';
@@ -83,16 +84,26 @@ export default function Home() {
   const ENTRY_FEE_VALUE = parseFloat(process.env.NEXT_PUBLIC_ENTRY_FEE || '0.1');
 
   // Signal to Farcaster that the app UI is ready (hides splash screen)
-  // This must be called AFTER the component mounts, not during SDK initialization
+  // Uses useRenderComplete for reliable render detection instead of arbitrary timeout
+  useRenderComplete(
+    () => {
+      if (isInMiniApp) {
+        console.log('[ColorDrop] 🎨 UI render complete, signaling ready to Farcaster');
+        signalReady({ source: 'useRenderComplete' });
+      }
+    },
+    {
+      enabled: isInMiniApp,
+      minDelay: 50,    // Small buffer to ensure paint is visible
+      maxDelay: 2000,  // Safety timeout - never wait longer than 2s
+    }
+  );
+
+  // Log environment detection
   useEffect(() => {
     if (isInMiniApp) {
       console.log('[ColorDrop] 🎯 Farcaster MiniApp detected');
       console.log('[ColorDrop] 💡 Wallet should auto-connect via wagmi useAccount()');
-      // Signal ready after a short delay to ensure UI is fully rendered
-      const timer = setTimeout(() => {
-        signalReady();
-      }, 100);
-      return () => clearTimeout(timer);
     } else {
       console.log('[ColorDrop] 🌐 Running in browser mode');
     }

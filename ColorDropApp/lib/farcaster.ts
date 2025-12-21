@@ -49,20 +49,61 @@ export async function initializeFarcaster(): Promise<boolean> {
   }
 }
 
+interface SignalReadyOptions {
+  /**
+   * Source identifier for debugging
+   */
+  source?: string;
+}
+
+// Track if ready has been called to prevent duplicate calls
+let hasSignaledReady = false;
+
 /**
- * Signal to Farcaster that the app is ready and splash screen can be hidden
- * Should be called from the main page component after UI is rendered
+ * Signal to Farcaster that the app is ready and splash screen can be hidden.
+ * Should be called from the main page component after UI is rendered.
+ *
+ * This function is idempotent - calling it multiple times is safe,
+ * only the first call will actually signal ready.
+ *
+ * @param options - Optional configuration
  */
-export async function signalReady(): Promise<void> {
+export async function signalReady(options: SignalReadyOptions = {}): Promise<void> {
+  const { source = 'unknown' } = options;
+
+  // Prevent duplicate calls
+  if (hasSignaledReady) {
+    console.log(`[Farcaster] signalReady already called, ignoring call from: ${source}`);
+    return;
+  }
+
   try {
     const isInMiniApp = await sdk.isInMiniApp();
-    if (!isInMiniApp) return;
+    if (!isInMiniApp) {
+      console.log(`[Farcaster] Not in Mini App, skipping ready signal (source: ${source})`);
+      return;
+    }
 
+    hasSignaledReady = true;
     sdk.actions.ready();
-    console.log('✅ Farcaster SDK ready() called - splash screen hidden');
+    console.log(`✅ Farcaster SDK ready() called - splash screen hidden (source: ${source})`);
   } catch (error) {
-    console.warn('⚠️ Failed to call sdk.actions.ready():', error);
+    console.warn(`⚠️ Failed to call sdk.actions.ready() (source: ${source}):`, error);
   }
+}
+
+/**
+ * Reset the signalReady state (for testing purposes only)
+ */
+export function resetSignalReady(): void {
+  hasSignaledReady = false;
+}
+
+/**
+ * Check if signalReady has been called
+ */
+export function hasCalledSignalReady(): boolean {
+  return hasSignaledReady;
 }
 
 /**
