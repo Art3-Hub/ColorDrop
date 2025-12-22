@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
-import { sdk } from '@farcaster/miniapp-sdk'; // Used for sharing functionality
 import { ConnectButton } from '@/components/ConnectButton';
 import { PlatformIndicator } from '@/components/PlatformIndicator';
 import { PlayGrid } from '@/components/landing/PlayGrid';
@@ -17,55 +16,6 @@ import { useColorDropPool } from '@/hooks/useColorDropPool';
 import { usePastGames } from '@/hooks/usePastGames';
 
 type AppState = 'landing' | 'game' | 'leaderboard' | 'pastGames';
-
-// Share pool on Farcaster to invite friends
-// Uses sdk.actions.composeCast() for proper mini app embed display in Farcaster
-async function sharePoolOnFarcaster(poolId: bigint | undefined, prizePool: number, slotsRemaining: number) {
-  const poolIdStr = poolId?.toString() || '???';
-
-  // Dynamic messaging based on slots remaining
-  let emoji: string;
-  let callToAction: string;
-
-  if (slotsRemaining <= 3) {
-    emoji = '🔥';
-    callToAction = `Almost full! Only ${slotsRemaining} slots left! ⚡`;
-  } else if (slotsRemaining <= 6) {
-    emoji = '🎯';
-    callToAction = `${slotsRemaining} slots left - join now! 🚀`;
-  } else {
-    emoji = '🎮';
-    callToAction = `Come and win fast! ${slotsRemaining} slots open 🚀`;
-  }
-
-  const entryFee = parseFloat(process.env.NEXT_PUBLIC_ENTRY_FEE || '0.1');
-  const text = `${emoji} Join me in Color Drop Pool #${poolIdStr}!\n\n🎨 Match colors in 10 seconds\n🎟️ Entry: ${entryFee} CELO\n💰 Prize Pool: ${prizePool.toFixed(2)} CELO\n🏆 Top 3 win prizes!\n\n${callToAction}`;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://colordrop.art3hub.xyz';
-
-  try {
-    const isInMiniApp = await sdk.isInMiniApp();
-    if (isInMiniApp) {
-      // Use composeCast with embeds for proper mini app display in Farcaster
-      // This shows the mini app card in the cast instead of just a link
-      console.log('[Share] Using composeCast with embeds:', [appUrl]);
-      await sdk.actions.composeCast({
-        text,
-        embeds: [appUrl],
-      });
-    } else {
-      // Fallback for browser - use warpcast compose URL
-      const encodedText = encodeURIComponent(text);
-      const embedsParam = `&embeds[]=${encodeURIComponent(appUrl)}`;
-      window.open(`https://farcaster.xyz/~/compose?text=${encodedText}${embedsParam}`, '_blank');
-    }
-  } catch (error) {
-    console.error('Failed to share on Farcaster:', error);
-    // Fallback to warpcast URL
-    const encodedText = encodeURIComponent(text);
-    const embedsParam = `&embeds[]=${encodeURIComponent(appUrl)}`;
-    window.open(`https://farcaster.xyz/~/compose?text=${encodedText}${embedsParam}`, '_blank');
-  }
-}
 
 export default function Home() {
   const { address, isConnected } = useAccount();
@@ -191,23 +141,6 @@ export default function Home() {
 
             <div className="flex items-center gap-2 sm:gap-3">
               {process.env.NODE_ENV === 'development' && <PlatformIndicator />}
-              {/* Share Button - Only show when connected */}
-              {isConnected && (
-                <button
-                  onClick={() => sharePoolOnFarcaster(
-                    poolData?.poolId,
-                    ENTRY_FEE_VALUE * POOL_SIZE,
-                    poolData ? POOL_SIZE - poolData.playerCount : POOL_SIZE
-                  )}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 bg-celo-forest text-white rounded-md text-sm font-medium hover:bg-celo-forest/90 transition-colors"
-                  title="Invite friends to play"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                  </svg>
-                  <span>Share</span>
-                </button>
-              )}
               {/* Connect Button - Hidden on mobile when connected (moved to hamburger menu) */}
               <div className={isConnected ? 'hidden sm:block' : ''}>
                 <ConnectButton />

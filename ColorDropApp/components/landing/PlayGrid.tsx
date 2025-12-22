@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
+import { sdk } from '@farcaster/miniapp-sdk';
 import { PaymentModal } from '../PaymentModal';
 import { SelfVerificationModal } from '../SelfVerificationModal';
 import { useSelf } from '@/contexts/SelfContext';
 import { useColorDropPool } from '@/hooks/useColorDropPool';
 import { usePlatformDetection } from '@/hooks/usePlatformDetection';
 import { getCurrentUser } from '@/lib/farcaster';
+import { useFarcaster } from '@/contexts/FarcasterContext';
 
 interface PlayGridProps {
   onStartGame: (slot: number) => void;
@@ -20,6 +22,7 @@ type FlowState = 'idle' | 'verification_prompt' | 'payment' | 'playing';
 
 export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames, unclaimedPrizesCount = 0 }: PlayGridProps) {
   const { address } = useAccount();
+  const { isInMiniApp } = useFarcaster();
   const {
     isVerified,
     initiateSelfVerification,
@@ -266,9 +269,79 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames, uncl
     }
   };
 
+  // Invite friends to fill the pool faster
+  const handleInviteFriends = async () => {
+    const poolIdStr = poolData?.poolId?.toString() || '???';
+    const slotsRemaining = poolData ? POOL_SIZE - poolData.playerCount : POOL_SIZE;
+    const prizePool = ENTRY_FEE_VALUE * POOL_SIZE;
+
+    // Dynamic messaging based on slots remaining
+    let emoji: string;
+    let urgency: string;
+
+    if (slotsRemaining <= 3) {
+      emoji = '🔥';
+      urgency = `Almost full! Only ${slotsRemaining} slots left!`;
+    } else if (slotsRemaining <= 6) {
+      emoji = '🎯';
+      urgency = `${slotsRemaining} slots left - join now!`;
+    } else {
+      emoji = '🎮';
+      urgency = `${slotsRemaining} slots open - come play!`;
+    }
+
+    const text = `${emoji} Join me in Color Drop Pool #${poolIdStr}!\n\n🎨 Match colors in 10 seconds\n🎟️ Entry: ${ENTRY_FEE_VALUE} CELO\n💰 Prize Pool: ${prizePool.toFixed(2)} CELO\n🏆 Top 3 win prizes!\n\n${urgency}`;
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://colordrop.art3hub.xyz';
+
+    try {
+      if (isInMiniApp) {
+        // Use Farcaster SDK composeCast for proper mini app embed
+        console.log('[Invite] Using composeCast with embeds:', [appUrl]);
+        await sdk.actions.composeCast({
+          text,
+          embeds: [appUrl],
+        });
+      } else {
+        // Fallback for browser - use warpcast compose URL
+        const encodedText = encodeURIComponent(text);
+        const embedsParam = `&embeds[]=${encodeURIComponent(appUrl)}`;
+        window.open(`https://warpcast.com/~/compose?text=${encodedText}${embedsParam}`, '_blank');
+      }
+    } catch (error) {
+      console.error('Failed to share on Farcaster:', error);
+      // Fallback to warpcast URL
+      const encodedText = encodeURIComponent(text);
+      const embedsParam = `&embeds[]=${encodeURIComponent(appUrl)}`;
+      window.open(`https://warpcast.com/~/compose?text=${encodedText}${embedsParam}`, '_blank');
+    }
+  };
+
   return (
     <>
       <div className="max-w-lg mx-auto px-3 sm:px-4">
+        {/* Invite Friends CTA - Always visible at top */}
+        <div className="bg-celo-forest/10 border border-celo-forest/30 rounded-xl p-3 mb-3">
+          <div className="flex items-center gap-3">
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-semibold text-celo-forest">
+                {poolData ? POOL_SIZE - poolData.playerCount : POOL_SIZE} slots left to fill & win!
+              </div>
+              <div className="text-xs text-celo-body">
+                Invite friends to play together
+              </div>
+            </div>
+            <button
+              onClick={handleInviteFriends}
+              className="flex-shrink-0 px-4 py-2 bg-celo-forest text-white text-sm font-medium rounded-lg hover:bg-celo-forest/90 transition-colors flex items-center gap-1.5"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+              </svg>
+              Invite
+            </button>
+          </div>
+        </div>
+
         {/* Header - Compact on mobile, detailed on desktop */}
         <div className="text-center mb-3 sm:mb-4">
           {/* Mobile: Ultra-compact motivating header */}
@@ -355,17 +428,17 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames, uncl
               <div className="flex items-center justify-center gap-6">
                 <div className="text-center">
                   <div className="text-xl mb-0.5">🥇</div>
-                  <div className="text-lg font-bold text-celo-orange">{(ENTRY_FEE_VALUE * 7).toFixed(2)}</div>
+                  <div className="text-xl font-bold text-celo-orange">{(ENTRY_FEE_VALUE * 7).toFixed(2)}</div>
                   <div className="text-xs text-celo-inactive">CELO</div>
                 </div>
                 <div className="text-center">
                   <div className="text-xl mb-0.5">🥈</div>
-                  <div className="text-lg font-bold text-celo-brown">{(ENTRY_FEE_VALUE * 5).toFixed(2)}</div>
+                  <div className="text-xl font-bold text-celo-brown">{(ENTRY_FEE_VALUE * 5).toFixed(2)}</div>
                   <div className="text-xs text-celo-inactive">CELO</div>
                 </div>
                 <div className="text-center">
                   <div className="text-xl mb-0.5">🥉</div>
-                  <div className="text-lg font-bold text-celo-brown/70">{(ENTRY_FEE_VALUE * 2.5).toFixed(2)}</div>
+                  <div className="text-xl font-bold text-celo-brown/70">{(ENTRY_FEE_VALUE * 2.5).toFixed(2)}</div>
                   <div className="text-xs text-celo-inactive">CELO</div>
                 </div>
               </div>
@@ -510,29 +583,52 @@ export function PlayGrid({ onStartGame, onViewLeaderboard, onViewPastGames, uncl
           </div>
         </div>
 
-        {/* Stats Bar - Compact inline */}
-        <div className="flex items-center justify-between bg-white rounded-xl px-4 py-3 shadow-sm border border-celo-dark-tan mb-4">
-          <div className="text-center">
-            <div className="text-lg font-bold text-celo-forest">
-              {poolData ? POOL_SIZE - poolData.playerCount : POOL_SIZE}
-            </div>
-            <div className="text-[10px] text-celo-body">Open</div>
+        {/* Stats Bar - Compact inline with progress */}
+        <div className="bg-white rounded-xl shadow-sm border border-celo-dark-tan mb-4 overflow-hidden">
+          {/* Progress bar */}
+          <div className="h-1.5 bg-celo-dark-tan/30">
+            <div
+              className="h-full bg-gradient-to-r from-celo-forest to-celo-success transition-all duration-500"
+              style={{ width: `${((poolData?.playerCount || 0) / POOL_SIZE) * 100}%` }}
+            />
           </div>
-          <div className="h-8 w-px bg-celo-dark-tan"></div>
-          <div className="text-center">
-            <div className="text-lg font-bold text-celo-brown">
-              {poolData?.playerCount || 0}/{POOL_SIZE}
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="text-center">
+              <div className="text-lg font-bold text-celo-forest">
+                {poolData ? POOL_SIZE - poolData.playerCount : POOL_SIZE}
+              </div>
+              <div className="text-[10px] text-celo-body">Open</div>
             </div>
-            <div className="text-[10px] text-celo-body">Filled</div>
-          </div>
-          <div className="h-8 w-px bg-celo-dark-tan"></div>
-          <div className="text-center">
-            <div className="text-lg font-bold text-celo-success">
-              {(ENTRY_FEE_VALUE * POOL_SIZE).toFixed(1)}
+            <div className="h-8 w-px bg-celo-dark-tan"></div>
+            <div className="text-center">
+              <div className="text-lg font-bold text-celo-brown">
+                {poolData?.playerCount || 0}/{POOL_SIZE}
+              </div>
+              <div className="text-[10px] text-celo-body">Filled</div>
             </div>
-            <div className="text-[10px] text-celo-body">Prize Pool</div>
+            <div className="h-8 w-px bg-celo-dark-tan"></div>
+            <div className="text-center">
+              <div className="text-lg font-bold text-celo-success">
+                {(ENTRY_FEE_VALUE * POOL_SIZE).toFixed(1)}
+              </div>
+              <div className="text-[10px] text-celo-body">Prize Pool</div>
+            </div>
           </div>
         </div>
+
+        {/* Almost Full Alert - Show when only 1-3 slots remaining */}
+        {poolData && poolData.playerCount >= POOL_SIZE - 3 && poolData.playerCount < POOL_SIZE && (
+          <div className="bg-gradient-to-r from-orange-50 to-yellow-50 border border-orange-200 rounded-xl p-3 mb-4 animate-pulse-subtle">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">🔥</span>
+              <div className="flex-1">
+                <span className="text-sm font-semibold text-orange-800">
+                  Almost full! Only {POOL_SIZE - poolData.playerCount} slot{POOL_SIZE - poolData.playerCount > 1 ? 's' : ''} left
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Action Buttons */}
         <div className="space-y-2">
